@@ -3526,26 +3526,28 @@ window.xmlReuploadConfirm=function(){
 };
 
 function createFullBackup(callback){
-  var backup={};
-  for(var i=0;i<localStorage.length;i++){
-    var key=localStorage.key(i);
-    if(key.indexOf(PFX)===0){
-      try{backup[key]=JSON.parse(localStorage.getItem(key));}
-      catch(e){backup[key]=localStorage.getItem(key);}
+  var projectName=(sGet('p_'+S.pid,{}).name||'');
+  var currentUsername=sGet('currentUser','');
+  var xhr=new XMLHttpRequest();
+  xhr.open('POST','../bauterm/api.php?action=backup',true);
+  xhr.setRequestHeader('Content-Type','application/json');
+  xhr.onload=function(){
+    if(xhr.status===200){
+      callback();
+    } else {
+      alert('Backup fehlgeschlagen. Upload abgebrochen.');
+      closeXmlReuploadModal();
     }
-  }
-  var blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  var ts=new Date().toISOString().replace(/[:.]/g,'-').substring(0,19);
-  a.href=url;
-  a.download='bauterm-backup-'+ts+'.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  // Short delay to ensure download starts before proceeding
-  setTimeout(function(){callback();},500);
+  };
+  xhr.onerror=function(){
+    alert('Server nicht erreichbar. Backup konnte nicht erstellt werden.');
+    closeXmlReuploadModal();
+  };
+  xhr.send(JSON.stringify({
+    user:currentUsername,
+    project_id:S.pid,
+    project_name:projectName
+  }));
 }
 
 function sendReuploadAdminNotification(log){
