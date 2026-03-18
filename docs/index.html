@@ -304,6 +304,20 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.sidebar-user {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px; margin: 0 12px 8px; border-radius: var(--radius-sm);
+  background: var(--surface2); border: 1px solid var(--border);
+}
+.sidebar-user-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--orange), var(--orange-dim));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.sidebar-user-info { flex: 1; min-width: 0; }
+.sidebar-user-name { font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-user-role { font-size: 11px; color: var(--text3); }
 .sidebar-bottom {
   padding: 12px;
   border-top: 1px solid var(--border);
@@ -1003,10 +1017,11 @@ body {
     </div>
     <p class="login-sub">Terminprogramm f&uuml;r Bauleiter</p>
     <form id="loginForm">
-      <input class="login-input" type="password" id="loginPw" placeholder="Passwort" autocomplete="current-password" autofocus>
+      <input class="login-input" type="text" id="loginUser" placeholder="Benutzername" autocomplete="username" autofocus>
+      <input class="login-input" type="password" id="loginPw" placeholder="Passwort" autocomplete="current-password" style="margin-top:8px;">
       <button class="login-btn" type="submit">Einloggen</button>
     </form>
-    <div class="login-error" id="loginErr">Falsches Passwort</div>
+    <div class="login-error" id="loginErr">Falsches Passwort oder Benutzername</div>
   </div>
 </div>
 
@@ -1026,6 +1041,7 @@ body {
       <div class="sidebar-label">Projekte</div>
     </div>
     <div class="sidebar-projects" id="projectList"></div>
+    <div class="sidebar-user" id="currentUserDisplay" style="display:none;"></div>
     <div class="sidebar-bottom">
       <button class="sidebar-btn primary" onclick="showNewDialog()">+ Neues Projekt</button>
       <button class="sidebar-btn" onclick="openAdmin()">Admin Center</button>
@@ -1162,10 +1178,13 @@ body {
 <script>
 (function(){
 'use strict';
-var PW='bauterm2024',PFX='bt_';
+var PFX='bt_';
+
+/* ─── DEFAULT USERS (username -> {password, displayName, role}) ─── */
+var DEFAULT_ADMIN={username:'admin',password:'bauterm2024',displayName:'Administrator',role:'admin'};
 
 /* ─── STATE ─── */
-var S={projects:[],pid:null,tasks:[],filtered:[],view:'dashboard',search:'',critOnly:false,dpUid:null,toastTimer:null};
+var S={projects:[],pid:null,tasks:[],filtered:[],view:'dashboard',search:'',critOnly:false,dpUid:null,toastTimer:null,currentUser:null};
 
 /* ─── HELPERS ─── */
 function $(id){return document.getElementById(id);}
@@ -1198,10 +1217,30 @@ window.toggleTheme=function(){
 };
 
 /* ─── AUTH ─── */
-function showLogin(){$('loginScreen').classList.remove('hidden');$('appScreen').classList.add('hidden');}
+function getUsers(){
+  var users=sGet('users',null);
+  if(!users){
+    // Initialize with default admin
+    users=[{username:'admin',password:'bauterm2024',displayName:'Administrator',role:'admin'}];
+    sSet('users',users);
+  }
+  return users;
+}
+function saveUsers(u){sSet('users',u);}
+function findUser(username){
+  return getUsers().find(function(u){return u.username.toLowerCase()===username.toLowerCase();});
+}
+
+function showLogin(){
+  $('loginScreen').classList.remove('hidden');
+  $('appScreen').classList.add('hidden');
+  S.currentUser=null;
+}
 function showApp(){
   $('loginScreen').classList.add('hidden');
   $('appScreen').classList.remove('hidden');
+  // Show current user in sidebar
+  updateUserDisplay();
   loadProjects();
   // Auto-select first project if none active
   if(!S.pid){
@@ -1209,13 +1248,36 @@ function showApp(){
     if(idx.length>0){loadProject(idx[0].id);}
   }
 }
+function updateUserDisplay(){
+  var el=$('currentUserDisplay');
+  if(!el)return;
+  if(S.currentUser){
+    var ini=S.currentUser.displayName.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2);
+    el.innerHTML='<div class="sidebar-user-avatar">'+esc(ini)+'</div>'
+      +'<div class="sidebar-user-info"><div class="sidebar-user-name">'+esc(S.currentUser.displayName)+'</div>'
+      +'<div class="sidebar-user-role">'+esc(S.currentUser.role==='admin'?'Administrator':'Benutzer')+'</div></div>';
+    el.style.display='flex';
+  } else {
+    el.style.display='none';
+  }
+}
 
 $('loginForm').addEventListener('submit',function(e){
   e.preventDefault();
-  if($('loginPw').value===PW){sSet('auth',true);showApp();}
-  else{var el=$('loginErr');el.style.display='block';el.style.animation='none';requestAnimationFrame(function(){el.style.animation='';});}
+  var username=$('loginUser').value.trim();
+  var pw=$('loginPw').value;
+  var user=findUser(username);
+  if(user&&user.password===pw){
+    sSet('auth',true);
+    sSet('currentUser',user.username);
+    S.currentUser=user;
+    showApp();
+  } else {
+    var el=$('loginErr');el.style.display='block';el.style.animation='none';
+    requestAnimationFrame(function(){el.style.animation='';});
+  }
 });
-window.doLogout=function(){sSet('auth',false);showLogin();};
+window.doLogout=function(){sSet('auth',false);sDel('currentUser');S.currentUser=null;showLogin();};
 
 /* ─── PROJECTS ─── */
 function getIdx(){return sGet('idx',[]);}
@@ -1629,15 +1691,31 @@ var PERMS=[
   {key:'manage_users',label:'Benutzer verwalten'}
 ];
 
-function getAllUsers(){
-  // Collect unique users across all projects
-  var idx=getIdx(),map={};
+function getAllUsersWithProjects(){
+  // Merge registered users + project-assigned users
+  var registered=getUsers();
+  var idx=getIdx();
+  var map={};
+  // Start with registered users
+  registered.forEach(function(u){
+    map[u.username.toLowerCase()]={
+      username:u.username,
+      displayName:u.displayName,
+      role:u.role||'user',
+      registered:true,
+      projects:[]
+    };
+  });
+  // Add project assignments
   idx.forEach(function(p){
     var d=sGet('p_'+p.id,{});
     var users=d.users||[];
-    users.forEach(function(u){
-      if(!map[u.toLowerCase()]){map[u.toLowerCase()]={name:u,projects:[],role:d.userRoles&&d.userRoles[u]||'editor'};}
-      map[u.toLowerCase()].projects.push(p.name);
+    users.forEach(function(uname){
+      var key=uname.toLowerCase();
+      if(!map[key]){
+        map[key]={username:uname,displayName:uname,role:'user',registered:false,projects:[]};
+      }
+      map[key].projects.push(p.name);
     });
   });
   return Object.keys(map).map(function(k){return map[k];});
@@ -1723,26 +1801,38 @@ function renderAdminProjects(){
 }
 
 function renderAdminUsers(){
-  var users=getAllUsers(),c=$('adminTabUsers');
+  var users=getAllUsersWithProjects(),c=$('adminTabUsers');
   var html='<div class="admin-section">'
     +'<div class="admin-section-title">Alle Benutzer ('+users.length+')</div>'
-    +'<div style="display:flex;gap:8px;margin-bottom:16px;">'
-    +'<input class="admin-inline-edit" id="adminNewUser" placeholder="Neuen Benutzer anlegen..." style="max-width:300px;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();adminCreateUser();}">'
+    +'<div class="admin-card" style="margin-bottom:20px;">'
+    +'<div style="font-size:13px;font-weight:600;margin-bottom:12px;">Neuen Benutzer anlegen</div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+    +'<input class="admin-inline-edit" id="adminNewUserName" placeholder="Anzeigename" style="max-width:200px;">'
+    +'<input class="admin-inline-edit" id="adminNewUserLogin" placeholder="Benutzername (Login)" style="max-width:180px;">'
+    +'<input class="admin-inline-edit" id="adminNewUserPw" placeholder="Passwort" type="password" style="max-width:160px;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();adminCreateUser();}">'
+    +'<select class="admin-role-select" id="adminNewUserRole" style="padding:8px 12px;"><option value="user">Benutzer</option><option value="admin">Administrator</option></select>'
     +'<button class="admin-btn primary" onclick="adminCreateUser()">Anlegen</button>'
-    +'</div>';
+    +'</div></div>';
   if(!users.length){
-    html+='<div class="admin-empty-msg">Noch keine Benutzer. F\u00fcge Benutzer \u00fcber die Projektverwaltung oder hier hinzu.</div>';
+    html+='<div class="admin-empty-msg">Noch keine Benutzer.</div>';
   } else {
     html+='<div class="admin-global-users">';
     users.forEach(function(u){
-      var ini=u.name.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2);
+      var ini=u.displayName.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2);
+      var isCurrent=S.currentUser&&S.currentUser.username.toLowerCase()===u.username.toLowerCase();
       html+='<div class="admin-global-user-row">'
         +'<div class="user-avatar">'+esc(ini)+'</div>'
         +'<div class="user-info">'
-        +'<div class="name">'+esc(u.name)+'</div>'
-        +'<div class="projects-count">'+u.projects.length+' Projekt'+(u.projects.length!==1?'e':'')+': '+esc(u.projects.join(', '))+'</div>'
+        +'<div class="name">'+esc(u.displayName)
+        +(u.registered?' <span class="admin-badge '+(u.role==='admin'?'orange':'blue')+'">'+esc(u.role==='admin'?'Admin':'Benutzer')+'</span>':'')
+        +(isCurrent?' <span class="admin-badge green">Eingeloggt</span>':'')
         +'</div>'
-        +'<button class="admin-btn danger" onclick="adminDeleteUser(\''+esc(u.name).replace(/'/g,"\\'")+'\')">Entfernen</button>'
+        +'<div class="projects-count">'
+        +'@'+esc(u.username)
+        +(u.projects.length?' &middot; '+u.projects.length+' Projekt'+(u.projects.length!==1?'e':'')+'': ' &middot; Keinen Projekten zugewiesen')
+        +'</div>'
+        +'</div>'
+        +(isCurrent?'':'<button class="admin-btn danger" onclick="adminDeleteUser(\''+esc(u.username).replace(/'/g,"\\'")+'\')">Entfernen</button>')
         +'</div>';
     });
     html+='</div>';
@@ -1842,31 +1932,39 @@ window.adminDeleteProject=function(id,name){
 };
 
 window.adminCreateUser=function(){
-  var input=$('adminNewUser');
-  var name=input.value.trim();if(!name){return;}
-  // Add to global user store
-  var gu=sGet('globalUsers',[]);
-  if(gu.some(function(u){return u.toLowerCase()===name.toLowerCase();})){input.value='';return;}
-  gu.push(name);sSet('globalUsers',gu);
-  input.value='';
+  var displayName=($('adminNewUserName')||{}).value;
+  var username=($('adminNewUserLogin')||{}).value;
+  var pw=($('adminNewUserPw')||{}).value;
+  var role=($('adminNewUserRole')||{}).value||'user';
+  if(!displayName||!displayName.trim()){alert('Bitte Anzeigename eingeben');return;}
+  if(!username||!username.trim()){alert('Bitte Benutzername eingeben');return;}
+  if(!pw||!pw.trim()){alert('Bitte Passwort eingeben');return;}
+  displayName=displayName.trim();username=username.trim();
+  var users=getUsers();
+  if(users.some(function(u){return u.username.toLowerCase()===username.toLowerCase();})){
+    alert('Benutzername "'+username+'" existiert bereits');return;
+  }
+  users.push({username:username,password:pw,displayName:displayName,role:role});
+  saveUsers(users);
+  $('adminNewUserName').value='';$('adminNewUserLogin').value='';$('adminNewUserPw').value='';
   renderAdminUsers();
 };
 
-window.adminDeleteUser=function(name){
-  if(!confirm('Benutzer "'+name+'" aus allen Projekten entfernen?'))return;
+window.adminDeleteUser=function(username){
+  if(!confirm('Benutzer "'+username+'" wirklich l\u00f6schen?'))return;
+  // Remove from registered users
+  var users=getUsers();
+  users=users.filter(function(u){return u.username.toLowerCase()!==username.toLowerCase();});
+  saveUsers(users);
   // Remove from all projects
   var idx=getIdx();
   idx.forEach(function(p){
     var d=sGet('p_'+p.id,{});
     if(d.users){
-      d.users=d.users.filter(function(u){return u.toLowerCase()!==name.toLowerCase();});
+      d.users=d.users.filter(function(u){return u.toLowerCase()!==username.toLowerCase();});
       sSet('p_'+p.id,d);
     }
   });
-  // Remove from global
-  var gu=sGet('globalUsers',[]);
-  gu=gu.filter(function(u){return u.toLowerCase()!==name.toLowerCase();});
-  sSet('globalUsers',gu);
   renderAdminUsers();
 };
 
@@ -1998,8 +2096,12 @@ document.addEventListener('drop',function(e){
 // Apply saved theme (default: light)
 applyTheme(sGet('theme','light'));
 
-// Check auth
-if(sGet('auth',false)){showApp();}else{showLogin();}
+// Check auth and restore user
+if(sGet('auth',false)){
+  var savedUsername=sGet('currentUser',null);
+  if(savedUsername){S.currentUser=findUser(savedUsername);}
+  showApp();
+}else{showLogin();}
 
 })();
 </script>
