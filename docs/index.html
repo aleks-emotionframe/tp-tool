@@ -1602,6 +1602,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <button class="admin-tab active" onclick="switchAdminTab('projects',this)">Projekte</button>
       <button class="admin-tab" onclick="switchAdminTab('users',this)">Benutzer</button>
       <button class="admin-tab" onclick="switchAdminTab('permissions',this)">Berechtigungen</button>
+      <button class="admin-tab" onclick="switchAdminTab('backup',this)">Backup</button>
     </div>
 
     <!-- TAB: Projekte -->
@@ -1612,6 +1613,9 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 
     <!-- TAB: Berechtigungen -->
     <div class="admin-tab-content" id="adminTabPermissions" style="display:none"></div>
+
+    <!-- TAB: Backup -->
+    <div class="admin-tab-content" id="adminTabBackup" style="display:none"></div>
   </div>
 </div>
 
@@ -3184,10 +3188,12 @@ window.switchAdminTab=function(tab,btn){
   $('adminTabProjects').style.display=tab==='projects'?'block':'none';
   $('adminTabUsers').style.display=tab==='users'?'block':'none';
   $('adminTabPermissions').style.display=tab==='permissions'?'block':'none';
+  $('adminTabBackup').style.display=tab==='backup'?'block':'none';
   // Render
   if(tab==='projects')renderAdminProjects();
   if(tab==='users')renderAdminUsers();
   if(tab==='permissions')renderAdminPermissions();
+  if(tab==='backup')renderAdminBackup();
 };
 
 function renderAdminProjects(){
@@ -3392,6 +3398,159 @@ function renderAdminPermissions(){
   html+='</div>';
   c.innerHTML=html;
 }
+
+function renderAdminBackup(){
+  var c=$('adminTabBackup');
+  var html='<div class="admin-section">'
+    +'<div class="admin-section-title">Backup &amp; Wiederherstellung</div>'
+    +'<p style="font-size:13px;color:var(--text3);margin-bottom:24px;">Erstelle ein vollständiges Backup aller Daten oder stelle ein vorheriges Backup wieder her.</p>';
+
+  // Download backup
+  html+='<div class="admin-card">'
+    +'<div class="admin-card-header"><div class="admin-card-title">Backup erstellen</div></div>'
+    +'<div class="admin-card-body">'
+    +'<p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Lädt eine JSON-Datei mit allen Projekten, Benutzern, Berechtigungen und Einstellungen herunter.</p>'
+    +'<button class="admin-btn primary" onclick="adminDownloadBackup()">Backup herunterladen</button>'
+    +'</div></div>';
+
+  // Restore backup
+  html+='<div class="admin-card" style="margin-top:16px;">'
+    +'<div class="admin-card-header"><div class="admin-card-title">Backup wiederherstellen</div>'
+    +'<span class="admin-badge" style="background:var(--red-light);color:var(--red);">Vorsicht</span></div>'
+    +'<div class="admin-card-body">'
+    +'<p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Stellt alle Daten aus einer Backup-Datei wieder her. <strong>Alle aktuellen Daten werden überschrieben!</strong></p>'
+    +'<input type="file" id="backupFileInput" accept=".json" style="display:none" onchange="adminHandleBackupFile(this)">'
+    +'<button class="admin-btn danger" onclick="$(\'backupFileInput\').click()">Backup-Datei hochladen</button>'
+    +'<div id="backupPreview" style="display:none;margin-top:16px;"></div>'
+    +'</div></div>';
+
+  // Reupload log
+  var logs=sGet('reupload_log',[]);
+  if(logs.length){
+    html+='<div class="admin-card" style="margin-top:16px;">'
+      +'<div class="admin-card-header"><div class="admin-card-title">Re-Upload Protokoll</div>'
+      +'<span class="admin-badge blue">'+logs.length+' Eintr\u00e4ge</span></div>'
+      +'<div class="admin-card-body"><div style="max-height:200px;overflow-y:auto;">';
+    logs.slice().reverse().forEach(function(log){
+      var d=new Date(log.timestamp);
+      html+='<div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;">'
+        +'<span style="color:var(--text3);white-space:nowrap;">'+d.toLocaleString('de-CH')+'</span>'
+        +'<span style="font-weight:500;">'+esc(log.user||'')+'</span>'
+        +'<span style="color:var(--text2);">hat <strong>'+esc(log.projectName||'')+'</strong> \u00fcberschrieben</span>'
+        +'</div>';
+    });
+    html+='</div></div></div>';
+  }
+
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+window.adminDownloadBackup=function(){
+  var allData={};
+  for(var i=0;i<localStorage.length;i++){
+    var key=localStorage.key(i);
+    if(key.indexOf(PFX)===0){
+      try{allData[key]=JSON.parse(localStorage.getItem(key));}
+      catch(e){allData[key]=localStorage.getItem(key);}
+    }
+  }
+  var backup={
+    _bauterm_backup:true,
+    version:1,
+    timestamp:new Date().toISOString(),
+    created_by:sGet('currentUser','')||(S.currentUser?S.currentUser.username:''),
+    data:allData
+  };
+  var blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  var ts=new Date().toISOString().replace(/[:.]/g,'-').substring(0,19);
+  a.href=url;
+  a.download='bauterm-backup-'+ts+'.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+window.adminHandleBackupFile=function(input){
+  if(!input.files||!input.files.length)return;
+  var file=input.files[0];
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var backup=JSON.parse(ev.target.result);
+    }catch(e){
+      alert('Ungültige JSON-Datei.');return;
+    }
+    // Support both formats: {data:{...}} and direct {bt_key:...}
+    var data=backup.data||backup.localStorage||null;
+    if(!data||typeof data!=='object'){
+      // Maybe it's a direct localStorage dump
+      var keys=Object.keys(backup).filter(function(k){return k.indexOf(PFX)===0;});
+      if(keys.length>0){data=backup;}
+      else{alert('Keine BAUTERM-Daten in dieser Datei gefunden.');return;}
+    }
+    // Count what's in the backup
+    var projectCount=0,userList=null;
+    Object.keys(data).forEach(function(k){
+      if(k.indexOf(PFX+'p_')===0)projectCount++;
+      if(k===PFX+'users')userList=data[k];
+    });
+    // Show preview
+    var preview=$('backupPreview');
+    var ts=backup.timestamp?new Date(backup.timestamp).toLocaleString('de-CH'):'Unbekannt';
+    var html='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;">'
+      +'<div style="font-weight:600;margin-bottom:8px;">Backup-Inhalt:</div>'
+      +'<div style="font-size:13px;color:var(--text2);line-height:1.8;">'
+      +'Erstellt: <strong>'+esc(ts)+'</strong><br>'
+      +(backup.created_by?'Von: <strong>'+esc(backup.created_by)+'</strong><br>':'')
+      +'Projekte: <strong>'+projectCount+'</strong><br>'
+      +(userList?'Benutzer: <strong>'+userList.length+'</strong><br>':'')
+      +'</div>'
+      +'<div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">'
+      +'<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:12px;">'
+      +'<input type="checkbox" id="backupRestoreConfirm">'
+      +'Ich verstehe, dass alle aktuellen Daten \u00fcberschrieben werden.'
+      +'</label>'
+      +'<button class="admin-btn danger" onclick="adminDoRestore()">Wiederherstellen</button>'
+      +'</div></div>';
+    preview.innerHTML=html;
+    preview.style.display='block';
+    // Store parsed data for restore
+    window._pendingRestore=data;
+  };
+  reader.readAsText(file);
+  try{input.value='';}catch(e){}
+};
+
+window.adminDoRestore=function(){
+  if(!$('backupRestoreConfirm').checked){
+    alert('Bitte bestätige mit dem Häkchen.');return;
+  }
+  var data=window._pendingRestore;
+  if(!data){alert('Keine Backup-Daten geladen.');return;}
+  // Clear all BAUTERM keys
+  var keysToRemove=[];
+  for(var i=0;i<localStorage.length;i++){
+    var key=localStorage.key(i);
+    if(key.indexOf(PFX)===0)keysToRemove.push(key);
+  }
+  keysToRemove.forEach(function(k){localStorage.removeItem(k);});
+  // Restore all keys from backup
+  Object.keys(data).forEach(function(k){
+    // Ensure key has prefix
+    var storeKey=k.indexOf(PFX)===0?k:PFX+k;
+    try{
+      localStorage.setItem(storeKey,typeof data[k]==='string'?data[k]:JSON.stringify(data[k]));
+    }catch(e){}
+  });
+  window._pendingRestore=null;
+  // Reload app
+  alert('Backup wurde erfolgreich wiederhergestellt. Die Seite wird neu geladen.');
+  location.reload();
+};
 
 window.adminRenameProject=function(id,name){
   name=name.trim();if(!name)return;
