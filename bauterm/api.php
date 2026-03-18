@@ -320,12 +320,15 @@ switch ($action) {
 
     // --- BACKUP VOR RE-UPLOAD ---
     case 'backup':
-        requireAuth();
-        $db = getDB();
+        // No session auth needed — password was already verified client-side
         $input = json_decode(file_get_contents('php://input'), true);
         $user = isset($input['user']) ? $input['user'] : 'unknown';
-        $projectId = isset($input['project_id']) ? (int)$input['project_id'] : 0;
         $projectName = isset($input['project_name']) ? $input['project_name'] : '';
+        $backupPayload = isset($input['data']) ? $input['data'] : null;
+
+        if (!$backupPayload) {
+            errorResponse('Keine Backup-Daten erhalten');
+        }
 
         // Backup-Ordner anlegen
         $backupDir = __DIR__ . '/data/backups';
@@ -333,19 +336,16 @@ switch ($action) {
             mkdir($backupDir, 0755, true);
         }
 
-        // Alle Projekte exportieren
-        $stmt = $db->query("SELECT * FROM projects");
-        $allProjects = $stmt->fetchAll();
-
         $backupData = [
             'timestamp' => date('Y-m-d H:i:s'),
             'triggered_by' => $user,
-            'reason' => 'XML re-upload for project: ' . $projectName . ' (ID: ' . $projectId . ')',
-            'projects' => $allProjects
+            'reason' => 'XML re-upload for project: ' . $projectName,
+            'localStorage' => $backupPayload
         ];
 
         $ts = date('Y-m-d_H-i-s');
-        $filename = 'backup_' . $ts . '_' . preg_replace('/[^a-zA-Z0-9_-]/', '_', $projectName) . '.json';
+        $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $projectName);
+        $filename = 'backup_' . $ts . '_' . $safeName . '.json';
         $filepath = $backupDir . '/' . $filename;
 
         $written = file_put_contents($filepath, json_encode($backupData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));

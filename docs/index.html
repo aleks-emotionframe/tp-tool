@@ -3532,15 +3532,32 @@ window.xmlReuploadConfirm=function(){
 
 function createFullBackup(callback){
   var projectName=(sGet('p_'+S.pid,{}).name||'');
-  var currentUsername=sGet('currentUser','');
+  var currentUsername=sGet('currentUser','')||(S.currentUser?S.currentUser.username:'');
+  // Collect all BAUTERM localStorage data
+  var allData={};
+  for(var i=0;i<localStorage.length;i++){
+    var key=localStorage.key(i);
+    if(key.indexOf(PFX)===0){
+      try{allData[key]=JSON.parse(localStorage.getItem(key));}
+      catch(e){allData[key]=localStorage.getItem(key);}
+    }
+  }
   var xhr=new XMLHttpRequest();
   xhr.open('POST','../bauterm/api.php?action=backup',true);
   xhr.setRequestHeader('Content-Type','application/json');
   xhr.onload=function(){
     if(xhr.status===200){
-      callback();
+      try{
+        var resp=JSON.parse(xhr.responseText);
+        if(resp.success){
+          callback();
+          return;
+        }
+      }catch(e){}
+      alert('Backup fehlgeschlagen: '+(xhr.responseText||'Unbekannter Fehler'));
+      closeXmlReuploadModal();
     } else {
-      alert('Backup fehlgeschlagen. Upload abgebrochen.');
+      alert('Backup fehlgeschlagen (Status '+xhr.status+'): '+(xhr.responseText||''));
       closeXmlReuploadModal();
     }
   };
@@ -3550,8 +3567,8 @@ function createFullBackup(callback){
   };
   xhr.send(JSON.stringify({
     user:currentUsername,
-    project_id:S.pid,
-    project_name:projectName
+    project_name:projectName,
+    data:allData
   }));
 }
 
