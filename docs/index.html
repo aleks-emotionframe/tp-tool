@@ -531,6 +531,85 @@ body {
 .dash-empty {
   padding: 24px 18px; text-align: center; color: var(--text3); font-size: 13px;
 }
+.dash-item { cursor: pointer; }
+
+/* --- TASK DETAIL POPUP --- */
+.task-detail-modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 0; width: 560px; max-width: 92vw;
+  box-shadow: var(--shadow-lg); max-height: 85vh; overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.task-detail-header {
+  padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.task-detail-header h3 {
+  font-size: 17px; font-weight: 700; flex: 1; line-height: 1.3;
+  margin: 0;
+}
+.task-detail-close {
+  width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text2); font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; transition: var(--transition);
+}
+.task-detail-close:hover { background: var(--red-light); color: var(--red); border-color: var(--red); }
+.task-detail-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.task-detail-body {
+  padding: 20px 24px; overflow-y: auto; flex: 1;
+}
+.task-detail-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.task-detail-field {}
+.task-detail-field .td-label {
+  font-size: 11px; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+}
+.task-detail-field .td-value { font-size: 14px; color: var(--text); font-weight: 500; }
+.task-detail-field.full { grid-column: 1 / -1; }
+.task-detail-progress {
+  grid-column: 1 / -1; margin-top: 4px;
+}
+.task-detail-progress-bar {
+  height: 8px; background: var(--surface3); border-radius: 4px;
+  overflow: hidden; margin-top: 6px;
+}
+.task-detail-progress-fill {
+  height: 100%; border-radius: 4px; transition: width 0.3s;
+}
+.task-detail-preds {
+  grid-column: 1 / -1; margin-top: 4px;
+}
+.task-detail-pred-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; background: var(--surface2);
+  border-radius: var(--radius-xs); margin-bottom: 4px;
+  font-size: 13px;
+}
+.task-detail-pred-item .pred-status {
+  width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+}
+.task-detail-pred-item .pred-name { flex: 1; }
+.task-detail-pred-item .pred-pct { font-size: 12px; color: var(--text3); }
+
+/* --- DASHBOARD DRAG & DROP --- */
+.dash-panel { transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s; }
+.dash-panel .dash-panel-header { cursor: grab; user-select: none; }
+.dash-panel.dragging {
+  opacity: 0.5; transform: scale(0.98);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+.dash-panel.drag-over {
+  box-shadow: 0 0 0 2px var(--orange);
+  transform: scale(1.01);
+}
+.dash-panel-header .drag-handle {
+  color: var(--text3); font-size: 14px; cursor: grab;
+  padding: 0 4px; user-select: none;
+}
+.dash-panel-header .drag-handle:hover { color: var(--text); }
 
 /* --- FILTER BAR --- */
 .filter-bar {
@@ -1352,6 +1431,22 @@ body {
   </div>
 </div>
 
+<!-- TASK DETAIL POPUP -->
+<div class="modal-bg" id="taskDetailModal">
+  <div class="task-detail-modal">
+    <div class="task-detail-header">
+      <div>
+        <h3 id="tdName"></h3>
+        <div class="task-detail-badges" id="tdBadges"></div>
+      </div>
+      <button class="task-detail-close" onclick="closeTaskDetail()">&times;</button>
+    </div>
+    <div class="task-detail-body">
+      <div class="task-detail-grid" id="tdGrid"></div>
+    </div>
+  </div>
+</div>
+
 <!-- USER EDIT MODAL -->
 <div class="modal-bg" id="userEditModal">
   <div class="user-edit-modal">
@@ -1716,6 +1811,14 @@ function renderView(){
 }
 
 /* ─── DASHBOARD PANELS ─── */
+function dashItem(t,dotColor,extras){
+  return '<div class="dash-item" data-uid="'+t.uid+'" onclick="openTaskDetail('+t.uid+')">'
+    +'<div class="dash-item-dot '+dotColor+'"></div>'
+    +'<div class="dash-item-name">'+esc(t.name)+'</div>'
+    +(extras||'')
+    +'</div>';
+}
+
 function renderDashboard(){
   var c=$('dashboardView');
   if(!S.tasks.length){c.innerHTML='';return;}
@@ -1732,160 +1835,293 @@ function renderDashboard(){
     return t.critical&&(t.percentComplete||0)<100;
   });
 
-  // 2. OVERDUE / DELAYED TASKS (finish date in the past, not 100% done)
+  // 2. OVERDUE / DELAYED TASKS
   var overdue=work.filter(function(t){
     return t.finish&&t.finish<today&&(t.percentComplete||0)<100;
   });
 
   // 3. TASKS READY TO START
-  // A task is "ready" when:
-  // - It's not a summary
-  // - It's not 100% complete
-  // - It has not started yet (percentComplete === 0) OR start <= today
-  // - ALL predecessors (FS/SS/FF/SF type) are 100% complete
-  // We only consider FS (Finish-to-Start, type=1) and SS (Start-to-Start, type=3) dependencies
   var ready=work.filter(function(t){
     if((t.percentComplete||0)>=100) return false;
-    // Must not have already started significantly (allow 0% or tasks where start <= today)
     var preds=t.predecessors||[];
-    // If no predecessors, it's ready if start <= today or not started
     var allPredsDone=true;
     for(var i=0;i<preds.length;i++){
       var predTask=taskByUid[preds[i].uid];
       if(!predTask)continue;
-      if(predTask.summary)continue; // Skip summary predecessors
-      var predType=preds[i].type; // 0=FF, 1=FS, 2=SF, 3=SS
+      if(predTask.summary)continue;
+      var predType=preds[i].type;
       if(predType===1||predType===undefined){
-        // FS: predecessor must be 100% complete
-        if((predTask.percentComplete||0)<100){
-          allPredsDone=false;break;
-        }
+        if((predTask.percentComplete||0)<100){allPredsDone=false;break;}
       } else if(predType===3){
-        // SS: predecessor must have started (>0%)
-        if((predTask.percentComplete||0)<=0){
-          allPredsDone=false;break;
-        }
+        if((predTask.percentComplete||0)<=0){allPredsDone=false;break;}
       } else if(predType===0){
-        // FF: predecessor must be 100% complete
-        if((predTask.percentComplete||0)<100){
-          allPredsDone=false;break;
-        }
+        if((predTask.percentComplete||0)<100){allPredsDone=false;break;}
       } else if(predType===2){
-        // SF: predecessor must have started
-        if((predTask.percentComplete||0)<=0){
-          allPredsDone=false;break;
-        }
+        if((predTask.percentComplete||0)<=0){allPredsDone=false;break;}
       }
     }
     if(!allPredsDone)return false;
-    // Ready: either can start now (start <= today) or could start earlier
     return true;
   });
 
-  // Sort: overdue by days overdue desc, critical by finish asc, ready by start asc
   overdue.sort(function(a,b){return (a.finish||'').localeCompare(b.finish||'');});
   critTasks.sort(function(a,b){return (a.finish||'').localeCompare(b.finish||'');});
   ready.sort(function(a,b){return (a.start||'').localeCompare(b.start||'');});
 
-  // Separate ready into: can start now (start <= today) and can start earlier
   var readyNow=ready.filter(function(t){return !t.start||t.start<=today;});
   var readyEarly=ready.filter(function(t){return t.start&&t.start>today;});
 
-  var html='<div class="dash-panels">';
+  // Build panels as array (for drag reorder)
+  var panels=[];
+  var savedOrder=sGet('dashOrder_'+(S.pid||''),null);
 
-  // --- OVERDUE PANEL ---
+  // --- OVERDUE ---
   if(overdue.length){
-    html+='<div class="dash-panel full">'
-      +'<div class="dash-panel-header">'
-      +'<div class="dash-panel-icon red">&#9888;</div>'
-      +'<div class="dash-panel-title">Verz\u00f6gerungen</div>'
-      +'<div class="dash-panel-count" style="background:var(--red-light);color:var(--red);">'+overdue.length+'</div>'
-      +'</div><div class="dash-panel-body">';
+    var ph='';
     overdue.forEach(function(t){
       var daysLate=Math.ceil((new Date(today)-new Date(t.finish))/86400000);
-      html+='<div class="dash-item">'
-        +'<div class="dash-item-dot red"></div>'
-        +'<div class="dash-item-name">'+esc(t.name)+'</div>'
-        +'<div class="dash-item-badge red">'+daysLate+' Tag'+(daysLate!==1?'e':'')+' \u00fcberf\u00e4llig</div>'
+      ph+=dashItem(t,'red',
+        '<div class="dash-item-badge red">'+daysLate+' Tag'+(daysLate!==1?'e':'')+' \u00fcberf\u00e4llig</div>'
         +'<div class="dash-item-meta">Frist: '+fmtDate(t.finish)+'</div>'
-        +'<div class="dash-item-meta">'+((t.percentComplete||0))+'%</div>'
-        +'</div>';
+        +'<div class="dash-item-meta">'+((t.percentComplete||0))+'%</div>');
     });
-    html+='</div></div>';
+    panels.push({id:'overdue',cls:'full',icon:'&#9888;',iconCls:'red',title:'Verz\u00f6gerungen',count:overdue.length,countStyle:'background:var(--red-light);color:var(--red)',body:ph});
   }
 
-  // --- CRITICAL PATH PANEL ---
+  // --- CRITICAL ---
   if(critTasks.length){
-    html+='<div class="dash-panel'+(overdue.length?'':' full')+'">'
-      +'<div class="dash-panel-header">'
-      +'<div class="dash-panel-icon yellow">&#9888;</div>'
-      +'<div class="dash-panel-title">Kritischer Pfad</div>'
-      +'<div class="dash-panel-count" style="background:var(--yellow-light);color:var(--yellow);">'+critTasks.length+'</div>'
-      +'</div><div class="dash-panel-body">';
+    var ph='';
     critTasks.forEach(function(t){
       var isOverdue=t.finish&&t.finish<today;
-      html+='<div class="dash-item">'
-        +'<div class="dash-item-dot '+(isOverdue?'red':'yellow')+'"></div>'
-        +'<div class="dash-item-name">'+esc(t.name)+'</div>'
-        +(isOverdue?'<div class="dash-item-badge red">\u00dcberf\u00e4llig</div>':'')
+      ph+=dashItem(t,isOverdue?'red':'yellow',
+        (isOverdue?'<div class="dash-item-badge red">\u00dcberf\u00e4llig</div>':'')
         +'<div class="dash-item-meta">'+fmtDate(t.start)+' \u2013 '+fmtDate(t.finish)+'</div>'
-        +'<div class="dash-item-meta">'+((t.percentComplete||0))+'%</div>'
-        +'</div>';
+        +'<div class="dash-item-meta">'+((t.percentComplete||0))+'%</div>');
     });
-    html+='</div></div>';
+    panels.push({id:'critical',cls:overdue.length?'':'full',icon:'&#9888;',iconCls:'yellow',title:'Kritischer Pfad',count:critTasks.length,countStyle:'background:var(--yellow-light);color:var(--yellow)',body:ph});
   }
 
-  // --- READY NOW PANEL ---
-  html+='<div class="dash-panel">'
-    +'<div class="dash-panel-header">'
-    +'<div class="dash-panel-icon green">&#10003;</div>'
-    +'<div class="dash-panel-title">Bereit zum Starten</div>'
-    +'<div class="dash-panel-count" style="background:var(--green-light);color:var(--green);">'+readyNow.length+'</div>'
-    +'</div><div class="dash-panel-body">';
+  // --- READY NOW ---
+  var ph='';
   if(readyNow.length){
     readyNow.forEach(function(t){
       var hasPreds=(t.predecessors||[]).length>0;
-      html+='<div class="dash-item">'
-        +'<div class="dash-item-dot green"></div>'
-        +'<div class="dash-item-name">'+esc(t.name)+'</div>'
-        +(hasPreds?'<div class="dash-item-badge green">Vorarbeiten fertig</div>':'<div class="dash-item-badge green">Keine Abh\u00e4ngigkeiten</div>')
-        +'<div class="dash-item-meta">'+fmtDate(t.start)+'</div>'
-        +'</div>';
+      ph+=dashItem(t,'green',
+        (hasPreds?'<div class="dash-item-badge green">Vorarbeiten fertig</div>':'<div class="dash-item-badge green">Keine Abh\u00e4ngigkeiten</div>')
+        +'<div class="dash-item-meta">'+fmtDate(t.start)+'</div>');
     });
   } else {
-    html+='<div class="dash-empty">Keine Vorg\u00e4nge bereit zum sofortigen Start.</div>';
+    ph='<div class="dash-empty">Keine Vorg\u00e4nge bereit zum sofortigen Start.</div>';
   }
-  html+='</div></div>';
+  panels.push({id:'ready',cls:'',icon:'&#10003;',iconCls:'green',title:'Bereit zum Starten',count:readyNow.length,countStyle:'background:var(--green-light);color:var(--green)',body:ph});
 
-  // --- CAN START EARLIER PANEL ---
-  html+='<div class="dash-panel">'
-    +'<div class="dash-panel-header">'
-    +'<div class="dash-panel-icon blue">&#8634;</div>'
-    +'<div class="dash-panel-title">K\u00f6nnen fr\u00fcher starten</div>'
-    +'<div class="dash-panel-count" style="background:var(--blue-light);color:var(--blue);">'+readyEarly.length+'</div>'
-    +'</div><div class="dash-panel-body">';
+  // --- CAN START EARLIER ---
+  var ph='';
   if(readyEarly.length){
     readyEarly.forEach(function(t){
       var daysEarly=Math.ceil((new Date(t.start)-new Date(today))/86400000);
-      html+='<div class="dash-item">'
-        +'<div class="dash-item-dot blue"></div>'
-        +'<div class="dash-item-name">'+esc(t.name)+'</div>'
-        +'<div class="dash-item-badge blue">Vorarbeiten fertig</div>'
-        +'<div class="dash-item-meta">Geplant: '+fmtDate(t.start)+' (in '+daysEarly+'d)</div>'
-        +'</div>';
+      ph+=dashItem(t,'blue',
+        '<div class="dash-item-badge blue">Vorarbeiten fertig</div>'
+        +'<div class="dash-item-meta">Geplant: '+fmtDate(t.start)+' (in '+daysEarly+'d)</div>');
     });
   } else {
-    html+='<div class="dash-empty">Keine Vorg\u00e4nge k\u00f6nnen vorgezogen werden.</div>';
+    ph='<div class="dash-empty">Keine Vorg\u00e4nge k\u00f6nnen vorgezogen werden.</div>';
   }
-  html+='</div></div>';
+  panels.push({id:'early',cls:'',icon:'&#8634;',iconCls:'blue',title:'K\u00f6nnen fr\u00fcher starten',count:readyEarly.length,countStyle:'background:var(--blue-light);color:var(--blue)',body:ph});
 
-  // --- SUMMARY ---
-  if(!overdue.length&&!critTasks.length&&!readyNow.length&&!readyEarly.length){
+  // Apply saved order
+  if(savedOrder&&savedOrder.length){
+    var panelMap={};panels.forEach(function(p){panelMap[p.id]=p;});
+    var ordered=[];
+    savedOrder.forEach(function(id){if(panelMap[id]){ordered.push(panelMap[id]);delete panelMap[id];}});
+    // Add any new panels not in saved order
+    panels.forEach(function(p){if(panelMap[p.id])ordered.push(p);});
+    panels=ordered;
+  }
+
+  // Render
+  var html='<div class="dash-panels" id="dashPanelsContainer">';
+  if(!panels.length||(!overdue.length&&!critTasks.length&&!readyNow.length&&!readyEarly.length)){
     html+='<div class="dash-panel full"><div class="dash-empty" style="padding:40px;">Keine besonderen Hinweise. Alle Vorg\u00e4nge laufen planm\u00e4\u00dfig.</div></div>';
+  } else {
+    panels.forEach(function(p){
+      html+='<div class="dash-panel '+p.cls+'" data-panel-id="'+p.id+'" draggable="true">'
+        +'<div class="dash-panel-header">'
+        +'<span class="drag-handle" title="Verschieben">&#9776;</span>'
+        +'<div class="dash-panel-icon '+p.iconCls+'">'+p.icon+'</div>'
+        +'<div class="dash-panel-title">'+p.title+'</div>'
+        +'<div class="dash-panel-count" style="'+p.countStyle+'">'+p.count+'</div>'
+        +'</div><div class="dash-panel-body">'+p.body+'</div>'
+        +'</div>';
+    });
   }
-
   html+='</div>';
   c.innerHTML=html;
+
+  // Init drag & drop on panels
+  initDashDragDrop();
+}
+
+/* ─── TASK DETAIL POPUP ─── */
+window.openTaskDetail=function(uid){
+  var t=findTask(uid);if(!t)return;
+  var taskByUid={};
+  S.tasks.forEach(function(x){taskByUid[x.uid]=x;});
+  var today=fmtISO(new Date());
+
+  $('tdName').textContent=t.name;
+
+  // Badges
+  var badges='';
+  if(t.critical)badges+='<span class="admin-badge red">Kritischer Pfad</span>';
+  if(t.summary)badges+='<span class="admin-badge blue">Sammelvorgang</span>';
+  if(t.finish&&t.finish<today&&(t.percentComplete||0)<100){
+    var daysLate=Math.ceil((new Date(today)-new Date(t.finish))/86400000);
+    badges+='<span class="admin-badge red">'+daysLate+' Tage \u00fcberf\u00e4llig</span>';
+  }
+  if((t.percentComplete||0)>=100)badges+='<span class="admin-badge green">Abgeschlossen</span>';
+  $('tdBadges').innerHTML=badges;
+
+  // Grid fields
+  var pc=t.percentComplete||0;
+  var pcColor=pc>=100?'var(--green)':pc>=50?'var(--yellow)':'var(--red)';
+  var predTypeNames={0:'FF (Ende-Ende)',1:'EA (Ende-Anfang)',2:'AE (Anfang-Ende)',3:'AA (Anfang-Anfang)'};
+
+  var g='<div class="task-detail-field"><div class="td-label">ID / UID</div><div class="td-value">'+t.id+' / '+t.uid+'</div></div>'
+    +'<div class="task-detail-field"><div class="td-label">WBS</div><div class="td-value">'+(t.wbs||'\u2013')+'</div></div>'
+    +'<div class="task-detail-field"><div class="td-label">Start</div><div class="td-value">'+fmtDate(t.start)+'</div></div>'
+    +'<div class="task-detail-field"><div class="td-label">Ende</div><div class="td-value">'+fmtDate(t.finish)+'</div></div>'
+    +'<div class="task-detail-field"><div class="td-label">Dauer</div><div class="td-value">'+(t.duration||0)+' Tage</div></div>'
+    +'<div class="task-detail-field"><div class="td-label">Gliederungsebene</div><div class="td-value">'+(t.outlineLevel||0)+'</div></div>';
+
+  // Progress
+  g+='<div class="task-detail-progress">'
+    +'<div class="td-label">Fortschritt: '+pc+'%</div>'
+    +'<div class="task-detail-progress-bar">'
+    +'<div class="task-detail-progress-fill" style="width:'+pc+'%;background:'+pcColor+';"></div>'
+    +'</div></div>';
+
+  // Predecessors
+  var preds=t.predecessors||[];
+  if(preds.length){
+    g+='<div class="task-detail-preds"><div class="td-label">Vorg\u00e4nger ('+preds.length+')</div>';
+    preds.forEach(function(p){
+      var pt=taskByUid[p.uid];
+      var ppc=pt?(pt.percentComplete||0):0;
+      var dotCol=ppc>=100?'var(--green)':ppc>0?'var(--yellow)':'var(--red)';
+      var typeName=predTypeNames[p.type]||'EA';
+      var lagStr=p.lagDays?' (+'+p.lagDays+'d Versatz)':'';
+      g+='<div class="task-detail-pred-item">'
+        +'<div class="pred-status" style="background:'+dotCol+'"></div>'
+        +'<div class="pred-name">'+(pt?esc(pt.name):'UID '+p.uid)+'</div>'
+        +'<div class="pred-pct">'+ppc+'% &middot; '+typeName+lagStr+'</div>'
+        +'</div>';
+    });
+    g+='</div>';
+  }
+
+  // Successors (tasks that depend on this one)
+  var successors=S.tasks.filter(function(x){
+    return (x.predecessors||[]).some(function(p){return p.uid===t.uid;});
+  });
+  if(successors.length){
+    g+='<div class="task-detail-preds"><div class="td-label">Nachfolger ('+successors.length+')</div>';
+    successors.forEach(function(s){
+      var spc=s.percentComplete||0;
+      var dotCol=spc>=100?'var(--green)':spc>0?'var(--yellow)':'var(--red)';
+      g+='<div class="task-detail-pred-item">'
+        +'<div class="pred-status" style="background:'+dotCol+'"></div>'
+        +'<div class="pred-name">'+esc(s.name)+'</div>'
+        +'<div class="pred-pct">'+spc+'%</div>'
+        +'</div>';
+    });
+    g+='</div>';
+  }
+
+  $('tdGrid').innerHTML=g;
+  $('taskDetailModal').classList.add('show');
+};
+
+window.closeTaskDetail=function(){
+  $('taskDetailModal').classList.remove('show');
+};
+
+// Close on backdrop click
+$('taskDetailModal').addEventListener('click',function(e){
+  if(e.target===$('taskDetailModal'))closeTaskDetail();
+});
+
+/* ─── DASHBOARD DRAG & DROP ─── */
+var _dragPanel=null;
+
+function initDashDragDrop(){
+  var container=$('dashPanelsContainer');
+  if(!container)return;
+  var panels=container.querySelectorAll('.dash-panel[data-panel-id]');
+
+  panels.forEach(function(panel){
+    panel.addEventListener('dragstart',function(e){
+      _dragPanel=panel;
+      panel.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+      e.dataTransfer.setData('text/plain',panel.dataset.panelId);
+    });
+
+    panel.addEventListener('dragend',function(){
+      panel.classList.remove('dragging');
+      panels.forEach(function(p){p.classList.remove('drag-over');});
+      _dragPanel=null;
+    });
+
+    panel.addEventListener('dragover',function(e){
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      if(_dragPanel&&_dragPanel!==panel){
+        panel.classList.add('drag-over');
+      }
+    });
+
+    panel.addEventListener('dragleave',function(){
+      panel.classList.remove('drag-over');
+    });
+
+    panel.addEventListener('drop',function(e){
+      e.preventDefault();
+      panel.classList.remove('drag-over');
+      if(!_dragPanel||_dragPanel===panel)return;
+
+      // Swap positions in DOM
+      var allPanels=Array.prototype.slice.call(container.querySelectorAll('.dash-panel[data-panel-id]'));
+      var fromIdx=allPanels.indexOf(_dragPanel);
+      var toIdx=allPanels.indexOf(panel);
+
+      if(fromIdx<toIdx){
+        container.insertBefore(_dragPanel,panel.nextSibling);
+      } else {
+        container.insertBefore(_dragPanel,panel);
+      }
+
+      // Swap CSS classes (full / half)
+      var fromCls=_dragPanel.classList.contains('full');
+      var toCls=panel.classList.contains('full');
+      if(fromCls!==toCls){
+        _dragPanel.classList.toggle('full');
+        panel.classList.toggle('full');
+      }
+
+      // Save order
+      saveDashOrder();
+    });
+  });
+}
+
+function saveDashOrder(){
+  var container=$('dashPanelsContainer');
+  if(!container||!S.pid)return;
+  var panels=container.querySelectorAll('.dash-panel[data-panel-id]');
+  var order=[];
+  panels.forEach(function(p){order.push(p.dataset.panelId);});
+  sSet('dashOrder_'+S.pid,order);
 }
 
 /* ─── LIST ─── */
