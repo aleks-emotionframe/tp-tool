@@ -2961,20 +2961,28 @@ window.handleXMLUpload=function(input){
   try{input.value='';}catch(e){}
 };
 
-// Drag & Drop
+// Drag & Drop (only for external file drops, not internal panel drag)
 var dragCounter=0;
+function isFileDrag(e){
+  if(!e.dataTransfer)return false;
+  var types=e.dataTransfer.types||[];
+  for(var i=0;i<types.length;i++){if(types[i]==='Files')return true;}
+  return false;
+}
 document.addEventListener('dragenter',function(e){
   e.preventDefault();
+  if(!isFileDrag(e))return;
   if(!S.pid&&!sGet('auth',false))return;
   dragCounter++;
   $('dropZone').classList.add('show');
 });
 document.addEventListener('dragleave',function(e){
   e.preventDefault();
+  if(!isFileDrag(e))return;
   dragCounter--;
   if(dragCounter<=0){dragCounter=0;$('dropZone').classList.remove('show');}
 });
-document.addEventListener('dragover',function(e){e.preventDefault();});
+document.addEventListener('dragover',function(e){if(isFileDrag(e))e.preventDefault();});
 document.addEventListener('drop',function(e){
   e.preventDefault();
   dragCounter=0;
