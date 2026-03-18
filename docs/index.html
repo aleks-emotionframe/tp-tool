@@ -1400,6 +1400,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 
     <div class="filter-bar" id="filterBar" style="display:none">
       <label class="filter-check"><input type="checkbox" id="critOnly"> Nur kritischer Pfad</label>
+      <label class="filter-check"><input type="checkbox" id="hideCompleted"> Erledigte ausblenden</label>
       <span class="counter-text" id="counterText">0 / 0</span>
     </div>
 
@@ -1541,7 +1542,7 @@ var PFX='bt_';
 var DEFAULT_ADMIN={username:'admin',password:'bauterm2024',firstName:'Admin',lastName:'',displayName:'Administrator',role:'admin',firma:'',phone:'',email:'',avatar:null,locked:false};
 
 /* ─── STATE ─── */
-var S={projects:[],pid:null,tasks:[],filtered:[],view:'dashboard',search:'',critOnly:false,dpUid:null,toastTimer:null,currentUser:null};
+var S={projects:[],pid:null,tasks:[],filtered:[],view:'dashboard',search:'',critOnly:false,hideCompleted:false,dpUid:null,toastTimer:null,currentUser:null};
 
 /* ─── HELPERS ─── */
 function $(id){return document.getElementById(id);}
@@ -1806,11 +1807,14 @@ function updateKPI(){
 /* ─── FILTER ─── */
 $('searchInput').addEventListener('input',function(){S.search=this.value.toLowerCase();applyFilters();});
 $('critOnly').addEventListener('change',function(){S.critOnly=this.checked;applyFilters();});
+$('hideCompleted').addEventListener('change',function(){S.hideCompleted=this.checked;applyFilters();});
 
 function applyFilters(){
+  var totalVisible=0;
   S.filtered=S.tasks.filter(function(task){
     if(S.search&&task.name.toLowerCase().indexOf(S.search)===-1)return false;
     if(S.critOnly&&!task.critical)return false;
+    if(S.hideCompleted&&!task.summary&&(task.percentComplete||0)>=100)return false;
     return true;
   });
   $('counterText').textContent=S.filtered.length+' / '+S.tasks.length+' Vorg\u00e4nge';
@@ -2119,9 +2123,10 @@ window.editProgressInline=function(ev,uid){
 window.goToTaskInList=function(uid){
   closeTaskDetail();
   // Clear filters so the task is visible
-  S.search='';S.critOnly=false;
+  S.search='';S.critOnly=false;S.hideCompleted=false;
   var si=$('searchInput');if(si)si.value='';
   var cb=$('critToggle');if(cb)cb.checked=false;
+  var hc=$('hideCompleted');if(hc)hc.checked=false;
   // Switch to list view
   S.view='list';
   // Update tab buttons
@@ -2400,9 +2405,10 @@ window.closePreds=function(){$('predPopover').classList.remove('show');};
 window.jumpToTask=function(uid){
   closePreds();
   // Ensure task is in filtered list
-  S.search='';S.critOnly=false;
+  S.search='';S.critOnly=false;S.hideCompleted=false;
   var si=$('searchInput');if(si)si.value='';
   var cb=$('critToggle');if(cb)cb.checked=false;
+  var hc=$('hideCompleted');if(hc)hc.checked=false;
   applyFilters();
   requestAnimationFrame(function(){
     setTimeout(function(){
