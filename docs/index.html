@@ -427,6 +427,27 @@ body {
   transition: var(--transition);
 }
 .bug-btn:hover { background: var(--red-light); color: var(--red); border-color: var(--red); transform: translateY(-1px); }
+
+/* --- JOKE BAR --- */
+.joke-bar { display: flex; align-items: center; gap: 10px; padding: 0 12px; margin-right: 8px; flex-shrink: 1; min-width: 0; }
+.joke-icon { font-size: 18px; flex-shrink: 0; }
+.joke-text { font-size: 13px; color: var(--text2); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.joke-btn { flex-shrink: 0; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--orange); background: none; color: var(--orange); font-family: var(--font); font-size: 12px; font-weight: 600; cursor: pointer; transition: var(--transition); white-space: nowrap; }
+.joke-btn:hover { background: var(--orange); color: #fff; transform: translateY(-1px); }
+
+/* Joke popup */
+.joke-overlay { position: fixed; inset: 0; z-index: 1200; background: rgba(0,0,0,0.35); display: none; align-items: center; justify-content: center; }
+.joke-overlay.show { display: flex; }
+.joke-popup { background: var(--surface); border-radius: 20px; box-shadow: 0 24px 64px rgba(0,0,0,0.25); padding: 36px 40px; text-align: center; max-width: 420px; width: 90vw; position: relative; z-index: 1201; }
+.joke-popup-q { font-size: 15px; color: var(--text3); margin-bottom: 12px; font-style: italic; }
+.joke-popup-a { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 20px; line-height: 1.3; }
+.joke-popup-close { padding: 8px 24px; border-radius: 20px; border: none; background: var(--orange); color: #fff; font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); }
+.joke-popup-close:hover { opacity: 0.9; }
+
+/* Confetti */
+.confetti-piece { position: fixed; z-index: 1300; pointer-events: none; width: 10px; height: 10px; opacity: 1; }
+@keyframes confetti-fall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+
 .save-flash {
   color: var(--green);
   font-size: 13px;
@@ -1387,9 +1408,12 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <div class="topbar-actions">
         <button class="icon-btn" onclick="triggerXMLUpload()" title="XML Importieren" style="font-size:14px;font-weight:700;">&#8679; XML</button>
         <input type="file" id="xmlUploadInput" accept=".xml" style="display:none" onchange="handleXMLUpload(this)">
-        <button class="icon-btn" onclick="doExportXML()" title="XML Export">&#8681;</button>
-        <button class="icon-btn" onclick="doExportJSON()" title="JSON Export">{ }</button>
         <button class="icon-btn theme-btn" onclick="toggleTheme()" id="themeBtn" title="Dark/Light Mode">&#9790;</button>
+      </div>
+      <div class="joke-bar" id="jokeBar">
+        <span class="joke-icon">&#9729;</span>
+        <span class="joke-text" id="jokeText"></span>
+        <button class="joke-btn" onclick="showJokeAnswer()">Aufl&ouml;sung &#127882;</button>
       </div>
       <button class="bug-btn" onclick="openBugReport()">&#128027; Bug melden</button>
       <span class="save-flash" id="saveFlash">Gespeichert</span>
@@ -1463,6 +1487,15 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
   <div class="toast-title" id="toastTitle"></div>
   <div class="toast-body" id="toastBody"></div>
   <div class="toast-chips" id="toastChips"></div>
+</div>
+
+<!-- JOKE POPUP -->
+<div class="joke-overlay" id="jokeOverlay" onclick="if(event.target===this)closeJoke()">
+  <div class="joke-popup">
+    <div class="joke-popup-q" id="jokePopupQ"></div>
+    <div class="joke-popup-a" id="jokePopupA"></div>
+    <button class="joke-popup-close" onclick="closeJoke()">Haha, ok &#128514;</button>
+  </div>
 </div>
 
 <!-- BUG REPORT -->
@@ -1796,20 +1829,6 @@ function autoSave(){
   var d=sGet('p_'+S.pid,{});d.tasks=S.tasks;sSet('p_'+S.pid,d);
   var f=$('saveFlash');f.classList.add('show');setTimeout(function(){f.classList.remove('show');},1200);
 }
-
-window.doExportXML=function(){
-  if(!S.pid)return;
-  var d=sGet('p_'+S.pid,{});
-  if(!d.xml){alert('Keine XML-Daten vorhanden (Projekt wurde ohne XML erstellt)');return;}
-  var p=getIdx().find(function(x){return x.id==S.pid;});
-  dlFile(d.xml,(p?p.name:'export').replace(/[^a-zA-Z0-9_\-]/g,'_')+'.xml','application/xml');
-};
-
-window.doExportJSON=function(){
-  if(!S.pid)return;
-  var p=getIdx().find(function(x){return x.id==S.pid;});
-  dlFile(JSON.stringify(S.tasks,null,2),(p?p.name:'export').replace(/[^a-zA-Z0-9_\-]/g,'_')+'.json','application/json');
-};
 
 function dlFile(c,n,m){var b=new Blob([c],{type:m}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);}
 
@@ -2474,6 +2493,133 @@ document.addEventListener('click',function(e){
   var pop=$('predPopover');
   if(pop.classList.contains('show')&&!pop.contains(e.target)&&!e.target.closest('.pred-badge'))closePreds();
 });
+
+/* ─── DAILY JOKE (FLACHWITZ) ─── */
+var _jokes=[
+  {q:'Warum summen Bienen?',a:'Weil sie den Text nicht kennen.'},
+  {q:'Was liegt am Strand und redet undeutlich?',a:'Eine Nuschel.'},
+  {q:'Was ist orange und geht \u00fcber den Berg?',a:'Eine Wanderine.'},
+  {q:'Was sagt ein Gen, wenn es ein anderes Gen trifft?',a:'Halogen!'},
+  {q:'Was ist weiss und st\u00f6rt beim Essen?',a:'Eine Lawine.'},
+  {q:'Was macht ein Clown im B\u00fcro?',a:'Faxen.'},
+  {q:'Was ist braun und schwimmt im Wasser?',a:'Ein U-Brot.'},
+  {q:'Was ist rot und sitzt auf dem WC?',a:'Eine Klomate.'},
+  {q:'Wie nennt man einen Bumerang, der nicht zur\u00fcckkommt?',a:'Stock.'},
+  {q:'Was hat vier Beine und kann fliegen?',a:'Zwei V\u00f6gel.'},
+  {q:'Was ist gr\u00fcn und steht vor der T\u00fcr?',a:'Ein Klopfsalat.'},
+  {q:'Was trinken Roboter?',a:'Blechkakao.'},
+  {q:'Was ist schwarz-weiss und h\u00fcpft von Eisscholle zu Eisscholle?',a:'Ein Springuin.'},
+  {q:'Wie nennt man ein helles Mammut?',a:'Hellmut.'},
+  {q:'Was ist gelb und kann nicht schwimmen?',a:'Ein Bagger. Warum? Weil er nur einen Arm hat.'},
+  {q:'Was macht eine Bombe im Kino?',a:'Platzen.'},
+  {q:'Was ist s\u00fcss, klebrig und l\u00e4uft durch die W\u00fcste?',a:'Ein Karamel.'},
+  {q:'Was steht im Dschungel am Strassenrand?',a:'Ein Uraltautomat.'},
+  {q:'Was ist das Gegenteil von Reformhaus?',a:'Reh hinterm Haus.'},
+  {q:'Was schwimmt auf dem Wasser und macht Miau?',a:'Ein Katamaran.'},
+  {q:'Was ist ein Keks unter einem Baum?',a:'Ein schattiges Pl\u00e4tzchen.'},
+  {q:'Was ist orange und schaut durchs Schl\u00fcsselloch?',a:'Eine Spannderine.'},
+  {q:'Welcher Vogel hat keine Fl\u00fcgel?',a:'Der Vogelstrauss \u2013 der hat ja Federn.'},
+  {q:'Was sagt der grosse Stift zum kleinen Stift?',a:'Wachsmalstift!'},
+  {q:'Was ist weiss und fliegt nach oben?',a:'Eine bescheuerte Schneeflocke.'},
+  {q:'Was ist braun, s\u00fcss und rennt durch den Wald?',a:'Eine Joggolade.'},
+  {q:'Was ist lang, orange und schiesst scharf?',a:'Eine Karottenpistole.'},
+  {q:'Was heisst Sonnenuntergang auf Chinesisch?',a:'Tsin Da Lull.'},
+  {q:'Was ist rot, rund und hat ein Maschinengewehr?',a:'Rambotan.'},
+  {q:'Was liegt unter der Erde und hat rote B\u00e4ckchen?',a:'Ein Vampirkartoffel.'},
+  {q:'Was macht ein Mathematiker im Garten?',a:'Wurzeln ziehen.'},
+  {q:'Was ist blau und liegt unter einer Kuh?',a:'Ein Schlumpf, der Liegest\u00fctze macht.'},
+  {q:'Was ist gr\u00fcn und klopft an die T\u00fcr?',a:'Ein Klopfr\u00f6schli.'},
+  {q:'Was sitzt auf dem Baum und winkt?',a:'Ein Huhu.'},
+  {q:'Was ist die freundlichste Gem\u00fcsesorte?',a:'Die Gr\u00fcssbohne.'},
+  {q:'Warum k\u00f6nnen Geister so schlecht l\u00fcgen?',a:'Weil man durch sie hindurchschauen kann.'},
+  {q:'Was sagt eine Schnecke auf einer Schildkr\u00f6te?',a:'Huiiii!'},
+  {q:'Was ist ein Cowboy ohne Pferd?',a:'Ein Sattelschlepper.'},
+  {q:'Was sagt der Hammer zu seinem Daumen?',a:'Schlag ein!'},
+  {q:'Was bestellt ein DJ im Restaurant?',a:'Einen Plattenteller.'},
+  {q:'Was ist klein, gr\u00fcn und dreieckig?',a:'Ein kleines gr\u00fcnes Dreieck.'},
+  {q:'Was passiert, wenn man Cola und Bier zusammen trinkt?',a:'Man colabiert.'},
+  {q:'Warum stehen Flamingos auf einem Bein?',a:'W\u00fcrden sie keines hochnehmen, w\u00fcrden sie umfallen.'},
+  {q:'Was macht man mit einem Hund ohne Beine?',a:'Um die H\u00e4user ziehen.'},
+  {q:'Was ist das Lieblingsgericht von Piraten?',a:'Kapern.'},
+  {q:'Was ist gelb und haut auf den Pudding?',a:'Vanillesosse.'},
+  {q:'Was ist braun und l\u00e4uft durch die Stadt?',a:'Ein Brotwagen.'},
+  {q:'Wie heisst ein Spanier ohne Auto?',a:'Carlos.'},
+  {q:'Was ergibt sieben mal sieben?',a:'Feinen Sand.'},
+  {q:'Was ist das Gegenteil von Katalog?',a:'Kata stansen.'},
+  {q:'Warum hat ein Elefant gelbe Fusssohlen?',a:'Vom durch-die-Sonne-stampfen.'},
+  {q:'Was steht auf dem Grabstein eines Mathematikers?',a:'Damit hat er nicht gerechnet.'},
+  {q:'Was sitzt auf einem Baum und ruft Aha?',a:'Ein Uhu mit Sprachfehler.'},
+  {q:'Was ist das Gegenteil von Tupper?',a:'Tuppauf.'},
+  {q:'Was ist ein studierter Bauer?',a:'Ein Ackerdemiker.'},
+  {q:'Was machen zwei w\u00fctende Schafe?',a:'Sie kriegen sich in die Wolle.'},
+  {q:'Was ist schwarz und weiss und dreht sich?',a:'Ein Pinguin in der Waschmaschine.'},
+  {q:'Was macht ein Pirat am Computer?',a:'Er dr\u00fcckt die Enter-Taste.'},
+  {q:'Was ist ein Ritter ohne Helm?',a:'Wilhelm.'},
+  {q:'Warum trinken Mauern keinen Alkohol?',a:'Weil sie sonst die W\u00e4nde hochgehen.'},
+  {q:'Treffen sich zwei Magnete.',a:'Einer sagt: Was soll ich heute anziehen?'},
+  {q:'Was ist rot und schlecht f\u00fcr die Z\u00e4hne?',a:'Ein Ziegelstein.'},
+  {q:'Was sagt man zu einem Smutje auf der Titanic?',a:'Eis bitte!'},
+  {q:'Was heisst Ohrring auf T\u00fcrkisch?',a:'Lansen durch.'},
+  {q:'Was ist ein Bauer ohne Stall?',a:'Arbeitslos.'},
+  {q:'Warum nehmen Seel\u00f6wen immer Salzwasser?',a:'Weil Pfefferwassr sie zum Niesen bringt.'},
+  {q:'Was ist gr\u00fcn und galoppiert durch den Wald?',a:'Ein Rudel Gurken. \u2013 Gurken sind doch kein Rudel! \u2013 Seit wann galoppieren Gurken?'},
+  {q:'Was ist ein Schneemann im Sommer?',a:'Eine Pf\u00fctze.'},
+  {q:'Was ist gelb und flattert im Wind?',a:'Eine Fahnane.'},
+  {q:'Was lebt in der Savanne und ist immer sauber?',a:'Ein Hygienik.'},
+  {q:'Was haben ein Weihnachtsbaum und ein Bart gemeinsam?',a:'Beide nadeln.'},
+  {q:'Welches Tier kann h\u00f6her springen als ein Haus?',a:'Alle \u2013 H\u00e4user k\u00f6nnen nicht springen.'},
+  {q:'Was ist ein Schmetterling?',a:'Butter, die aus dem K\u00fchlschrank fliegt.'},
+  {q:'Was ist gr\u00fcn, hat vier Beine und w\u00e4re t\u00f6dlich, wenn es dir aus dem Baum auf den Kopf fiele?',a:'Ein Billardtisch.'},
+  {q:'Was sagen zwei Wände zueinander?',a:'Wir treffen uns in der Ecke!'}
+];
+function getTodayJoke(){
+  var now=new Date();
+  var h=now.getHours();
+  // Use previous day if before 06:00
+  var d=new Date(now);if(h<6)d.setDate(d.getDate()-1);
+  var seed=d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+  return _jokes[seed%_jokes.length];
+}
+function initJoke(){
+  var j=getTodayJoke();
+  $('jokeText').textContent=j.q;
+}
+window.showJokeAnswer=function(){
+  var j=getTodayJoke();
+  $('jokePopupQ').textContent=j.q;
+  $('jokePopupA').textContent=j.a;
+  $('jokeOverlay').classList.add('show');
+  launchConfetti();
+};
+window.closeJoke=function(){$('jokeOverlay').classList.remove('show');};
+function launchConfetti(){
+  var colors=['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff922b','#cc5de8','#20c997','#e64980'];
+  var shapes=['circle','rect','triangle'];
+  for(var i=0;i<80;i++){
+    (function(i){
+      setTimeout(function(){
+        var el=document.createElement('div');
+        el.className='confetti-piece';
+        var c=colors[Math.floor(Math.random()*colors.length)];
+        var s=shapes[Math.floor(Math.random()*shapes.length)];
+        var sz=6+Math.random()*10;
+        el.style.left=Math.random()*100+'vw';
+        el.style.top=-20+'px';
+        el.style.width=sz+'px';
+        el.style.height=(s==='rect'?sz*1.5:sz)+'px';
+        if(s==='circle'){el.style.borderRadius='50%';el.style.background=c;}
+        else if(s==='triangle'){el.style.width='0';el.style.height='0';el.style.borderLeft=sz/2+'px solid transparent';el.style.borderRight=sz/2+'px solid transparent';el.style.borderBottom=sz+'px solid '+c;el.style.background='none';}
+        else{el.style.borderRadius='2px';el.style.background=c;}
+        var dur=2+Math.random()*2;
+        el.style.animation='confetti-fall '+dur+'s ease-out forwards';
+        el.style.animationDelay='0s';
+        document.body.appendChild(el);
+        setTimeout(function(){el.remove();},dur*1000+100);
+      },i*25);
+    })(i);
+  }
+}
+initJoke();
 
 /* ─── BUG REPORT ─── */
 window.openBugReport=function(){
