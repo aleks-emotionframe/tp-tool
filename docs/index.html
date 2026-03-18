@@ -739,7 +739,19 @@ tr.is-done { background: var(--green-light) !important; }
 tr.is-done td { color: var(--green) !important; }
 tr.is-done .progress-fill { background: var(--green) !important; }
 tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
-.col-pred { color: var(--text3); font-size: 12px; }
+.col-pred { font-size: 12px; white-space: nowrap; }
+.pred-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; background: var(--surface3); color: var(--text2); font-size: 11px; font-weight: 500; cursor: pointer; transition: var(--transition); border: 1px solid transparent; }
+.pred-badge:hover { background: var(--orange-light); color: var(--orange); border-color: var(--orange); }
+.pred-badge .pred-icon { font-size: 13px; line-height: 1; }
+.pred-popover { position: fixed; z-index: 999; background: var(--surface1); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); padding: 12px 0; min-width: 280px; max-width: 380px; max-height: 320px; overflow-y: auto; display: none; }
+.pred-popover.show { display: block; }
+.pred-popover-title { padding: 0 16px 8px; font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+.pred-item { display: flex; align-items: flex-start; gap: 10px; padding: 8px 16px; transition: background 0.1s; }
+.pred-item:hover { background: var(--surface2); }
+.pred-item-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.pred-item-info { flex: 1; min-width: 0; }
+.pred-item-name { font-size: 12.5px; font-weight: 500; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pred-item-meta { font-size: 11px; color: var(--text3); margin-top: 1px; }
 .col-id { color: var(--text3); font-variant-numeric: tabular-nums; font-size: 12px; }
 
 /* --- GANTT --- */
@@ -1412,6 +1424,8 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     <button class="apply-btn" onclick="applyDP()">Anwenden</button>
   </div>
 </div>
+
+<div class="pred-popover" id="predPopover"></div>
 
 <!-- TOAST -->
 <div class="toast" id="toast">
@@ -2226,7 +2240,7 @@ function renderList(){
   rows.forEach(function(row){
     var cls='';if(row.summary)cls+=' is-summary';if(row.critical)cls+=' is-critical';
     var ind=(row.outlineLevel||0)*20;
-    var pred=(row.predecessors||[]).map(function(p){var ty={0:'FF',1:'FS',2:'SF',3:'SS'};return p.uid+(ty[p.type]||'FS')+(p.lagDays?'+'+p.lagDays+'d':'');}).join(', ');
+    var preds=row.predecessors||[];
     var pc=row.percentComplete||0;
     var pcls=pc<30?'low':pc<70?'mid':'';
     if(pc>=100)cls+=' is-done';
@@ -2241,7 +2255,12 @@ function renderList(){
     }else{
       h+='<td><div class="progress-wrap progress-editable" onclick="editProgressInline(event,'+row.uid+')" title="Klicken zum Bearbeiten"><div class="progress-track"><div class="progress-fill '+pcls+'" style="width:'+pc+'%"></div></div><span class="progress-text">'+pc+'%</span></div></td>';
     }
-    h+='<td class="col-pred">'+esc(pred)+'</td></tr>';
+    if(preds.length){
+      h+='<td class="col-pred"><span class="pred-badge" onclick="showPreds(event,'+row.uid+')"><span class="pred-icon">&#8599;</span>'+preds.length+(preds.length===1?' Vorgänger':' Vorgänger')+'</span></td>';
+    }else{
+      h+='<td class="col-pred"></td>';
+    }
+    h+='</tr>';
   });
   h+='</tbody></table>';c.innerHTML=h;
 }
@@ -2336,6 +2355,39 @@ window.applyDP=function(){
     updateKPI();applyFilters();
   }
 };
+window.showPreds=function(ev,uid){
+  ev.stopPropagation();
+  var task=findTask(uid);if(!task)return;
+  var preds=task.predecessors||[];if(!preds.length)return;
+  var tyNames={0:'Ende\u2013Ende',1:'Ende\u2013Anfang',2:'Anfang\u2013Ende',3:'Anfang\u2013Anfang'};
+  var h='<div class="pred-popover-title">Vorg\u00e4nger von '+esc(task.name)+'</div>';
+  preds.forEach(function(p){
+    var pt=findTask(p.uid);
+    var name=pt?pt.name:'#'+p.uid;
+    var pc=pt?(pt.percentComplete||0):0;
+    var dot=pc>=100?'var(--green)':pc>0?'var(--yellow)':'var(--surface3)';
+    var ty=tyNames[p.type]||'Ende\u2013Anfang';
+    var lag=p.lagDays?(p.lagDays>0?' +'+p.lagDays+'d':' '+p.lagDays+'d'):'';
+    h+='<div class="pred-item">';
+    h+='<div class="pred-item-dot" style="background:'+dot+'"></div>';
+    h+='<div class="pred-item-info">';
+    h+='<div class="pred-item-name" title="'+esc(name)+'">'+esc(name)+'</div>';
+    h+='<div class="pred-item-meta">'+ty+lag+' &middot; '+pc+'%</div>';
+    h+='</div></div>';
+  });
+  var pop=$('predPopover');
+  pop.innerHTML=h;
+  var rect=ev.currentTarget.getBoundingClientRect();
+  pop.style.left=Math.min(rect.left,innerWidth-400)+'px';
+  pop.style.top=Math.min(rect.bottom+4,innerHeight-340)+'px';
+  pop.classList.add('show');
+};
+window.closePreds=function(){$('predPopover').classList.remove('show');};
+document.addEventListener('click',function(e){
+  var pop=$('predPopover');
+  if(pop.classList.contains('show')&&!pop.contains(e.target)&&!e.target.closest('.pred-badge'))closePreds();
+});
+
 window.openDPEnd=function(ev,uid){
   ev.stopPropagation();
   var task=findTask(uid);if(!task||task.summary)return;
