@@ -1656,7 +1656,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         Ich bestätige, dass ich das bestehende Terminprogramm ersetzen möchte.
       </label>
       <label>Passwort eingeben</label>
-      <input type="password" id="xmlReuploadPw" placeholder="Dein persönliches Passwort" style="width:100%;box-sizing:border-box;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text);font-family:var(--font);font-size:14px;margin-top:4px;">
+      <input type="password" id="xmlReuploadPw" placeholder="Dein persönliches Passwort" autocomplete="off" style="width:100%;box-sizing:border-box;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text);font-family:var(--font);font-size:14px;margin-top:4px;">
       <p id="xmlReuploadErr" style="color:var(--red);font-size:13px;margin-top:8px;display:none;"></p>
       <div class="modal-btns" style="margin-top:16px;">
         <button onclick="closeXmlReuploadModal()">Abbrechen</button>
@@ -3497,10 +3497,15 @@ window.xmlReuploadConfirm=function(){
     return;
   }
   // Verify password against current user
-  var currentUsername=sGet('currentUser','');
+  var currentUsername=sGet('currentUser','')||(S.currentUser?S.currentUser.username:'');
   var user=findUser(currentUsername);
-  if(!user||user.password!==pw){
-    errEl.textContent='Falsches Passwort.';
+  if(!user){
+    errEl.textContent='Benutzer nicht gefunden. Bitte erneut einloggen.';
+    errEl.style.display='block';
+    return;
+  }
+  if(user.password!==pw){
+    errEl.textContent='Falsches Passwort für Benutzer "'+user.username+'".';
     errEl.style.display='block';
     return;
   }
