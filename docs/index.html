@@ -1066,6 +1066,21 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 }
 .modal-btns .btn-danger:hover { box-shadow: 0 4px 16px var(--red-glow); }
 
+/* Project Picker */
+.picker-project {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: var(--radius-xs);
+  cursor: pointer; transition: var(--transition);
+  border: 1px solid var(--border); margin-bottom: 8px;
+}
+.picker-project:hover { background: var(--orange-light); border-color: var(--orange-glow); }
+.picker-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--orange); flex-shrink: 0;
+}
+.picker-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.picker-meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
 /* --- USER MANAGEMENT --- */
 .user-section { margin-top: 4px; margin-bottom: 16px; }
 .user-add-row {
@@ -1719,6 +1734,18 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
   </div>
 </div>
 
+<!-- Project Picker Modal (daily) -->
+<div class="modal-bg" id="projectPickerModal">
+  <div class="modal" style="max-width:420px;">
+    <h3>Projekt auswählen</h3>
+    <p style="color:var(--text3);font-size:13px;margin-bottom:16px;">Mit welchem Projekt möchtest du heute arbeiten?</p>
+    <div id="projectPickerList" style="max-height:320px;overflow-y:auto;"></div>
+    <div class="modal-btns" style="margin-top:16px;">
+      <button onclick="closeProjectPicker()">Überspringen</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
 'use strict';
@@ -1811,15 +1838,82 @@ function showLogin(){
 function showApp(){
   $('loginScreen').classList.add('hidden');
   $('appScreen').classList.remove('hidden');
-  // Show current user in sidebar
   updateUserDisplay();
+  // Restore last view
+  var savedView=sGet('lastView','dashboard');
+  if(savedView&&savedView!==S.view){
+    S.view=savedView;
+    document.querySelectorAll('.tab-btn').forEach(function(b){
+      b.classList.toggle('active',b.dataset.view===savedView);
+    });
+  }
   loadProjects();
-  // Auto-select first project if none active
-  if(!S.pid){
+  // Restore last project
+  var lastPid=sGet('lastPid',null);
+  if(lastPid){
+    var d=sGet('p_'+lastPid,null);
+    if(d){loadProject(lastPid);return;}
+  }
+  // No saved project — check if daily project picker should show
+  var today=new Date().toISOString().substring(0,10);
+  var lastPickerDate=sGet('lastPickerDate','');
+  var userProjects=getUserAssignedProjects();
+  if(userProjects.length>0&&lastPickerDate!==today){
+    showProjectPicker(userProjects);
+  } else if(!S.pid){
     var idx=getIdx();
     if(idx.length>0){loadProject(idx[0].id);}
   }
 }
+
+function getUserAssignedProjects(){
+  if(!S.currentUser)return[];
+  var un=S.currentUser.username;
+  var dn=getUserDisplayName(S.currentUser);
+  var idx=getIdx();
+  var assigned=[];
+  idx.forEach(function(p){
+    var d=sGet('p_'+p.id,{});
+    var users=(d.users||[]).map(function(u){return u.toLowerCase();});
+    if(users.indexOf(un.toLowerCase())>=0||users.indexOf(dn.toLowerCase())>=0||S.currentUser.role==='admin'){
+      assigned.push(p);
+    }
+  });
+  return assigned;
+}
+
+function showProjectPicker(projects){
+  var modal=$('projectPickerModal');
+  var list=$('projectPickerList');
+  list.innerHTML='';
+  projects.forEach(function(p){
+    var d=sGet('p_'+p.id,{});
+    var taskCount=(d.tasks||[]).length;
+    var el=document.createElement('div');
+    el.className='picker-project';
+    el.innerHTML='<div class="picker-dot"></div>'
+      +'<div class="picker-info">'
+      +'<div class="picker-name">'+esc(p.name)+'</div>'
+      +'<div class="picker-meta">'+taskCount+' Vorg\u00e4nge</div>'
+      +'</div>';
+    el.onclick=function(){
+      sSet('lastPickerDate',new Date().toISOString().substring(0,10));
+      modal.classList.remove('show');
+      loadProject(p.id);
+    };
+    list.appendChild(el);
+  });
+  modal.classList.add('show');
+}
+
+window.closeProjectPicker=function(){
+  sSet('lastPickerDate',new Date().toISOString().substring(0,10));
+  $('projectPickerModal').classList.remove('show');
+  if(!S.pid){
+    var idx=getIdx();
+    if(idx.length>0)loadProject(idx[0].id);
+  }
+};
 function updateUserDisplay(){
   var el=$('currentUserDisplay');
   if(!el)return;
@@ -2065,6 +2159,7 @@ function loadProjects(){
 function loadProject(id){
   var d=sGet('p_'+id,null);if(!d)return;
   S.pid=id;S.tasks=d.tasks||[];
+  sSet('lastPid',id);
   var idx=getIdx(),p=idx.find(function(x){return x.id==id;});
   $('topTitle').textContent=p?p.name:'Projekt';
   showEmpty(false);
@@ -2190,6 +2285,7 @@ document.querySelectorAll('.tab-btn').forEach(function(b){
     document.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active');});
     this.classList.add('active');
     S.view=this.dataset.view;
+    sSet('lastView',S.view);
     if(S.pid)showEmpty(false);
   });
 });
