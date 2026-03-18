@@ -994,6 +994,142 @@ body {
 }
 .admin-role-select:focus { border-color: var(--orange); }
 
+/* --- USER DETAIL CARD --- */
+.user-detail-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; margin-bottom: 12px;
+  transition: var(--transition);
+}
+.user-detail-card:hover { border-color: var(--border2); box-shadow: var(--shadow); }
+.user-detail-card.locked { opacity: 0.6; }
+.user-detail-card.locked .user-detail-avatar { filter: grayscale(1); }
+.user-detail-header {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
+}
+.user-detail-avatar {
+  width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--orange), var(--orange-dim));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 800; color: #fff; overflow: hidden;
+  position: relative; cursor: pointer;
+}
+.user-detail-avatar img {
+  width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
+}
+.user-detail-avatar:hover::after {
+  content: '\270E'; position: absolute; inset: 0;
+  background: rgba(0,0,0,0.5); display: flex;
+  align-items: center; justify-content: center;
+  font-size: 20px; color: #fff; border-radius: 50%;
+}
+.user-detail-info { flex: 1; min-width: 0; }
+.user-detail-name { font-size: 16px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.user-detail-meta { font-size: 12px; color: var(--text3); margin-top: 2px; display: flex; gap: 12px; flex-wrap: wrap; }
+.user-detail-meta span { display: flex; align-items: center; gap: 4px; }
+.user-detail-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.user-detail-body {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  padding-top: 12px; border-top: 1px solid var(--border);
+}
+.user-detail-field { font-size: 13px; }
+.user-detail-field .field-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.user-detail-field .field-value { color: var(--text); }
+.user-detail-projects {
+  grid-column: 1 / -1; padding-top: 12px; border-top: 1px solid var(--border);
+}
+.user-detail-projects .proj-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.user-project-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.user-project-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; background: var(--blue-light); color: var(--blue);
+  border-radius: 20px; font-size: 12px; font-weight: 500;
+}
+.user-project-tag .tag-x {
+  width: 16px; height: 16px; border-radius: 50%; border: none; background: none;
+  color: var(--blue); cursor: pointer; font-size: 14px; display: flex;
+  align-items: center; justify-content: center; padding: 0;
+}
+.user-project-tag .tag-x:hover { background: var(--blue); color: #fff; }
+.proj-add-select {
+  padding: 4px 8px; border-radius: 20px; border: 1px dashed var(--border2);
+  background: var(--surface2); font-family: var(--font); font-size: 12px;
+  color: var(--text2); cursor: pointer; outline: none;
+}
+.proj-add-select:focus { border-color: var(--orange); }
+
+/* --- USER EDIT MODAL --- */
+.user-edit-modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 32px; width: 520px; max-width: 90vw;
+  box-shadow: var(--shadow-lg); max-height: 90vh; overflow-y: auto;
+}
+.user-edit-modal h3 { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+.user-edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.user-edit-grid .full-width { grid-column: 1 / -1; }
+.user-edit-modal label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: var(--text3); text-transform: uppercase;
+  letter-spacing: 0.5px; margin-bottom: 4px;
+}
+.user-edit-modal input[type="text"],
+.user-edit-modal input[type="email"],
+.user-edit-modal input[type="tel"],
+.user-edit-modal input[type="password"] {
+  width: 100%; padding: 10px 12px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: var(--font); font-size: 14px; outline: none;
+}
+.user-edit-modal input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-glow); }
+.user-edit-modal select {
+  width: 100%; padding: 10px 12px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: var(--font); font-size: 14px; outline: none; cursor: pointer;
+}
+.user-edit-avatar-section {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 20px;
+  grid-column: 1 / -1;
+}
+.user-edit-avatar-preview {
+  width: 64px; height: 64px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--orange), var(--orange-dim));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 800; color: #fff; overflow: hidden;
+}
+.user-edit-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+.user-edit-avatar-btns { display: flex; flex-direction: column; gap: 4px; }
+
+/* --- CREATE USER CARD --- */
+.create-user-card {
+  background: var(--surface); border: 2px dashed var(--border);
+  border-radius: var(--radius); padding: 24px; margin-bottom: 20px;
+}
+.create-user-card:hover { border-color: var(--orange); }
+.create-user-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+}
+.create-user-header h4 { font-size: 15px; font-weight: 700; flex: 1; }
+.create-user-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.create-user-grid .full-width { grid-column: 1 / -1; }
+.create-user-grid label {
+  display: block; font-size: 11px; font-weight: 600;
+  color: var(--text3); text-transform: uppercase;
+  letter-spacing: 0.5px; margin-bottom: 3px;
+}
+.create-user-grid input, .create-user-grid select {
+  width: 100%; padding: 8px 10px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-xs); color: var(--text);
+  font-family: var(--font); font-size: 13px; outline: none;
+}
+.create-user-grid input:focus, .create-user-grid select:focus {
+  border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-glow);
+}
+.create-user-actions {
+  display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end;
+}
+
 /* --- SCROLLBAR --- */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -1159,6 +1295,38 @@ body {
   </div>
 </div>
 
+<!-- USER EDIT MODAL -->
+<div class="modal-bg" id="userEditModal">
+  <div class="user-edit-modal">
+    <h3 id="userEditTitle">Benutzer bearbeiten</h3>
+    <div class="user-edit-avatar-section">
+      <div class="user-edit-avatar-preview" id="ueAvatarPreview"></div>
+      <div class="user-edit-avatar-btns">
+        <button class="admin-btn" onclick="document.getElementById('ueAvatarInput').click()">Bild hochladen</button>
+        <button class="admin-btn" onclick="adminRemoveAvatar()" id="ueRemoveAvatarBtn" style="display:none;">Bild entfernen</button>
+        <input type="file" id="ueAvatarInput" accept="image/*" style="display:none;" onchange="adminPreviewAvatar(this)">
+      </div>
+    </div>
+    <div class="user-edit-grid">
+      <div><label>Vorname *</label><input type="text" id="ueFirstName"></div>
+      <div><label>Nachname *</label><input type="text" id="ueLastName"></div>
+      <div><label>Benutzername *</label><input type="text" id="ueUsername"></div>
+      <div><label>Rolle</label>
+        <select id="ueRole"><option value="user">Benutzer</option><option value="admin">Administrator</option></select>
+      </div>
+      <div><label>Firma</label><input type="text" id="ueFirma"></div>
+      <div><label>Telefonnummer</label><input type="tel" id="uePhone"></div>
+      <div class="full-width"><label>E-Mail Adresse</label><input type="email" id="ueEmail"></div>
+      <div class="full-width"><label>Neues Passwort (leer lassen um nicht zu ändern)</label><input type="password" id="uePassword" placeholder="Neues Passwort..."></div>
+    </div>
+    <input type="hidden" id="ueOrigUsername">
+    <div class="modal-btns" style="margin-top:20px;">
+      <button onclick="closeUserEdit()">Abbrechen</button>
+      <button class="btn-primary" onclick="saveUserEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
 <!-- NEW PROJECT MODAL -->
 <div class="modal-bg" id="newModal">
   <div class="modal">
@@ -1180,8 +1348,8 @@ body {
 'use strict';
 var PFX='bt_';
 
-/* ─── DEFAULT USERS (username -> {password, displayName, role}) ─── */
-var DEFAULT_ADMIN={username:'admin',password:'bauterm2024',displayName:'Administrator',role:'admin'};
+/* ─── DEFAULT ADMIN ─── */
+var DEFAULT_ADMIN={username:'admin',password:'bauterm2024',firstName:'Admin',lastName:'',displayName:'Administrator',role:'admin',firma:'',phone:'',email:'',avatar:null,locked:false};
 
 /* ─── STATE ─── */
 var S={projects:[],pid:null,tasks:[],filtered:[],view:'dashboard',search:'',critOnly:false,dpUid:null,toastTimer:null,currentUser:null};
@@ -1220,11 +1388,39 @@ window.toggleTheme=function(){
 function getUsers(){
   var users=sGet('users',null);
   if(!users){
-    // Initialize with default admin
-    users=[{username:'admin',password:'bauterm2024',displayName:'Administrator',role:'admin'}];
+    users=[Object.assign({},DEFAULT_ADMIN)];
     sSet('users',users);
   }
+  // Migrate old format
+  var dirty=false;
+  users.forEach(function(u){
+    if(!u.firstName&&u.firstName!==''){u.firstName=u.displayName||'';dirty=true;}
+    if(!u.lastName&&u.lastName!==''){u.lastName='';dirty=true;}
+    if(u.locked===undefined){u.locked=false;dirty=true;}
+    if(!u.firma&&u.firma!==''){u.firma='';dirty=true;}
+    if(!u.phone&&u.phone!==''){u.phone='';dirty=true;}
+    if(!u.email&&u.email!==''){u.email='';dirty=true;}
+    if(u.avatar===undefined){u.avatar=null;dirty=true;}
+  });
+  if(dirty)sSet('users',users);
   return users;
+}
+function getUserDisplayName(u){
+  if(u.firstName&&u.lastName)return u.firstName+' '+u.lastName;
+  if(u.firstName)return u.firstName;
+  return u.displayName||u.username;
+}
+function getUserInitials(u){
+  var dn=getUserDisplayName(u);
+  return dn.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2);
+}
+function renderAvatar(u,size){
+  size=size||36;
+  var ini=getUserInitials(u);
+  if(u.avatar){
+    return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;overflow:hidden;flex-shrink:0;"><img src="'+esc(u.avatar)+'" style="width:100%;height:100%;object-fit:cover;"></div>';
+  }
+  return '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--orange-dim));display:flex;align-items:center;justify-content:center;font-size:'+Math.round(size*0.38)+'px;font-weight:700;color:#fff;flex-shrink:0;">'+esc(ini)+'</div>';
 }
 function saveUsers(u){sSet('users',u);}
 function findUser(username){
@@ -1252,9 +1448,9 @@ function updateUserDisplay(){
   var el=$('currentUserDisplay');
   if(!el)return;
   if(S.currentUser){
-    var ini=S.currentUser.displayName.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2);
-    el.innerHTML='<div class="sidebar-user-avatar">'+esc(ini)+'</div>'
-      +'<div class="sidebar-user-info"><div class="sidebar-user-name">'+esc(S.currentUser.displayName)+'</div>'
+    var dn=getUserDisplayName(S.currentUser);
+    el.innerHTML=renderAvatar(S.currentUser,32)
+      +'<div class="sidebar-user-info"><div class="sidebar-user-name">'+esc(dn)+'</div>'
       +'<div class="sidebar-user-role">'+esc(S.currentUser.role==='admin'?'Administrator':'Benutzer')+'</div></div>';
     el.style.display='flex';
   } else {
@@ -1268,11 +1464,18 @@ $('loginForm').addEventListener('submit',function(e){
   var pw=$('loginPw').value;
   var user=findUser(username);
   if(user&&user.password===pw){
+    if(user.locked){
+      $('loginErr').textContent='Dieser Account ist gesperrt.';
+      var el=$('loginErr');el.style.display='block';el.style.animation='none';
+      requestAnimationFrame(function(){el.style.animation='';});
+      return;
+    }
     sSet('auth',true);
     sSet('currentUser',user.username);
     S.currentUser=user;
     showApp();
   } else {
+    $('loginErr').textContent='Falsches Passwort oder Benutzername';
     var el=$('loginErr');el.style.display='block';el.style.animation='none';
     requestAnimationFrame(function(){el.style.animation='';});
   }
@@ -1801,41 +2004,102 @@ function renderAdminProjects(){
 }
 
 function renderAdminUsers(){
-  var users=getAllUsersWithProjects(),c=$('adminTabUsers');
+  var users=getUsers();
+  var idx=getIdx();
+  // Build project map per user
+  var projMap={};
+  idx.forEach(function(p){
+    var d=sGet('p_'+p.id,{});
+    (d.users||[]).forEach(function(uname){
+      var key=uname.toLowerCase();
+      if(!projMap[key])projMap[key]=[];
+      projMap[key].push({id:p.id,name:p.name});
+    });
+  });
+
+  var c=$('adminTabUsers');
   var html='<div class="admin-section">'
-    +'<div class="admin-section-title">Alle Benutzer ('+users.length+')</div>'
-    +'<div class="admin-card" style="margin-bottom:20px;">'
-    +'<div style="font-size:13px;font-weight:600;margin-bottom:12px;">Neuen Benutzer anlegen</div>'
-    +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-    +'<input class="admin-inline-edit" id="adminNewUserName" placeholder="Anzeigename" style="max-width:200px;">'
-    +'<input class="admin-inline-edit" id="adminNewUserLogin" placeholder="Benutzername (Login)" style="max-width:180px;">'
-    +'<input class="admin-inline-edit" id="adminNewUserPw" placeholder="Passwort" type="password" style="max-width:160px;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();adminCreateUser();}">'
-    +'<select class="admin-role-select" id="adminNewUserRole" style="padding:8px 12px;"><option value="user">Benutzer</option><option value="admin">Administrator</option></select>'
+    +'<div class="admin-section-title">Alle Benutzer ('+users.length+')</div>';
+
+  // --- Create User Card ---
+  html+='<div class="create-user-card">'
+    +'<div class="create-user-header"><h4>Neuen Benutzer anlegen</h4></div>'
+    +'<div class="create-user-grid">'
+    +'<div><label>Vorname *</label><input type="text" id="ncFirstName" placeholder="Max"></div>'
+    +'<div><label>Nachname *</label><input type="text" id="ncLastName" placeholder="Mustermann"></div>'
+    +'<div><label>Benutzername *</label><input type="text" id="ncUsername" placeholder="mmustermann"></div>'
+    +'<div><label>Passwort *</label><input type="password" id="ncPassword" placeholder="Min. 4 Zeichen"></div>'
+    +'<div><label>Firma</label><input type="text" id="ncFirma" placeholder="Firma GmbH"></div>'
+    +'<div><label>Telefonnummer</label><input type="tel" id="ncPhone" placeholder="+49 123 456789"></div>'
+    +'<div><label>E-Mail Adresse</label><input type="email" id="ncEmail" placeholder="max@firma.de"></div>'
+    +'<div><label>Rolle</label><select id="ncRole"><option value="user">Benutzer</option><option value="admin">Administrator</option></select></div>'
+    +'</div>'
+    +'<div class="create-user-actions">'
+    +'<button class="admin-btn" onclick="adminSendInviteEmail()">Per E-Mail einladen</button>'
     +'<button class="admin-btn primary" onclick="adminCreateUser()">Anlegen</button>'
-    +'</div></div>';
+    +'</div>'
+    +'</div>';
+
+  // --- User List ---
   if(!users.length){
     html+='<div class="admin-empty-msg">Noch keine Benutzer.</div>';
   } else {
-    html+='<div class="admin-global-users">';
     users.forEach(function(u){
-      var ini=u.displayName.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2);
+      var dn=getUserDisplayName(u);
       var isCurrent=S.currentUser&&S.currentUser.username.toLowerCase()===u.username.toLowerCase();
-      html+='<div class="admin-global-user-row">'
-        +'<div class="user-avatar">'+esc(ini)+'</div>'
-        +'<div class="user-info">'
-        +'<div class="name">'+esc(u.displayName)
-        +(u.registered?' <span class="admin-badge '+(u.role==='admin'?'orange':'blue')+'">'+esc(u.role==='admin'?'Admin':'Benutzer')+'</span>':'')
+      var uProjects=projMap[u.username.toLowerCase()]||[];
+      var uEsc=esc(u.username).replace(/'/g,"\\'");
+
+      html+='<div class="user-detail-card'+(u.locked?' locked':'')+'">'
+        +'<div class="user-detail-header">'
+        +renderAvatar(u,56)
+        +'<div class="user-detail-info">'
+        +'<div class="user-detail-name">'+esc(dn)
+        +' <span class="admin-badge '+(u.role==='admin'?'orange':'blue')+'">'+esc(u.role==='admin'?'Admin':'Benutzer')+'</span>'
+        +(u.locked?' <span class="admin-badge red">Gesperrt</span>':'')
         +(isCurrent?' <span class="admin-badge green">Eingeloggt</span>':'')
         +'</div>'
-        +'<div class="projects-count">'
-        +'@'+esc(u.username)
-        +(u.projects.length?' &middot; '+u.projects.length+' Projekt'+(u.projects.length!==1?'e':'')+'': ' &middot; Keinen Projekten zugewiesen')
+        +'<div class="user-detail-meta">'
+        +'<span>@'+esc(u.username)+'</span>'
+        +(u.email?'<span>'+esc(u.email)+'</span>':'')
+        +(u.phone?'<span>'+esc(u.phone)+'</span>':'')
+        +(u.firma?'<span>'+esc(u.firma)+'</span>':'')
         +'</div>'
         +'</div>'
-        +(isCurrent?'':'<button class="admin-btn danger" onclick="adminDeleteUser(\''+esc(u.username).replace(/'/g,"\\'")+'\')">Entfernen</button>')
+        +'<div class="user-detail-actions">'
+        +'<button class="admin-btn" onclick="openUserEdit(\''+uEsc+'\')">Bearbeiten</button>'
+        +(u.locked
+          ?'<button class="admin-btn" onclick="adminToggleLock(\''+uEsc+'\')">Entsperren</button>'
+          :(isCurrent?'':'<button class="admin-btn" onclick="adminToggleLock(\''+uEsc+'\')">Sperren</button>'))
+        +(isCurrent?'':'<button class="admin-btn danger" onclick="adminDeleteUser(\''+uEsc+'\')">L\u00f6schen</button>')
+        +'</div>'
         +'</div>';
+
+      // Project assignments
+      html+='<div class="user-detail-projects">'
+        +'<div class="proj-label">Zugewiesene Projekte</div>'
+        +'<div class="user-project-tags">';
+      uProjects.forEach(function(pr){
+        html+='<span class="user-project-tag">'+esc(pr.name)
+          +'<button class="tag-x" onclick="adminUnassignProject(\''+uEsc+'\',\''+esc(pr.id)+'\')">&times;</button></span>';
+      });
+      // Add project dropdown
+      var available=idx.filter(function(p){return !uProjects.some(function(up){return up.id===p.id;});});
+      if(available.length){
+        html+='<select class="proj-add-select" onchange="adminAssignProject(\''+uEsc+'\',this.value);this.selectedIndex=0;">'
+          +'<option value="">+ Projekt</option>';
+        available.forEach(function(p){
+          html+='<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>';
+        });
+        html+='</select>';
+      }
+      if(!uProjects.length&&!available.length){
+        html+='<span style="font-size:12px;color:var(--text3);font-style:italic;">Keine Projekte vorhanden</span>';
+      }
+      html+='</div></div>';
+
+      html+='</div>';
     });
-    html+='</div>';
   }
   html+='</div>';
   c.innerHTML=html;
@@ -1932,31 +2196,42 @@ window.adminDeleteProject=function(id,name){
 };
 
 window.adminCreateUser=function(){
-  var displayName=($('adminNewUserName')||{}).value;
-  var username=($('adminNewUserLogin')||{}).value;
-  var pw=($('adminNewUserPw')||{}).value;
-  var role=($('adminNewUserRole')||{}).value||'user';
-  if(!displayName||!displayName.trim()){alert('Bitte Anzeigename eingeben');return;}
-  if(!username||!username.trim()){alert('Bitte Benutzername eingeben');return;}
-  if(!pw||!pw.trim()){alert('Bitte Passwort eingeben');return;}
-  displayName=displayName.trim();username=username.trim();
+  var fn=($('ncFirstName')||{}).value;
+  var ln=($('ncLastName')||{}).value;
+  var un=($('ncUsername')||{}).value;
+  var pw=($('ncPassword')||{}).value;
+  var firma=($('ncFirma')||{}).value;
+  var phone=($('ncPhone')||{}).value;
+  var email=($('ncEmail')||{}).value;
+  var role=($('ncRole')||{}).value||'user';
+  if(!fn||!fn.trim()){alert('Bitte Vorname eingeben');return;}
+  if(!ln||!ln.trim()){alert('Bitte Nachname eingeben');return;}
+  if(!un||!un.trim()){alert('Bitte Benutzername eingeben');return;}
+  if(!pw||pw.length<4){alert('Passwort muss mindestens 4 Zeichen haben');return;}
+  fn=fn.trim();ln=ln.trim();un=un.trim();
   var users=getUsers();
-  if(users.some(function(u){return u.username.toLowerCase()===username.toLowerCase();})){
-    alert('Benutzername "'+username+'" existiert bereits');return;
+  if(users.some(function(u){return u.username.toLowerCase()===un.toLowerCase();})){
+    alert('Benutzername "'+un+'" existiert bereits');return;
   }
-  users.push({username:username,password:pw,displayName:displayName,role:role});
+  users.push({
+    username:un,password:pw,firstName:fn,lastName:ln,
+    displayName:fn+' '+ln,role:role,
+    firma:(firma||'').trim(),phone:(phone||'').trim(),
+    email:(email||'').trim(),avatar:null,locked:false
+  });
   saveUsers(users);
-  $('adminNewUserName').value='';$('adminNewUserLogin').value='';$('adminNewUserPw').value='';
+  // Clear form
+  ['ncFirstName','ncLastName','ncUsername','ncPassword','ncFirma','ncPhone','ncEmail'].forEach(function(id){
+    var el=$(id);if(el)el.value='';
+  });
   renderAdminUsers();
 };
 
 window.adminDeleteUser=function(username){
-  if(!confirm('Benutzer "'+username+'" wirklich l\u00f6schen?'))return;
-  // Remove from registered users
+  if(!confirm('Benutzer "'+username+'" wirklich l\u00f6schen? Alle Projektzuweisungen werden entfernt.'))return;
   var users=getUsers();
   users=users.filter(function(u){return u.username.toLowerCase()!==username.toLowerCase();});
   saveUsers(users);
-  // Remove from all projects
   var idx=getIdx();
   idx.forEach(function(p){
     var d=sGet('p_'+p.id,{});
@@ -1965,6 +2240,173 @@ window.adminDeleteUser=function(username){
       sSet('p_'+p.id,d);
     }
   });
+  renderAdminUsers();
+};
+
+window.adminToggleLock=function(username){
+  var users=getUsers();
+  users.forEach(function(u){
+    if(u.username.toLowerCase()===username.toLowerCase()){
+      u.locked=!u.locked;
+    }
+  });
+  saveUsers(users);
+  renderAdminUsers();
+};
+
+window.adminAssignProject=function(username,pid){
+  if(!pid)return;
+  var d=sGet('p_'+pid,{});
+  var users=d.users||[];
+  if(!users.some(function(u){return u.toLowerCase()===username.toLowerCase();})){
+    users.push(username);
+    d.users=users;
+    sSet('p_'+pid,d);
+  }
+  renderAdminUsers();
+};
+
+window.adminUnassignProject=function(username,pid){
+  var d=sGet('p_'+pid,{});
+  if(d.users){
+    d.users=d.users.filter(function(u){return u.toLowerCase()!==username.toLowerCase();});
+    sSet('p_'+pid,d);
+  }
+  renderAdminUsers();
+};
+
+window.adminSendInviteEmail=function(){
+  var email=($('ncEmail')||{}).value;
+  var fn=($('ncFirstName')||{}).value||'';
+  var ln=($('ncLastName')||{}).value||'';
+  var un=($('ncUsername')||{}).value||'';
+  if(!email||!email.trim()){alert('Bitte E-Mail Adresse eingeben');return;}
+  var name=(fn+' '+ln).trim()||'Benutzer';
+  var subject=encodeURIComponent('Einladung zu BAUTERM');
+  var body=encodeURIComponent('Hallo '+name+',\n\ndu wurdest zu BAUTERM eingeladen!\n\n'
+    +'Bitte registriere dich unter folgendem Link:\n'
+    +window.location.origin+window.location.pathname+'#register\n\n'
+    +'Dein Benutzername: '+un+'\n\n'
+    +'Bitte setze dir bei der ersten Anmeldung ein sicheres Passwort.\n\n'
+    +'Viele Gr\u00fc\u00dfe,\nDein BAUTERM-Team');
+  window.open('mailto:'+encodeURIComponent(email.trim())+'?subject='+subject+'&body='+body,'_blank');
+};
+
+// --- USER EDIT MODAL ---
+var _ueAvatarData=null;
+
+window.openUserEdit=function(username){
+  var user=findUser(username);if(!user)return;
+  $('ueOrigUsername').value=user.username;
+  $('ueFirstName').value=user.firstName||'';
+  $('ueLastName').value=user.lastName||'';
+  $('ueUsername').value=user.username;
+  $('ueRole').value=user.role||'user';
+  $('ueFirma').value=user.firma||'';
+  $('uePhone').value=user.phone||'';
+  $('ueEmail').value=user.email||'';
+  $('uePassword').value='';
+  $('userEditTitle').textContent=getUserDisplayName(user)+' bearbeiten';
+  _ueAvatarData=user.avatar||null;
+  _updateEditAvatarPreview(user);
+  $('ueRemoveAvatarBtn').style.display=user.avatar?'':'none';
+  $('userEditModal').classList.add('show');
+};
+
+function _updateEditAvatarPreview(user){
+  var el=$('ueAvatarPreview');
+  if(_ueAvatarData){
+    el.innerHTML='<img src="'+esc(_ueAvatarData)+'">';
+  } else {
+    el.innerHTML=esc(getUserInitials(user||{firstName:$('ueFirstName').value,lastName:$('ueLastName').value,displayName:'?',username:'?'}));
+  }
+}
+
+window.closeUserEdit=function(){
+  $('userEditModal').classList.remove('show');
+  _ueAvatarData=null;
+};
+
+window.adminPreviewAvatar=function(input){
+  if(!input.files||!input.files[0])return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    // Resize to 128px
+    var img=new Image();
+    img.onload=function(){
+      var canvas=document.createElement('canvas');
+      var size=128;
+      canvas.width=size;canvas.height=size;
+      var ctx=canvas.getContext('2d');
+      var min=Math.min(img.width,img.height);
+      var sx=(img.width-min)/2,sy=(img.height-min)/2;
+      ctx.drawImage(img,sx,sy,min,min,0,0,size,size);
+      _ueAvatarData=canvas.toDataURL('image/jpeg',0.8);
+      $('ueAvatarPreview').innerHTML='<img src="'+_ueAvatarData+'">';
+      $('ueRemoveAvatarBtn').style.display='';
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(input.files[0]);
+};
+
+window.adminRemoveAvatar=function(){
+  _ueAvatarData=null;
+  $('ueRemoveAvatarBtn').style.display='none';
+  var fn=$('ueFirstName').value||'';
+  var ln=$('ueLastName').value||'';
+  var ini=((fn.charAt(0)||'')+(ln.charAt(0)||'')).toUpperCase()||'?';
+  $('ueAvatarPreview').innerHTML=esc(ini);
+};
+
+window.saveUserEdit=function(){
+  var origUn=$('ueOrigUsername').value;
+  var fn=$('ueFirstName').value.trim();
+  var ln=$('ueLastName').value.trim();
+  var un=$('ueUsername').value.trim();
+  var role=$('ueRole').value;
+  var firma=$('ueFirma').value.trim();
+  var phone=$('uePhone').value.trim();
+  var email=$('ueEmail').value.trim();
+  var pw=$('uePassword').value;
+  if(!fn){alert('Bitte Vorname eingeben');return;}
+  if(!ln){alert('Bitte Nachname eingeben');return;}
+  if(!un){alert('Bitte Benutzername eingeben');return;}
+  var users=getUsers();
+  // Check username conflict
+  if(un.toLowerCase()!==origUn.toLowerCase()){
+    if(users.some(function(u){return u.username.toLowerCase()===un.toLowerCase();})){
+      alert('Benutzername "'+un+'" existiert bereits');return;
+    }
+  }
+  users.forEach(function(u){
+    if(u.username.toLowerCase()===origUn.toLowerCase()){
+      u.firstName=fn;u.lastName=ln;u.displayName=fn+' '+ln;
+      u.username=un;u.role=role;u.firma=firma;u.phone=phone;u.email=email;
+      if(pw&&pw.length>=4)u.password=pw;
+      else if(pw&&pw.length>0){alert('Passwort muss mindestens 4 Zeichen haben');return;}
+      u.avatar=_ueAvatarData;
+    }
+  });
+  saveUsers(users);
+  // Update project assignments if username changed
+  if(un.toLowerCase()!==origUn.toLowerCase()){
+    var idx=getIdx();
+    idx.forEach(function(p){
+      var d=sGet('p_'+p.id,{});
+      if(d.users){
+        d.users=d.users.map(function(u){return u.toLowerCase()===origUn.toLowerCase()?un:u;});
+        sSet('p_'+p.id,d);
+      }
+    });
+  }
+  // Update current user if editing self
+  if(S.currentUser&&S.currentUser.username.toLowerCase()===origUn.toLowerCase()){
+    S.currentUser=findUser(un);
+    sSet('currentUser',un);
+    updateUserDisplay();
+  }
+  closeUserEdit();
   renderAdminUsers();
 };
 
