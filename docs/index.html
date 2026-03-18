@@ -598,12 +598,19 @@ body {
 .dash-panel { transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s; }
 .dash-panel .dash-panel-header { cursor: grab; user-select: none; }
 .dash-panel.dragging {
-  opacity: 0.5; transform: scale(0.98);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  opacity: 0.4; transform: scale(0.97);
+  pointer-events: none;
 }
-.dash-panel.drag-over {
-  box-shadow: 0 0 0 2px var(--orange);
-  transform: scale(1.01);
+.dash-drop-placeholder {
+  border: 2px dashed var(--orange); border-radius: var(--radius);
+  background: rgba(255,140,50,0.06); min-height: 80px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s ease;
+}
+.dash-drop-placeholder.full { grid-column: 1 / -1; }
+.dash-drop-placeholder::after {
+  content: 'Hier ablegen'; color: var(--orange); font-size: 13px;
+  font-weight: 600; opacity: 0.7;
 }
 .dash-panel-header .drag-handle {
   color: var(--text3); font-size: 14px; cursor: grab;
@@ -2053,6 +2060,7 @@ $('taskDetailModal').addEventListener('click',function(e){
 
 /* ─── DASHBOARD DRAG & DROP ─── */
 var _dragPanel=null;
+var _placeholder=null;
 
 function initDashDragDrop(){
   var container=$('dashPanelsContainer');
@@ -2062,57 +2070,69 @@ function initDashDragDrop(){
   panels.forEach(function(panel){
     panel.addEventListener('dragstart',function(e){
       _dragPanel=panel;
-      panel.classList.add('dragging');
+      // Create placeholder with same size class
+      _placeholder=document.createElement('div');
+      _placeholder.className='dash-drop-placeholder';
+      if(panel.classList.contains('full'))_placeholder.classList.add('full');
+      _placeholder.style.minHeight=panel.offsetHeight+'px';
+      // Delay adding dragging class so browser captures drag image first
+      setTimeout(function(){
+        panel.classList.add('dragging');
+        // Insert placeholder where the panel was
+        container.insertBefore(_placeholder,panel);
+      },0);
       e.dataTransfer.effectAllowed='move';
       e.dataTransfer.setData('text/plain',panel.dataset.panelId);
     });
 
     panel.addEventListener('dragend',function(){
+      // Drop panel into placeholder position
+      if(_placeholder&&_placeholder.parentNode){
+        container.insertBefore(_dragPanel,_placeholder);
+        _placeholder.parentNode.removeChild(_placeholder);
+      }
       panel.classList.remove('dragging');
-      panels.forEach(function(p){p.classList.remove('drag-over');});
       _dragPanel=null;
-    });
-
-    panel.addEventListener('dragover',function(e){
-      e.preventDefault();
-      e.dataTransfer.dropEffect='move';
-      if(_dragPanel&&_dragPanel!==panel){
-        panel.classList.add('drag-over');
-      }
-    });
-
-    panel.addEventListener('dragleave',function(){
-      panel.classList.remove('drag-over');
-    });
-
-    panel.addEventListener('drop',function(e){
-      e.preventDefault();
-      panel.classList.remove('drag-over');
-      if(!_dragPanel||_dragPanel===panel)return;
-
-      // Swap positions in DOM
-      var allPanels=Array.prototype.slice.call(container.querySelectorAll('.dash-panel[data-panel-id]'));
-      var fromIdx=allPanels.indexOf(_dragPanel);
-      var toIdx=allPanels.indexOf(panel);
-
-      if(fromIdx<toIdx){
-        container.insertBefore(_dragPanel,panel.nextSibling);
-      } else {
-        container.insertBefore(_dragPanel,panel);
-      }
-
-      // Swap CSS classes (full / half)
-      var fromCls=_dragPanel.classList.contains('full');
-      var toCls=panel.classList.contains('full');
-      if(fromCls!==toCls){
-        _dragPanel.classList.toggle('full');
-        panel.classList.toggle('full');
-      }
-
-      // Save order
+      _placeholder=null;
       saveDashOrder();
     });
   });
+
+  // Use container-level dragover for smooth placeholder movement
+  container.addEventListener('dragover',function(e){
+    e.preventDefault();
+    e.dataTransfer.dropEffect='move';
+    if(!_dragPanel||!_placeholder)return;
+
+    var target=getDashPanelFromPoint(e.clientX,e.clientY,container);
+    if(!target||target===_dragPanel||target===_placeholder)return;
+
+    // Determine if we should place before or after the target
+    var rect=target.getBoundingClientRect();
+    var midX=rect.left+rect.width/2;
+    var midY=rect.top+rect.height/2;
+    // Use vertical position for same-row, horizontal for side-by-side
+    var afterTarget=(e.clientY>midY)||(e.clientY>=rect.top&&e.clientY<=rect.bottom&&e.clientX>midX);
+
+    // Transfer size class from target to placeholder
+    _placeholder.classList.toggle('full',target.classList.contains('full'));
+    _placeholder.style.minHeight=target.offsetHeight+'px';
+
+    if(afterTarget){
+      container.insertBefore(_placeholder,target.nextSibling);
+    } else {
+      container.insertBefore(_placeholder,target);
+    }
+  });
+}
+
+function getDashPanelFromPoint(x,y,container){
+  var panels=container.querySelectorAll('.dash-panel[data-panel-id]:not(.dragging)');
+  for(var i=0;i<panels.length;i++){
+    var r=panels[i].getBoundingClientRect();
+    if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return panels[i];
+  }
+  return null;
 }
 
 function saveDashOrder(){
