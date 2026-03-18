@@ -996,7 +996,8 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
   color: var(--text); font-family: var(--font);
   font-size: 14px; margin-bottom: 16px; outline: none;
 }
-.modal input[type="text"]:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-glow); }
+.modal input[type="text"]:focus,
+.modal input[type="password"]:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-glow); }
 .modal-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
 .modal-btns button {
   padding: 10px 20px; border-radius: var(--radius-sm);
@@ -1628,6 +1629,42 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
   </div>
 </div>
 
+<!-- XML Re-Upload Protection Modal -->
+<div class="modal-bg" id="xmlReuploadModal">
+  <div class="modal">
+    <!-- Step 1: Warning -->
+    <div id="xmlReuploadStep1">
+      <h3>Terminprogramm bereits vorhanden</h3>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:16px;">
+        Dieses Projekt hat bereits ein hochgeladenes Terminprogramm.
+        Ein erneutes Hochladen überschreibt alle bestehenden Vorgänge unwiderruflich.
+      </p>
+      <div class="modal-btns">
+        <button onclick="closeXmlReuploadModal()">Abbrechen</button>
+        <button class="btn-danger" onclick="xmlReuploadStep2()">Trotzdem hochladen</button>
+      </div>
+    </div>
+    <!-- Step 2: Confirmation + Password -->
+    <div id="xmlReuploadStep2" style="display:none;">
+      <h3>Sicherheitsbestätigung</h3>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:16px;">
+        Bitte bestätige, dass du das bestehende Terminprogramm ersetzen möchtest.
+        Dieser Vorgang wird protokolliert und dem Admin gemeldet.
+      </p>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:16px;cursor:pointer;font-size:14px;">
+        <input type="checkbox" id="xmlReuploadConfirm">
+        Ich bestätige, dass ich das bestehende Terminprogramm ersetzen möchte.
+      </label>
+      <label>Passwort eingeben</label>
+      <input type="password" id="xmlReuploadPw" placeholder="Dein persönliches Passwort" style="width:100%;box-sizing:border-box;padding:10px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text);font-family:var(--font);font-size:14px;margin-top:4px;">
+      <p id="xmlReuploadErr" style="color:var(--red);font-size:13px;margin-top:8px;display:none;"></p>
+      <div class="modal-btns" style="margin-top:16px;">
+        <button onclick="closeXmlReuploadModal()">Abbrechen</button>
+        <button class="btn-danger" onclick="xmlReuploadConfirm()">Hochladen bestätigen</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -3404,16 +3441,116 @@ window.adminTogglePerm=function(pid,user,key,val){
 };
 
 /* ─── XML UPLOAD (topbar + drag & drop) ─── */
+var pendingXMLFile=null;
+
+function projectHasSchedule(){
+  if(!S.pid)return false;
+  var d=sGet('p_'+S.pid,{});
+  return (d.tasks&&d.tasks.length>0);
+}
+
 window.triggerXMLUpload=function(){
   if(!S.pid){
-    // If projects exist, select the first one automatically
     var idx=getIdx();
     if(idx.length>0){
       loadProject(idx[0].id);
     }
   }
+  if(projectHasSchedule()){
+    showXmlReuploadModal();
+  } else {
+    $('xmlUploadInput').click();
+  }
+};
+
+function showXmlReuploadModal(){
+  $('xmlReuploadStep1').style.display='';
+  $('xmlReuploadStep2').style.display='none';
+  $('xmlReuploadModal').classList.add('show');
+}
+window.closeXmlReuploadModal=function(){
+  $('xmlReuploadModal').classList.remove('show');
+  $('xmlReuploadConfirm').checked=false;
+  $('xmlReuploadPw').value='';
+  $('xmlReuploadErr').style.display='none';
+  pendingXMLFile=null;
+};
+window.xmlReuploadStep2=function(){
+  $('xmlReuploadStep1').style.display='none';
+  $('xmlReuploadStep2').style.display='';
+  $('xmlReuploadConfirm').checked=false;
+  $('xmlReuploadPw').value='';
+  $('xmlReuploadErr').style.display='none';
+};
+window.xmlReuploadConfirm=function(){
+  var cb=$('xmlReuploadConfirm');
+  var pw=$('xmlReuploadPw').value;
+  var errEl=$('xmlReuploadErr');
+  if(!cb.checked){
+    errEl.textContent='Bitte bestätige mit dem Häkchen.';
+    errEl.style.display='block';
+    return;
+  }
+  if(!pw){
+    errEl.textContent='Bitte gib dein Passwort ein.';
+    errEl.style.display='block';
+    return;
+  }
+  // Verify password against current user
+  var currentUsername=sGet('currentUser','');
+  var user=findUser(currentUsername);
+  if(!user||user.password!==pw){
+    errEl.textContent='Falsches Passwort.';
+    errEl.style.display='block';
+    return;
+  }
+  // Log the re-upload
+  var logEntry={
+    action:'xml_reupload',
+    user:currentUsername,
+    project:S.pid,
+    projectName:(sGet('p_'+S.pid,{}).name||''),
+    timestamp:new Date().toISOString()
+  };
+  var logs=sGet('reupload_log',[]);
+  logs.push(logEntry);
+  sSet('reupload_log',logs);
+  // Send admin email notification
+  sendReuploadAdminNotification(logEntry);
+  // Close modal and trigger actual upload
+  closeXmlReuploadModal();
   $('xmlUploadInput').click();
 };
+
+function sendReuploadAdminNotification(log){
+  var admins=getUsers().filter(function(u){return u.role==='admin';});
+  var adminEmails=admins.map(function(u){return u.email;}).filter(function(e){return e&&e.length>0;});
+  var toEmail=adminEmails.length>0?adminEmails[0]:'aleks@emotionframe.ch';
+  var subj='[BAUTERM] Terminprogramm überschrieben – '+log.projectName;
+  var body='Achtung: Ein Terminprogramm wurde überschrieben.\n\n'
+    +'Benutzer: '+log.user+'\n'
+    +'Projekt: '+log.projectName+' (ID: '+log.project+')\n'
+    +'Zeitpunkt: '+new Date(log.timestamp).toLocaleString('de-CH')+'\n\n'
+    +'Diese Aktion wurde protokolliert.';
+  var mailto='mailto:'+encodeURIComponent(toEmail)
+    +'?subject='+encodeURIComponent(subj)
+    +'&body='+encodeURIComponent(body);
+  window.open(mailto,'_blank');
+}
+
+function doXMLImport(tasks,xmlStr){
+  var d=sGet('p_'+S.pid,{});
+  d.tasks=tasks;
+  d.xml=xmlStr;
+  sSet('p_'+S.pid,d);
+  S.tasks=tasks;
+  showEmpty(false);
+  updateKPI();
+  applyFilters();
+  var f=$('saveFlash');f.textContent=tasks.length+' Vorg\u00e4nge importiert';
+  f.classList.add('show');
+  setTimeout(function(){f.classList.remove('show');f.textContent='Gespeichert';},3000);
+}
 
 window.handleXMLUpload=function(input){
   if(!input.files||!input.files.length)return;
@@ -3426,7 +3563,6 @@ window.handleXMLUpload=function(input){
       alert('Keine Vorg\u00e4nge in der XML-Datei gefunden.');
       return;
     }
-    // If no project selected, pick first existing or create one
     if(!S.pid){
       var idx=getIdx();
       if(idx.length>0){
@@ -3438,22 +3574,9 @@ window.handleXMLUpload=function(input){
         return;
       }
     }
-    // Import into current project
-    var d=sGet('p_'+S.pid,{});
-    d.tasks=tasks;
-    d.xml=xmlStr;
-    sSet('p_'+S.pid,d);
-    S.tasks=tasks;
-    showEmpty(false);
-    updateKPI();
-    applyFilters();
-    // Flash feedback
-    var f=$('saveFlash');f.textContent=tasks.length+' Vorg\u00e4nge importiert';
-    f.classList.add('show');
-    setTimeout(function(){f.classList.remove('show');f.textContent='Gespeichert';},3000);
+    doXMLImport(tasks,xmlStr);
   };
   reader.readAsText(file);
-  // Reset input
   try{input.value='';}catch(e){}
 };
 
