@@ -1970,83 +1970,66 @@ function renderDashboard(){
 }
 
 /* ─── TASK DETAIL POPUP ─── */
+var _tdUid=null;
 window.openTaskDetail=function(uid){
   var t=findTask(uid);if(!t)return;
-  var taskByUid={};
-  S.tasks.forEach(function(x){taskByUid[x.uid]=x;});
+  _tdUid=uid;
   var today=fmtISO(new Date());
 
   $('tdName').textContent=t.name;
 
   // Badges
   var badges='';
-  if(t.critical)badges+='<span class="admin-badge red">Kritischer Pfad</span>';
-  if(t.summary)badges+='<span class="admin-badge blue">Sammelvorgang</span>';
+  var daysLate=0;
   if(t.finish&&t.finish<today&&(t.percentComplete||0)<100){
-    var daysLate=Math.ceil((new Date(today)-new Date(t.finish))/86400000);
+    daysLate=Math.ceil((new Date(today)-new Date(t.finish))/86400000);
     badges+='<span class="admin-badge red">'+daysLate+' Tage \u00fcberf\u00e4llig</span>';
   }
   if((t.percentComplete||0)>=100)badges+='<span class="admin-badge green">Abgeschlossen</span>';
+  if(t.critical)badges+='<span class="admin-badge" style="background:var(--yellow-light);color:var(--yellow);">Kritischer Pfad</span>';
   $('tdBadges').innerHTML=badges;
 
-  // Grid fields
   var pc=t.percentComplete||0;
   var pcColor=pc>=100?'var(--green)':pc>=50?'var(--yellow)':'var(--red)';
-  var predTypeNames={0:'FF (Ende-Ende)',1:'EA (Ende-Anfang)',2:'AE (Anfang-Ende)',3:'AA (Anfang-Anfang)'};
 
-  var g='<div class="task-detail-field"><div class="td-label">ID / UID</div><div class="td-value">'+t.id+' / '+t.uid+'</div></div>'
-    +'<div class="task-detail-field"><div class="td-label">WBS</div><div class="td-value">'+(t.wbs||'\u2013')+'</div></div>'
-    +'<div class="task-detail-field"><div class="td-label">Start</div><div class="td-value">'+fmtDate(t.start)+'</div></div>'
+  var g='<div class="task-detail-field"><div class="td-label">Start</div><div class="td-value">'+fmtDate(t.start)+'</div></div>'
     +'<div class="task-detail-field"><div class="td-label">Ende</div><div class="td-value">'+fmtDate(t.finish)+'</div></div>'
     +'<div class="task-detail-field"><div class="td-label">Dauer</div><div class="td-value">'+(t.duration||0)+' Tage</div></div>'
-    +'<div class="task-detail-field"><div class="td-label">Gliederungsebene</div><div class="td-value">'+(t.outlineLevel||0)+'</div></div>';
+    +'<div class="task-detail-field"><div class="td-label">\u00dcberf\u00e4llig</div><div class="td-value">'+(daysLate>0?'<span style="color:var(--red);font-weight:700;">'+daysLate+' Tage</span>':'\u2013')+'</div></div>';
 
-  // Progress
+  // Progress with slider + input
   g+='<div class="task-detail-progress">'
-    +'<div class="td-label">Fortschritt: '+pc+'%</div>'
-    +'<div class="task-detail-progress-bar">'
-    +'<div class="task-detail-progress-fill" style="width:'+pc+'%;background:'+pcColor+';"></div>'
+    +'<div class="td-label">Fortschritt</div>'
+    +'<div style="display:flex;align-items:center;gap:12px;margin-top:8px;">'
+    +'<input type="range" id="tdSlider" min="0" max="100" step="1" value="'+pc+'" style="flex:1;accent-color:var(--orange);height:6px;cursor:pointer;" oninput="updateTaskProgress(this.value)">'
+    +'<div style="display:flex;align-items:center;gap:2px;">'
+    +'<input type="number" id="tdPctInput" min="0" max="100" value="'+pc+'" style="width:52px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:14px;font-weight:600;text-align:center;background:var(--surface2);color:var(--text);" oninput="updateTaskProgress(this.value)">'
+    +'<span style="color:var(--text3);font-weight:600;">%</span>'
+    +'</div></div>'
+    +'<div class="task-detail-progress-bar" style="margin-top:10px;">'
+    +'<div class="task-detail-progress-fill" id="tdProgressFill" style="width:'+pc+'%;background:'+pcColor+';"></div>'
     +'</div></div>';
-
-  // Predecessors
-  var preds=t.predecessors||[];
-  if(preds.length){
-    g+='<div class="task-detail-preds"><div class="td-label">Vorg\u00e4nger ('+preds.length+')</div>';
-    preds.forEach(function(p){
-      var pt=taskByUid[p.uid];
-      var ppc=pt?(pt.percentComplete||0):0;
-      var dotCol=ppc>=100?'var(--green)':ppc>0?'var(--yellow)':'var(--red)';
-      var typeName=predTypeNames[p.type]||'EA';
-      var lagStr=p.lagDays?' (+'+p.lagDays+'d Versatz)':'';
-      g+='<div class="task-detail-pred-item">'
-        +'<div class="pred-status" style="background:'+dotCol+'"></div>'
-        +'<div class="pred-name">'+(pt?esc(pt.name):'UID '+p.uid)+'</div>'
-        +'<div class="pred-pct">'+ppc+'% &middot; '+typeName+lagStr+'</div>'
-        +'</div>';
-    });
-    g+='</div>';
-  }
-
-  // Successors (tasks that depend on this one)
-  var successors=S.tasks.filter(function(x){
-    return (x.predecessors||[]).some(function(p){return p.uid===t.uid;});
-  });
-  if(successors.length){
-    g+='<div class="task-detail-preds"><div class="td-label">Nachfolger ('+successors.length+')</div>';
-    successors.forEach(function(s){
-      var spc=s.percentComplete||0;
-      var dotCol=spc>=100?'var(--green)':spc>0?'var(--yellow)':'var(--red)';
-      g+='<div class="task-detail-pred-item">'
-        +'<div class="pred-status" style="background:'+dotCol+'"></div>'
-        +'<div class="pred-name">'+esc(s.name)+'</div>'
-        +'<div class="pred-pct">'+spc+'%</div>'
-        +'</div>';
-    });
-    g+='</div>';
-  }
 
   $('tdGrid').innerHTML=g;
   $('taskDetailModal').classList.add('show');
+};
+
+window.updateTaskProgress=function(val){
+  val=Math.max(0,Math.min(100,parseInt(val)||0));
+  var slider=$('tdSlider'),inp=$('tdPctInput'),fill=$('tdProgressFill');
+  if(slider)slider.value=val;
+  if(inp)inp.value=val;
+  var col=val>=100?'var(--green)':val>=50?'var(--yellow)':'var(--red)';
+  if(fill){fill.style.width=val+'%';fill.style.background=col;}
+  // Update task data
+  if(_tdUid!==null){
+    var t=findTask(_tdUid);
+    if(t){
+      t.percentComplete=val;
+      // Auto-save
+      if(S.pid){var d=sGet('p_'+S.pid,{});d.tasks=S.tasks;sSet('p_'+S.pid,d);}
+    }
+  }
 };
 
 window.closeTaskDetail=function(){
