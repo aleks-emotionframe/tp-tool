@@ -732,6 +732,14 @@ body {
 .progress-fill.low { background: var(--red); }
 .progress-fill.mid { background: var(--yellow); }
 .progress-text { font-size: 12px; color: var(--text3); font-variant-numeric: tabular-nums; min-width: 32px; }
+.progress-editable { cursor: pointer; border-radius: 4px; padding: 2px 4px; margin: -2px -4px; transition: background 0.15s; }
+.progress-editable:hover { background: var(--surface3); }
+.progress-inline-input { width: 48px; padding: 2px 4px; border: 1.5px solid var(--orange); border-radius: 4px; font-size: 12px; text-align: center; outline: none; background: var(--surface1); color: var(--text1); font-variant-numeric: tabular-nums; }
+tr.is-done { background: var(--green-light) !important; }
+tr.is-done td { color: var(--green) !important; }
+tr.is-done .col-name { text-decoration: line-through; text-decoration-color: var(--green); }
+tr.is-done .progress-fill { background: var(--green) !important; }
+tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 .col-pred { color: var(--text3); font-size: 12px; }
 .col-id { color: var(--text3); font-variant-numeric: tabular-nums; font-size: 12px; }
 
@@ -2058,6 +2066,34 @@ window.updateTaskProgress=function(val){
   }
 };
 
+window.editProgressInline=function(ev,uid){
+  ev.stopPropagation();
+  var wrap=ev.currentTarget;
+  if(wrap.querySelector('.progress-inline-input'))return; // already editing
+  var t=findTask(uid);if(!t)return;
+  var pc=t.percentComplete||0;
+  var track=wrap.querySelector('.progress-track');
+  var txt=wrap.querySelector('.progress-text');
+  if(track)track.style.display='none';
+  if(txt)txt.style.display='none';
+  var inp=document.createElement('input');
+  inp.type='number';inp.min='0';inp.max='100';inp.value=pc;
+  inp.className='progress-inline-input';
+  wrap.appendChild(inp);
+  inp.focus();inp.select();
+  function commit(){
+    var val=Math.max(0,Math.min(100,parseInt(inp.value)||0));
+    t.percentComplete=val;
+    if(S.pid){var d=sGet('p_'+S.pid,{});d.tasks=S.tasks;sSet('p_'+S.pid,d);}
+    applyFilters();
+  }
+  inp.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){e.preventDefault();commit();}
+    if(e.key==='Escape'){e.preventDefault();applyFilters();}
+  });
+  inp.addEventListener('blur',commit);
+};
+
 window.goToTaskInList=function(uid){
   closeTaskDetail();
   // Clear filters so the task is visible
@@ -2194,13 +2230,18 @@ function renderList(){
     var pred=(row.predecessors||[]).map(function(p){var ty={0:'FF',1:'FS',2:'SF',3:'SS'};return p.uid+(ty[p.type]||'FS')+(p.lagDays?'+'+p.lagDays+'d':'');}).join(', ');
     var pc=row.percentComplete||0;
     var pcls=pc<30?'low':pc<70?'mid':'';
+    if(pc>=100)cls+=' is-done';
     h+='<tr class="'+cls+'" data-uid="'+row.uid+'">';
     h+='<td class="col-id">'+row.id+'</td>';
     h+='<td class="col-name" style="padding-left:'+(14+ind)+'px">'+esc(row.name)+'</td>';
     h+='<td><span class="col-date" onclick="openDP(event,'+row.uid+')">'+fmtDate(row.start)+'</span></td>';
     h+='<td style="color:var(--text3)">'+fmtDate(row.finish)+'</td>';
     h+='<td class="col-duration">'+(row.duration||0)+'d</td>';
-    h+='<td><div class="progress-wrap"><div class="progress-track"><div class="progress-fill '+pcls+'" style="width:'+pc+'%"></div></div><span class="progress-text">'+pc+'%</span></div></td>';
+    if(row.summary){
+      h+='<td><div class="progress-wrap"><div class="progress-track"><div class="progress-fill '+pcls+'" style="width:'+pc+'%"></div></div><span class="progress-text">'+pc+'%</span></div></td>';
+    }else{
+      h+='<td><div class="progress-wrap progress-editable" onclick="editProgressInline(event,'+row.uid+')" title="Klicken zum Bearbeiten"><div class="progress-track"><div class="progress-fill '+pcls+'" style="width:'+pc+'%"></div></div><span class="progress-text">'+pc+'%</span></div></td>';
+    }
     h+='<td class="col-pred">'+esc(pred)+'</td></tr>';
   });
   h+='</tbody></table>';c.innerHTML=h;
