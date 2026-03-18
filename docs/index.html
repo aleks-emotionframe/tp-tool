@@ -2060,20 +2060,32 @@ window.updateTaskProgress=function(val){
 
 window.goToTaskInList=function(uid){
   closeTaskDetail();
+  // Clear filters so the task is visible
+  S.search='';S.critOnly=false;
+  var si=$('searchInput');if(si)si.value='';
+  var cb=$('critToggle');if(cb)cb.checked=false;
   // Switch to list view
   S.view='list';
-  applyFilters();
-  switchView();
-  // Scroll to the task row after render
-  setTimeout(function(){
-    var row=document.querySelector('tr[data-uid="'+uid+'"]');
-    if(row){
-      row.scrollIntoView({behavior:'smooth',block:'center'});
-      row.style.transition='background 0.3s';
-      row.style.background='var(--orange-light,rgba(255,140,50,0.15))';
-      setTimeout(function(){row.style.background='';},2000);
-    }
-  },50);
+  // Update tab buttons
+  document.querySelectorAll('.tab-btn').forEach(function(b){
+    b.classList.toggle('active',b.dataset.view==='list');
+  });
+  applyFilters(); // this calls renderView() which renders the list
+  // Scroll to the task row after DOM is ready
+  requestAnimationFrame(function(){
+    setTimeout(function(){
+      var row=document.querySelector('tr[data-uid="'+uid+'"]');
+      if(row){
+        row.scrollIntoView({behavior:'smooth',block:'center'});
+        row.style.transition='background 0.3s';
+        row.style.background='rgba(255,140,50,0.15)';
+        setTimeout(function(){
+          row.style.transition='background 1s';
+          row.style.background='';
+        },2000);
+      }
+    },100);
+  });
 };
 
 window.closeTaskDetail=function(){
