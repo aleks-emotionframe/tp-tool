@@ -3504,23 +3504,49 @@ window.xmlReuploadConfirm=function(){
     errEl.style.display='block';
     return;
   }
-  // Log the re-upload
-  var logEntry={
-    action:'xml_reupload',
-    user:currentUsername,
-    project:S.pid,
-    projectName:(sGet('p_'+S.pid,{}).name||''),
-    timestamp:new Date().toISOString()
-  };
-  var logs=sGet('reupload_log',[]);
-  logs.push(logEntry);
-  sSet('reupload_log',logs);
-  // Send admin email notification
-  sendReuploadAdminNotification(logEntry);
-  // Close modal and trigger actual upload
-  closeXmlReuploadModal();
-  $('xmlUploadInput').click();
+  // Create full backup before allowing re-upload
+  createFullBackup(function(){
+    // Log the re-upload
+    var logEntry={
+      action:'xml_reupload',
+      user:currentUsername,
+      project:S.pid,
+      projectName:(sGet('p_'+S.pid,{}).name||''),
+      timestamp:new Date().toISOString()
+    };
+    var logs=sGet('reupload_log',[]);
+    logs.push(logEntry);
+    sSet('reupload_log',logs);
+    // Send admin email notification
+    sendReuploadAdminNotification(logEntry);
+    // Close modal and trigger actual upload
+    closeXmlReuploadModal();
+    $('xmlUploadInput').click();
+  });
 };
+
+function createFullBackup(callback){
+  var backup={};
+  for(var i=0;i<localStorage.length;i++){
+    var key=localStorage.key(i);
+    if(key.indexOf(PFX)===0){
+      try{backup[key]=JSON.parse(localStorage.getItem(key));}
+      catch(e){backup[key]=localStorage.getItem(key);}
+    }
+  }
+  var blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  var ts=new Date().toISOString().replace(/[:.]/g,'-').substring(0,19);
+  a.href=url;
+  a.download='bauterm-backup-'+ts+'.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  // Short delay to ensure download starts before proceeding
+  setTimeout(function(){callback();},500);
+}
 
 function sendReuploadAdminNotification(log){
   var admins=getUsers().filter(function(u){return u.role==='admin';});
