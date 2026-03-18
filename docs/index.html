@@ -1905,7 +1905,7 @@ function renderDashboard(){
         +'<div class="dash-item-meta">'+fmtDate(t.start)+' \u2013 '+fmtDate(t.finish)+'</div>'
         +'<div class="dash-item-meta">'+((t.percentComplete||0))+'%</div>');
     });
-    panels.push({id:'critical',cls:overdue.length?'':'full',icon:'&#9888;',iconCls:'yellow',title:'Kritischer Pfad',count:critTasks.length,countStyle:'background:var(--yellow-light);color:var(--yellow)',body:ph});
+    panels.push({id:'critical',cls:'full',icon:'&#9888;',iconCls:'yellow',title:'Kritischer Pfad',count:critTasks.length,countStyle:'background:var(--yellow-light);color:var(--yellow)',body:ph});
   }
 
   // --- READY NOW ---
