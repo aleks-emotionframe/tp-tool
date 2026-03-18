@@ -354,12 +354,25 @@ body {
 /* --- TOP BAR --- */
 .topbar {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 24px;
+  flex-direction: column;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   flex-shrink: 0;
+}
+.topbar-row1 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px;
+}
+.topbar-row2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 24px 10px;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  background: var(--surface2);
 }
 .topbar-title {
   font-size: 20px;
@@ -429,9 +442,9 @@ body {
 .bug-btn:hover { background: var(--red-light); color: var(--red); border-color: var(--red); transform: translateY(-1px); }
 
 /* --- JOKE BAR --- */
-.joke-bar { display: flex; align-items: center; gap: 10px; padding: 0 12px; margin-right: 8px; flex-shrink: 1; min-width: 0; }
-.joke-icon { font-size: 18px; flex-shrink: 0; }
-.joke-text { font-size: 13px; color: var(--text2); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.joke-bar { display: flex; align-items: center; gap: 10px; }
+.joke-icon { font-size: 16px; flex-shrink: 0; }
+.joke-text { font-size: 13px; color: var(--text3); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .joke-btn { flex-shrink: 0; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--orange); background: none; color: var(--orange); font-family: var(--font); font-size: 12px; font-weight: 600; cursor: pointer; transition: var(--transition); white-space: nowrap; }
 .joke-btn:hover { background: var(--orange); color: #fff; transform: translateY(-1px); }
 
@@ -1398,25 +1411,29 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 
   <div class="main">
     <div class="topbar">
-      <div class="topbar-title" id="topTitle">Kein Projekt</div>
-      <input class="topbar-search" id="searchInput" type="text" placeholder="Vorgang suchen...">
-      <div class="tab-group">
-        <button class="tab-btn active" data-view="dashboard">Dashboard</button>
-        <button class="tab-btn" data-view="list">Liste</button>
-        <button class="tab-btn" data-view="gantt">Gantt</button>
+      <div class="topbar-row1">
+        <div class="topbar-title" id="topTitle">Kein Projekt</div>
+        <input class="topbar-search" id="searchInput" type="text" placeholder="Vorgang suchen...">
+        <div class="tab-group">
+          <button class="tab-btn active" data-view="dashboard">Dashboard</button>
+          <button class="tab-btn" data-view="list">Liste</button>
+          <button class="tab-btn" data-view="gantt">Gantt</button>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-btn" onclick="triggerXMLUpload()" title="XML Importieren" style="font-size:14px;font-weight:700;">&#8679; XML</button>
+          <input type="file" id="xmlUploadInput" accept=".xml" style="display:none" onchange="handleXMLUpload(this)">
+          <button class="icon-btn theme-btn" onclick="toggleTheme()" id="themeBtn" title="Dark/Light Mode">&#9790;</button>
+        </div>
+        <button class="bug-btn" onclick="openBugReport()">&#128027; Bug melden</button>
+        <span class="save-flash" id="saveFlash">Gespeichert</span>
       </div>
-      <div class="topbar-actions">
-        <button class="icon-btn" onclick="triggerXMLUpload()" title="XML Importieren" style="font-size:14px;font-weight:700;">&#8679; XML</button>
-        <input type="file" id="xmlUploadInput" accept=".xml" style="display:none" onchange="handleXMLUpload(this)">
-        <button class="icon-btn theme-btn" onclick="toggleTheme()" id="themeBtn" title="Dark/Light Mode">&#9790;</button>
+      <div class="topbar-row2">
+        <div class="joke-bar" id="jokeBar">
+          <span class="joke-icon">&#9729;</span>
+          <span class="joke-text" id="jokeText"></span>
+          <button class="joke-btn" onclick="showJokeAnswer()">Aufl&ouml;sung &#127882;</button>
+        </div>
       </div>
-      <div class="joke-bar" id="jokeBar">
-        <span class="joke-icon">&#9729;</span>
-        <span class="joke-text" id="jokeText"></span>
-        <button class="joke-btn" onclick="showJokeAnswer()">Aufl&ouml;sung &#127882;</button>
-      </div>
-      <button class="bug-btn" onclick="openBugReport()">&#128027; Bug melden</button>
-      <span class="save-flash" id="saveFlash">Gespeichert</span>
     </div>
 
     <div class="kpi-strip" id="kpiStrip" style="display:none">
