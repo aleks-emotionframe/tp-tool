@@ -414,19 +414,19 @@ body {
 }
 .icon-btn:hover { border-color: var(--border2); color: var(--text); }
 .theme-btn { font-size: 18px; }
-.save-btn {
-  padding: 8px 20px;
-  background: linear-gradient(135deg, var(--orange) 0%, var(--orange-dim) 100%);
-  border: none;
+.bug-btn {
+  padding: 8px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
   border-radius: var(--radius-xs);
-  color: #fff;
+  color: var(--text2);
   font-family: var(--font);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: var(--transition);
 }
-.save-btn:hover { box-shadow: 0 4px 16px rgba(232,96,10,0.25); transform: translateY(-1px); }
+.bug-btn:hover { background: var(--red-light); color: var(--red); border-color: var(--red); transform: translateY(-1px); }
 .save-flash {
   color: var(--green);
   font-size: 13px;
@@ -762,6 +762,26 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 .pred-item-arrow { color: var(--text3); font-size: 14px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; }
 .pred-item:hover .pred-item-arrow { opacity: 1; color: var(--orange); }
 .col-id { color: var(--text3); font-variant-numeric: tabular-nums; font-size: 12px; }
+
+/* --- BUG REPORT MODAL --- */
+.bug-overlay { position: fixed; inset: 0; z-index: 1100; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; }
+.bug-overlay.show { display: flex; }
+.bug-modal { background: var(--surface); border-radius: 16px; box-shadow: 0 24px 64px rgba(0,0,0,0.25); width: 440px; max-width: 92vw; max-height: 90vh; overflow: hidden; }
+.bug-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 12px 20px; border-bottom: 1px solid var(--border); }
+.bug-modal-header h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text); }
+.bug-modal-body { padding: 20px; }
+.bug-modal-body label { display: block; font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 6px; }
+.bug-modal-body input, .bug-modal-body textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-xs); background: var(--surface2); color: var(--text); font-family: var(--font); font-size: 14px; transition: var(--transition); resize: vertical; }
+.bug-modal-body input:focus, .bug-modal-body textarea:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(232,96,10,0.12); }
+.bug-modal-body textarea { min-height: 120px; }
+.bug-field { margin-bottom: 16px; }
+.bug-modal-footer { padding: 0 20px 20px; display: flex; justify-content: flex-end; gap: 10px; }
+.bug-modal-footer button { padding: 10px 20px; border-radius: var(--radius-xs); font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); }
+.bug-cancel-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text2); }
+.bug-cancel-btn:hover { background: var(--surface3); }
+.bug-send-btn { background: var(--red); border: none; color: #fff; }
+.bug-send-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.bug-sent-msg { text-align: center; padding: 30px 20px; color: var(--green); font-weight: 600; font-size: 15px; }
 
 /* --- GANTT --- */
 .gantt-left {
@@ -1371,7 +1391,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         <button class="icon-btn" onclick="doExportJSON()" title="JSON Export">{ }</button>
         <button class="icon-btn theme-btn" onclick="toggleTheme()" id="themeBtn" title="Dark/Light Mode">&#9790;</button>
       </div>
-      <button class="save-btn" onclick="doSave()">Speichern</button>
+      <button class="bug-btn" onclick="openBugReport()">&#128027; Bug melden</button>
       <span class="save-flash" id="saveFlash">Gespeichert</span>
     </div>
 
@@ -1443,6 +1463,30 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
   <div class="toast-title" id="toastTitle"></div>
   <div class="toast-body" id="toastBody"></div>
   <div class="toast-chips" id="toastChips"></div>
+</div>
+
+<!-- BUG REPORT -->
+<div class="bug-overlay" id="bugOverlay" onclick="if(event.target===this)closeBugReport()">
+  <div class="bug-modal">
+    <div class="bug-modal-header">
+      <h3>&#128027; Bug melden</h3>
+      <button class="pred-popover-close" onclick="closeBugReport()">&times;</button>
+    </div>
+    <div class="bug-modal-body" id="bugBody">
+      <div class="bug-field">
+        <label>Betreff</label>
+        <input type="text" id="bugSubject" placeholder="Kurze Beschreibung des Problems...">
+      </div>
+      <div class="bug-field">
+        <label>Beschreibung</label>
+        <textarea id="bugDesc" placeholder="Was ist passiert? Was hast du erwartet? Welche Schritte f&uuml;hren zum Problem?"></textarea>
+      </div>
+    </div>
+    <div class="bug-modal-footer" id="bugFooter">
+      <button class="bug-cancel-btn" onclick="closeBugReport()">Abbrechen</button>
+      <button class="bug-send-btn" onclick="sendBugReport()">Absenden</button>
+    </div>
+  </div>
 </div>
 
 <!-- ADMIN CENTER -->
@@ -1746,8 +1790,12 @@ function finishCreate(id,name,tasks,xml){
 window.doSave=function(){
   if(!S.pid)return;
   var d=sGet('p_'+S.pid,{});d.tasks=S.tasks;sSet('p_'+S.pid,d);
-  var f=$('saveFlash');f.classList.add('show');setTimeout(function(){f.classList.remove('show');},2000);
 };
+function autoSave(){
+  if(!S.pid)return;
+  var d=sGet('p_'+S.pid,{});d.tasks=S.tasks;sSet('p_'+S.pid,d);
+  var f=$('saveFlash');f.classList.add('show');setTimeout(function(){f.classList.remove('show');},1200);
+}
 
 window.doExportXML=function(){
   if(!S.pid)return;
@@ -2086,8 +2134,7 @@ window.updateTaskProgress=function(val){
     var t=findTask(_tdUid);
     if(t){
       t.percentComplete=val;
-      // Auto-save
-      if(S.pid){var d=sGet('p_'+S.pid,{});d.tasks=S.tasks;sSet('p_'+S.pid,d);}
+      autoSave();
     }
   }
 };
@@ -2110,7 +2157,7 @@ window.editProgressInline=function(ev,uid){
   function commit(){
     var val=Math.max(0,Math.min(100,parseInt(inp.value)||0));
     t.percentComplete=val;
-    if(S.pid){var d=sGet('p_'+S.pid,{});d.tasks=S.tasks;sSet('p_'+S.pid,d);}
+    autoSave();
     applyFilters();
   }
   inp.addEventListener('keydown',function(e){
@@ -2361,11 +2408,12 @@ window.applyDP=function(){
     var task=findTask(uid);if(!task)return;
     task.finish=nd;
     task.duration=countWD(task.start,nd);
-    if(S.pid){var d=sGet('p_'+S.pid,{});d.tasks=S.tasks;sSet('p_'+S.pid,d);}
+    autoSave();
     updateKPI();applyFilters();
   }else{
     var result=cascade(S.tasks,uid,nd);S.tasks=result.tasks;
     if(result.changed.length>0)showToast(uid,result.changed);
+    autoSave();
     updateKPI();applyFilters();
   }
 };
@@ -2426,6 +2474,36 @@ document.addEventListener('click',function(e){
   var pop=$('predPopover');
   if(pop.classList.contains('show')&&!pop.contains(e.target)&&!e.target.closest('.pred-badge'))closePreds();
 });
+
+/* ─── BUG REPORT ─── */
+window.openBugReport=function(){
+  $('bugSubject').value='';$('bugDesc').value='';
+  $('bugBody').style.display='';$('bugFooter').style.display='';
+  $('bugOverlay').classList.add('show');
+  setTimeout(function(){$('bugSubject').focus();},100);
+};
+window.closeBugReport=function(){$('bugOverlay').classList.remove('show');};
+window.sendBugReport=function(){
+  var subj=$('bugSubject').value.trim();
+  var desc=$('bugDesc').value.trim();
+  if(!subj){$('bugSubject').focus();return;}
+  if(!desc){$('bugDesc').focus();return;}
+  var user=S.currentUser||'Unbekannt';
+  var proj='';
+  if(S.pid){var p=getIdx().find(function(x){return x.id==S.pid;});if(p)proj=p.name;}
+  var body='Gemeldet von: '+user+'\n'
+    +'Projekt: '+(proj||'Kein Projekt')+'\n'
+    +'Browser: '+navigator.userAgent+'\n'
+    +'Datum: '+new Date().toLocaleString('de-CH')+'\n\n'
+    +'Beschreibung:\n'+desc;
+  var mailto='mailto:aleks@emotionframe.ch'
+    +'?subject='+encodeURIComponent('[BAUTERM Bug] '+subj)
+    +'&body='+encodeURIComponent(body);
+  window.open(mailto,'_blank');
+  $('bugBody').innerHTML='<div class="bug-sent-msg">&#10003; Vielen Dank! Dein E-Mail-Programm wurde ge\u00f6ffnet.</div>';
+  $('bugFooter').style.display='none';
+  setTimeout(closeBugReport,3000);
+};
 
 window.openDPEnd=function(ev,uid){
   ev.stopPropagation();
