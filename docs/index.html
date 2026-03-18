@@ -962,7 +962,16 @@ window.toggleTheme=function(){
 
 /* ─── AUTH ─── */
 function showLogin(){$('loginScreen').classList.remove('hidden');$('appScreen').classList.add('hidden');}
-function showApp(){$('loginScreen').classList.add('hidden');$('appScreen').classList.remove('hidden');loadProjects();}
+function showApp(){
+  $('loginScreen').classList.add('hidden');
+  $('appScreen').classList.remove('hidden');
+  loadProjects();
+  // Auto-select first project if none active
+  if(!S.pid){
+    var idx=getIdx();
+    if(idx.length>0){loadProject(idx[0].id);}
+  }
+}
 
 $('loginForm').addEventListener('submit',function(e){
   e.preventDefault();
@@ -1395,9 +1404,11 @@ function parseDur(d,lag){
 /* ─── XML UPLOAD (topbar + drag & drop) ─── */
 window.triggerXMLUpload=function(){
   if(!S.pid){
-    // No project yet - create one first
-    showNewDialog();
-    return;
+    // If projects exist, select the first one automatically
+    var idx=getIdx();
+    if(idx.length>0){
+      loadProject(idx[0].id);
+    }
   }
   $('xmlUploadInput').click();
 };
@@ -1413,21 +1424,31 @@ window.handleXMLUpload=function(input){
       alert('Keine Vorg\u00e4nge in der XML-Datei gefunden.');
       return;
     }
-    if(S.pid){
-      // Import into current project
-      var d=sGet('p_'+S.pid,{});
-      d.tasks=tasks;
-      d.xml=xmlStr;
-      sSet('p_'+S.pid,d);
-      S.tasks=tasks;
-      showEmpty(false);
-      updateKPI();
-      applyFilters();
-      // Flash feedback
-      var f=$('saveFlash');f.textContent=tasks.length+' Vorg\u00e4nge importiert';
-      f.classList.add('show');
-      setTimeout(function(){f.classList.remove('show');f.textContent='Gespeichert';},3000);
+    // If no project selected, pick first existing or create one
+    if(!S.pid){
+      var idx=getIdx();
+      if(idx.length>0){
+        loadProject(idx[0].id);
+      } else {
+        var name=file.name.replace(/\.xml$/i,'');
+        var id=Date.now().toString();
+        finishCreate(id,name,tasks,xmlStr);
+        return;
+      }
     }
+    // Import into current project
+    var d=sGet('p_'+S.pid,{});
+    d.tasks=tasks;
+    d.xml=xmlStr;
+    sSet('p_'+S.pid,d);
+    S.tasks=tasks;
+    showEmpty(false);
+    updateKPI();
+    applyFilters();
+    // Flash feedback
+    var f=$('saveFlash');f.textContent=tasks.length+' Vorg\u00e4nge importiert';
+    f.classList.add('show');
+    setTimeout(function(){f.classList.remove('show');f.textContent='Gespeichert';},3000);
   };
   reader.readAsText(file);
   // Reset input
