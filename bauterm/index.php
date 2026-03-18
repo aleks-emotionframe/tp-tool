@@ -1,0 +1,1059 @@
+<?php
+require_once __DIR__ . '/config.php';
+session_name(SESSION_NAME);
+session_start();
+$authenticated = !empty($_SESSION['authenticated']);
+?><!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BAUTERM — Terminprogramm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   BAUTERM — CSS
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #111318;
+  --surface: #1c1f26;
+  --header-bg: #1c1f26;
+  --accent: #FF6B00;
+  --critical-bar: #8a2a0a;
+  --critical-border: #FF6B0060;
+  --normal-bar: #0a3a5a;
+  --normal-border: #2a6a8a40;
+  --text: #d0d0d0;
+  --text-sec: #888888;
+  --border: #1e2030;
+  --row-even: #0e1015;
+  --row-odd: #12151a;
+  --critical-text: #FF9060;
+  --summary-text: #FFD080;
+  --date-text: #7ab0a0;
+  --font-head: 'Barlow Condensed', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+html, body { height: 100%; }
+body {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* --- LOGIN --- */
+.login-wrap {
+  display: flex; align-items: center; justify-content: center;
+  height: 100vh; background: var(--bg);
+}
+.login-box {
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 40px; width: 360px; text-align: center;
+}
+.login-box h1 {
+  font-family: var(--font-head); font-weight: 700; font-size: 28px;
+  color: var(--accent); margin-bottom: 8px;
+}
+.login-box p { color: var(--text-sec); margin-bottom: 24px; font-size: 12px; }
+.login-box input {
+  width: 100%; padding: 10px 14px; background: var(--bg);
+  border: 1px solid var(--border); color: var(--text);
+  font-family: var(--font-mono); font-size: 14px; margin-bottom: 16px;
+  outline: none;
+}
+.login-box input:focus { border-color: var(--accent); }
+.login-box button {
+  width: 100%; padding: 10px; background: var(--accent); color: #fff;
+  border: none; cursor: pointer; font-family: var(--font-head);
+  font-weight: 700; font-size: 16px; letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.login-box button:hover { background: #e05e00; }
+.login-error { color: #ff4444; font-size: 12px; margin-top: 8px; display: none; }
+
+/* --- HEADER --- */
+.app-header {
+  height: 50px; background: var(--header-bg);
+  border-bottom: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; position: relative; z-index: 100;
+}
+.app-logo {
+  font-family: var(--font-head); font-weight: 700; font-size: 20px;
+  color: var(--accent); letter-spacing: 1px;
+}
+.app-logo span { margin-right: 6px; }
+.header-actions { display: flex; align-items: center; gap: 10px; }
+.header-actions select,
+.header-actions button {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  font-family: var(--font-mono); font-size: 12px; padding: 5px 10px;
+  cursor: pointer; outline: none;
+}
+.header-actions select { max-width: 200px; }
+.header-actions button:hover { border-color: var(--accent); color: var(--accent); }
+.btn-accent {
+  background: var(--accent) !important; color: #fff !important;
+  border-color: var(--accent) !important; font-weight: 500;
+}
+.btn-accent:hover { background: #e05e00 !important; }
+.save-feedback {
+  color: #4CAF50; font-size: 12px; opacity: 0;
+  transition: opacity 0.3s;
+}
+.save-feedback.show { opacity: 1; }
+
+/* --- TOOLBAR --- */
+.toolbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 16px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.toolbar input[type="text"] {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  font-family: var(--font-mono); font-size: 12px; padding: 5px 10px;
+  width: 240px; outline: none;
+}
+.toolbar input[type="text"]:focus { border-color: var(--accent); }
+.toolbar label {
+  font-size: 12px; color: var(--text-sec); cursor: pointer;
+  display: flex; align-items: center; gap: 4px;
+}
+.toolbar label input[type="checkbox"] { accent-color: var(--accent); }
+.counter { font-size: 12px; color: var(--text-sec); margin-left: auto; }
+.view-tabs { display: flex; gap: 2px; margin-left: 12px; }
+.view-tab {
+  background: var(--bg); border: 1px solid var(--border); color: var(--text-sec);
+  font-family: var(--font-mono); font-size: 12px; padding: 5px 14px;
+  cursor: pointer; outline: none;
+}
+.view-tab.active { border-color: var(--accent); color: var(--accent); }
+
+/* --- CASCADE BANNER --- */
+.cascade-banner {
+  background: #2a1500; border-bottom: 1px solid var(--accent);
+  padding: 10px 16px; display: none; position: relative;
+}
+.cascade-banner.show { display: block; }
+.cascade-banner .banner-title {
+  font-family: var(--font-head); font-weight: 700; font-size: 15px;
+  color: var(--accent); margin-bottom: 6px;
+}
+.cascade-banner .banner-close {
+  position: absolute; top: 8px; right: 12px; background: none;
+  border: none; color: var(--text-sec); font-size: 18px; cursor: pointer;
+}
+.cascade-banner .banner-close:hover { color: var(--text); }
+.cascade-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.cascade-chip {
+  font-size: 11px; padding: 2px 8px; border-radius: 3px;
+}
+.cascade-chip.critical { background: #3a1500; color: var(--critical-text); }
+.cascade-chip.normal { background: #0a2a1a; color: #70c090; }
+
+/* --- CONTENT AREA --- */
+.content { flex: 1; overflow: auto; position: relative; }
+.app-wrap {
+  display: flex; flex-direction: column; height: 100vh;
+}
+
+/* --- TABLE (LIST VIEW) --- */
+.task-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+}
+.task-table th {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface); color: var(--text-sec);
+  font-weight: 500; text-align: left; padding: 6px 10px;
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.task-table td {
+  padding: 4px 10px; border-bottom: 1px solid #0a0c10;
+  white-space: nowrap; vertical-align: middle;
+}
+.task-table tr:nth-child(even) td { background: var(--row-even); }
+.task-table tr:nth-child(odd) td { background: var(--row-odd); }
+.task-table tr:hover td { background: #1a1d25; }
+.task-table tr.is-summary td { font-weight: 500; }
+.task-table tr.is-summary .task-name { color: var(--summary-text); }
+.task-table tr.is-critical .task-name { color: var(--critical-text); }
+.task-name { overflow: hidden; text-overflow: ellipsis; max-width: 400px; }
+.date-cell {
+  color: var(--date-text); cursor: pointer; position: relative;
+}
+.date-cell:hover { text-decoration: underline; }
+.date-cell input[type="date"] {
+  position: absolute; top: 0; left: 0; opacity: 0;
+  width: 100%; height: 100%; cursor: pointer;
+}
+.progress-bar {
+  width: 60px; height: 6px; background: var(--bg);
+  border: 1px solid var(--border); display: inline-block;
+  vertical-align: middle;
+}
+.progress-fill { height: 100%; background: var(--accent); }
+.pred-text { color: var(--text-sec); font-size: 11px; }
+
+/* --- GANTT VIEW --- */
+.gantt-wrap {
+  display: flex; height: 100%; overflow: hidden;
+}
+.gantt-names {
+  width: 280px; min-width: 280px; overflow-y: auto;
+  border-right: 1px solid var(--border); background: var(--surface);
+  flex-shrink: 0;
+}
+.gantt-names::-webkit-scrollbar { width: 0; }
+.gantt-names table { width: 100%; border-collapse: collapse; }
+.gantt-names th {
+  position: sticky; top: 0; z-index: 5;
+  background: var(--surface); color: var(--text-sec);
+  font-weight: 500; text-align: left; padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+  height: 44px;
+}
+.gantt-names td {
+  padding: 3px 10px; border-bottom: 1px solid #0a0c10;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 12px; height: 26px;
+}
+.gantt-names tr:nth-child(even) td { background: var(--row-even); }
+.gantt-names tr:nth-child(odd) td { background: var(--row-odd); }
+.gantt-names tr.is-summary td { color: var(--summary-text); font-weight: 500; }
+.gantt-names tr.is-critical td { color: var(--critical-text); }
+
+.gantt-chart-wrap {
+  flex: 1; overflow: auto; position: relative;
+}
+.gantt-header {
+  position: sticky; top: 0; z-index: 4;
+  background: var(--surface); height: 44px;
+  border-bottom: 1px solid var(--border);
+}
+.gantt-header-label {
+  position: absolute; top: 4px; font-size: 11px;
+  color: var(--text-sec); font-weight: 500; white-space: nowrap;
+  padding-left: 4px;
+}
+.gantt-body { position: relative; }
+.gantt-row {
+  height: 26px; position: relative;
+  border-bottom: 1px solid #0a0c10;
+}
+.gantt-row:nth-child(even) { background: var(--row-even); }
+.gantt-row:nth-child(odd) { background: var(--row-odd); }
+.gantt-bar {
+  position: absolute; top: 5px; height: 16px;
+  border-radius: 2px; cursor: pointer; min-width: 4px;
+  transition: opacity 0.15s;
+}
+.gantt-bar:hover { opacity: 0.8; }
+.gantt-bar.normal {
+  background: var(--normal-bar); border: 1px solid var(--normal-border);
+}
+.gantt-bar.critical {
+  background: var(--critical-bar); border: 1px solid var(--critical-border);
+}
+.gantt-bar.summary {
+  background: #5a4a1a; border: 1px solid #8a7a3a40;
+  height: 8px; top: 9px; border-radius: 1px;
+}
+.gantt-month-line {
+  position: absolute; top: 0; bottom: 0; width: 1px;
+  background: var(--border); z-index: 1; pointer-events: none;
+}
+.gantt-today-line {
+  position: absolute; top: 0; bottom: 0; width: 2px;
+  background: var(--accent); z-index: 2; opacity: 0.7;
+  pointer-events: none;
+}
+
+/* --- POPUP DATE PICKER --- */
+.date-popup {
+  position: fixed; z-index: 200; background: var(--surface);
+  border: 1px solid var(--accent); padding: 12px;
+  display: none; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.date-popup.show { display: block; }
+.date-popup label {
+  display: block; font-size: 11px; color: var(--text-sec);
+  margin-bottom: 6px;
+}
+.date-popup input[type="date"] {
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); font-family: var(--font-mono);
+  padding: 6px 10px; font-size: 13px; outline: none;
+}
+.date-popup input[type="date"]:focus { border-color: var(--accent); }
+.date-popup .popup-btns { margin-top: 8px; display: flex; gap: 6px; }
+.date-popup .popup-btns button {
+  padding: 4px 12px; font-size: 12px; cursor: pointer;
+  font-family: var(--font-mono); border: 1px solid var(--border);
+  background: var(--bg); color: var(--text);
+}
+.date-popup .popup-btns button.apply {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+
+/* --- PROJECT DIALOG --- */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6); z-index: 300;
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 24px; width: 420px; max-width: 90vw;
+}
+.modal-box h3 {
+  font-family: var(--font-head); font-weight: 700; font-size: 18px;
+  color: var(--accent); margin-bottom: 16px;
+}
+.modal-box label {
+  display: block; font-size: 12px; color: var(--text-sec); margin-bottom: 4px;
+}
+.modal-box input[type="text"],
+.modal-box input[type="file"] {
+  width: 100%; padding: 8px 10px; background: var(--bg);
+  border: 1px solid var(--border); color: var(--text);
+  font-family: var(--font-mono); font-size: 13px;
+  margin-bottom: 12px; outline: none;
+}
+.modal-box input:focus { border-color: var(--accent); }
+.modal-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
+.modal-btns button {
+  padding: 6px 16px; font-size: 13px; cursor: pointer;
+  font-family: var(--font-mono); border: 1px solid var(--border);
+  background: var(--bg); color: var(--text);
+}
+.modal-btns .btn-primary {
+  background: var(--accent); border-color: var(--accent); color: #fff;
+}
+
+/* --- SCROLLBAR --- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: #2a2d36; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3d46; }
+
+/* --- EMPTY STATE --- */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; height: 100%; color: var(--text-sec);
+  font-size: 14px; gap: 12px;
+}
+.empty-state .icon { font-size: 48px; opacity: 0.3; }
+</style>
+</head>
+<body>
+
+<?php if (!$authenticated): ?>
+<!-- ============================================================ -->
+<!-- LOGIN SCREEN -->
+<!-- ============================================================ -->
+<div class="login-wrap">
+  <div class="login-box">
+    <h1><span>&#9724;</span> BAUTERM</h1>
+    <p>Terminprogramm f&uuml;r Bauleiter</p>
+    <form id="loginForm">
+      <input type="password" id="loginPassword" placeholder="Passwort eingeben" autocomplete="current-password" autofocus>
+      <button type="submit">EINLOGGEN</button>
+    </form>
+    <div class="login-error" id="loginError">Falsches Passwort</div>
+  </div>
+</div>
+<script>
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var pw = document.getElementById('loginPassword').value;
+  fetch('api.php?action=login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({password: pw})
+  }).then(function(r) { return r.json(); }).then(function(d) {
+    if (d.success) { location.reload(); }
+    else { document.getElementById('loginError').style.display = 'block'; }
+  }).catch(function() { document.getElementById('loginError').style.display = 'block'; });
+});
+</script>
+
+<?php else: ?>
+<!-- ============================================================ -->
+<!-- MAIN APP -->
+<!-- ============================================================ -->
+<div class="app-wrap">
+  <!-- HEADER -->
+  <div class="app-header">
+    <div class="app-logo"><span>&#9724;</span> BAUTERM</div>
+    <div class="header-actions">
+      <select id="projectSelect"><option value="">— Projekt w&auml;hlen —</option></select>
+      <button onclick="showNewProjectDialog()">+ Neu</button>
+      <button onclick="renameProject()">Umbenennen</button>
+      <button onclick="deleteProject()">L&ouml;schen</button>
+      <span style="color:var(--border)">|</span>
+      <button class="btn-accent" onclick="saveProject()">Speichern</button>
+      <span class="save-feedback" id="saveFeedback">Gespeichert &#10003;</span>
+      <span style="color:var(--border)">|</span>
+      <button onclick="exportXML()">XML</button>
+      <button onclick="exportJSON()">JSON</button>
+      <span style="color:var(--border)">|</span>
+      <button onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="Vorgang suchen...">
+    <label><input type="checkbox" id="criticalOnly"> Nur kritische</label>
+    <span class="counter" id="counter">0 / 0 Vorg&auml;nge</span>
+    <div class="view-tabs">
+      <button class="view-tab active" data-view="list">Liste</button>
+      <button class="view-tab" data-view="gantt">Gantt</button>
+    </div>
+  </div>
+
+  <!-- CASCADE BANNER -->
+  <div class="cascade-banner" id="cascadeBanner">
+    <button class="banner-close" onclick="closeBanner()">&times;</button>
+    <div class="banner-title" id="bannerTitle"></div>
+    <div class="cascade-chips" id="bannerChips"></div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content" id="contentArea">
+    <div class="empty-state" id="emptyState">
+      <div class="icon">&#9724;</div>
+      <div>Kein Projekt geladen</div>
+      <div style="font-size:12px">Erstelle ein neues Projekt mit XML-Import</div>
+    </div>
+    <div id="listView" style="display:none; height:100%; overflow:auto;"></div>
+    <div id="ganttView" style="display:none; height:100%; overflow:hidden;"></div>
+  </div>
+</div>
+
+<!-- DATE POPUP -->
+<div class="date-popup" id="datePopup">
+  <label id="datePopupLabel">Startdatum &auml;ndern</label>
+  <input type="date" id="datePopupInput">
+  <div class="popup-btns">
+    <button onclick="closeDatePopup()">Abbrechen</button>
+    <button class="apply" onclick="applyDateChange()">Anwenden</button>
+  </div>
+</div>
+
+<!-- NEW PROJECT MODAL -->
+<div class="modal-overlay" id="newProjectModal">
+  <div class="modal-box">
+    <h3>Neues Projekt</h3>
+    <label>Projektname</label>
+    <input type="text" id="newProjectName" placeholder="z.B. Neubau Schulhaus Muster">
+    <label>MS Project XML-Datei</label>
+    <input type="file" id="newProjectFile" accept=".xml">
+    <div class="modal-btns">
+      <button onclick="closeNewProjectDialog()">Abbrechen</button>
+      <button class="btn-primary" onclick="createProject()">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- JAVASCRIPT -->
+<!-- ============================================================ -->
+<script>
+(function() {
+'use strict';
+
+// ============================================================
+// STATE
+// ============================================================
+var state = {
+  projects: [],
+  currentProjectId: null,
+  tasks: [],
+  filteredTasks: [],
+  view: 'list',
+  search: '',
+  criticalOnly: false,
+  datePopupUid: null
+};
+
+// ============================================================
+// API HELPERS
+// ============================================================
+function api(action, opts) {
+  opts = opts || {};
+  var url = 'api.php?action=' + action;
+  if (opts.query) {
+    for (var k in opts.query) url += '&' + k + '=' + encodeURIComponent(opts.query[k]);
+  }
+  var fetchOpts = { method: opts.method || 'GET' };
+  if (opts.body) {
+    if (opts.body instanceof FormData) {
+      fetchOpts.method = 'POST';
+      fetchOpts.body = opts.body;
+    } else {
+      fetchOpts.method = 'POST';
+      fetchOpts.headers = {'Content-Type': 'application/json'};
+      fetchOpts.body = JSON.stringify(opts.body);
+    }
+  }
+  return fetch(url, fetchOpts).then(function(r) { return r.json(); });
+}
+
+// ============================================================
+// PROJECT MANAGEMENT
+// ============================================================
+function loadProjects() {
+  api('projects').then(function(list) {
+    state.projects = list;
+    var sel = document.getElementById('projectSelect');
+    sel.innerHTML = '<option value="">— Projekt w\u00e4hlen —</option>';
+    list.forEach(function(p) {
+      var opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.name;
+      if (state.currentProjectId && p.id == state.currentProjectId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+document.getElementById('projectSelect').addEventListener('change', function() {
+  var id = this.value;
+  if (!id) {
+    state.currentProjectId = null;
+    state.tasks = [];
+    applyFilters();
+    showEmpty(true);
+    return;
+  }
+  loadProject(id);
+});
+
+function loadProject(id) {
+  api('project_load', {query: {id: id}}).then(function(p) {
+    state.currentProjectId = p.id;
+    try { state.tasks = JSON.parse(p.tasks_json) || []; }
+    catch(e) { state.tasks = []; }
+    showEmpty(false);
+    applyFilters();
+  });
+}
+
+window.showNewProjectDialog = function() {
+  document.getElementById('newProjectModal').classList.add('show');
+  document.getElementById('newProjectName').value = '';
+  document.getElementById('newProjectFile').value = '';
+  document.getElementById('newProjectName').focus();
+};
+
+window.closeNewProjectDialog = function() {
+  document.getElementById('newProjectModal').classList.remove('show');
+};
+
+window.createProject = function() {
+  var name = document.getElementById('newProjectName').value.trim();
+  var fileInput = document.getElementById('newProjectFile');
+  if (!name) { alert('Bitte Projektname eingeben'); return; }
+  var fd = new FormData();
+  fd.append('name', name);
+  if (fileInput.files.length > 0) {
+    fd.append('xml_file', fileInput.files[0]);
+  }
+  api('project_new', {body: fd}).then(function(d) {
+    if (d.error) { alert(d.error); return; }
+    closeNewProjectDialog();
+    state.currentProjectId = d.id;
+    loadProjects();
+    setTimeout(function() { loadProject(d.id); }, 200);
+  });
+};
+
+window.renameProject = function() {
+  if (!state.currentProjectId) return;
+  var name = prompt('Neuer Projektname:');
+  if (!name) return;
+  api('project_rename', {body: {id: state.currentProjectId, name: name}}).then(function() {
+    loadProjects();
+  });
+};
+
+window.deleteProject = function() {
+  if (!state.currentProjectId) return;
+  if (!confirm('Projekt wirklich l\u00f6schen?')) return;
+  api('project_delete', {body: {id: state.currentProjectId}}).then(function() {
+    state.currentProjectId = null;
+    state.tasks = [];
+    showEmpty(true);
+    loadProjects();
+    applyFilters();
+  });
+};
+
+window.saveProject = function() {
+  if (!state.currentProjectId) return;
+  api('project_save', {body: {
+    id: state.currentProjectId,
+    tasks_json: JSON.stringify(state.tasks)
+  }}).then(function(d) {
+    if (d.success) {
+      var fb = document.getElementById('saveFeedback');
+      fb.classList.add('show');
+      setTimeout(function() { fb.classList.remove('show'); }, 2000);
+    }
+  });
+};
+
+window.exportXML = function() {
+  if (!state.currentProjectId) return;
+  window.open('api.php?action=export_xml&id=' + state.currentProjectId);
+};
+
+window.exportJSON = function() {
+  if (!state.currentProjectId) return;
+  window.open('api.php?action=export_json&id=' + state.currentProjectId);
+};
+
+window.doLogout = function() {
+  api('logout', {body: {}}).then(function() { location.reload(); });
+};
+
+function showEmpty(show) {
+  document.getElementById('emptyState').style.display = show ? 'flex' : 'none';
+  document.getElementById('listView').style.display = show ? 'none' : (state.view === 'list' ? 'block' : 'none');
+  document.getElementById('ganttView').style.display = show ? 'none' : (state.view === 'gantt' ? 'flex' : 'none');
+}
+
+// ============================================================
+// FILTERING
+// ============================================================
+document.getElementById('searchInput').addEventListener('input', function() {
+  state.search = this.value.toLowerCase();
+  applyFilters();
+});
+
+document.getElementById('criticalOnly').addEventListener('change', function() {
+  state.criticalOnly = this.checked;
+  applyFilters();
+});
+
+function applyFilters() {
+  var tasks = state.tasks;
+  var filtered = tasks.filter(function(t) {
+    if (state.search && t.name.toLowerCase().indexOf(state.search) === -1) return false;
+    if (state.criticalOnly && !t.critical) return false;
+    return true;
+  });
+  state.filteredTasks = filtered;
+  document.getElementById('counter').textContent = filtered.length + ' / ' + tasks.length + ' Vorg\u00e4nge';
+  renderView();
+}
+
+// ============================================================
+// VIEW SWITCHING
+// ============================================================
+document.querySelectorAll('.view-tab').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.view-tab').forEach(function(b) { b.classList.remove('active'); });
+    this.classList.add('active');
+    state.view = this.dataset.view;
+    if (state.currentProjectId) showEmpty(false);
+    renderView();
+  });
+});
+
+function renderView() {
+  if (state.view === 'list') {
+    document.getElementById('listView').style.display = 'block';
+    document.getElementById('ganttView').style.display = 'none';
+    renderList();
+  } else {
+    document.getElementById('listView').style.display = 'none';
+    document.getElementById('ganttView').style.display = 'flex';
+    renderGantt();
+  }
+}
+
+// ============================================================
+// LIST VIEW
+// ============================================================
+function renderList() {
+  var container = document.getElementById('listView');
+  var tasks = state.filteredTasks;
+  if (tasks.length === 0) {
+    container.innerHTML = '<div class="empty-state"><div>Keine Vorg\u00e4nge</div></div>';
+    return;
+  }
+
+  var html = '<table class="task-table"><thead><tr>';
+  html += '<th>ID</th><th>Vorgang</th><th>Start</th><th>Ende</th><th>Dauer</th><th>Fortschritt</th><th>Vorg\u00e4nger</th>';
+  html += '</tr></thead><tbody>';
+
+  tasks.forEach(function(t) {
+    var cls = '';
+    if (t.summary) cls += ' is-summary';
+    if (t.critical) cls += ' is-critical';
+    var indent = (t.outlineLevel || 0) * 16;
+    var predStr = (t.predecessors || []).map(function(p) {
+      var types = {0:'FF',1:'FS',2:'SF',3:'SS'};
+      return p.uid + (types[p.type] || 'FS') + (p.lagDays ? '+' + p.lagDays + 'd' : '');
+    }).join(', ');
+
+    html += '<tr class="' + cls + '" data-uid="' + t.uid + '">';
+    html += '<td>' + t.id + '</td>';
+    html += '<td class="task-name" style="padding-left:' + (10 + indent) + 'px">' + escHtml(t.name) + '</td>';
+    html += '<td class="date-cell" onclick="openDatePicker(event,' + t.uid + ')">' + formatDate(t.start) + '</td>';
+    html += '<td>' + formatDate(t.finish) + '</td>';
+    html += '<td>' + (t.duration || 0) + 'd</td>';
+    html += '<td><div class="progress-bar"><div class="progress-fill" style="width:' + (t.percentComplete || 0) + '%"></div></div> ' + (t.percentComplete || 0) + '%</td>';
+    html += '<td class="pred-text">' + escHtml(predStr) + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ============================================================
+// GANTT VIEW
+// ============================================================
+function renderGantt() {
+  var container = document.getElementById('ganttView');
+  var tasks = state.filteredTasks;
+
+  if (tasks.length === 0) {
+    container.innerHTML = '<div class="empty-state" style="width:100%"><div>Keine Vorg\u00e4nge</div></div>';
+    return;
+  }
+
+  // Calculate date range
+  var minDate = null, maxDate = null;
+  tasks.forEach(function(t) {
+    if (t.start) {
+      var d = new Date(t.start);
+      if (!minDate || d < minDate) minDate = new Date(d);
+    }
+    if (t.finish) {
+      var d = new Date(t.finish);
+      if (!maxDate || d > maxDate) maxDate = new Date(d);
+    }
+  });
+
+  if (!minDate || !maxDate) {
+    container.innerHTML = '<div class="empty-state" style="width:100%"><div>Keine Daten verf\u00fcgbar</div></div>';
+    return;
+  }
+
+  // Add padding
+  minDate.setDate(minDate.getDate() - 14);
+  maxDate.setDate(maxDate.getDate() + 30);
+
+  var dayWidth = 3;
+  var totalDays = Math.ceil((maxDate - minDate) / 86400000);
+  var chartWidth = totalDays * dayWidth;
+  var rowHeight = 26;
+
+  // LEFT: Names
+  var namesHtml = '<table><thead><tr><th>Vorgang</th></tr></thead><tbody>';
+  tasks.forEach(function(t) {
+    var cls = '';
+    if (t.summary) cls += ' is-summary';
+    if (t.critical) cls += ' is-critical';
+    var indent = (t.outlineLevel || 0) * 12;
+    namesHtml += '<tr class="' + cls + '"><td style="padding-left:' + (10 + indent) + 'px">' + escHtml(t.name) + '</td></tr>';
+  });
+  namesHtml += '</tbody></table>';
+
+  // RIGHT: Chart
+  var headerHtml = '';
+  var linesHtml = '';
+
+  // Month lines + labels
+  var d = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+  var months = ['Jan','Feb','M\u00e4r','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  while (d <= maxDate) {
+    var x = Math.round((d - minDate) / 86400000) * dayWidth;
+    linesHtml += '<div class="gantt-month-line" style="left:' + x + 'px;height:' + (tasks.length * rowHeight) + 'px"></div>';
+    headerHtml += '<div class="gantt-header-label" style="left:' + (x + 2) + 'px">' + months[d.getMonth()] + ' ' + d.getFullYear() + '</div>';
+    d.setMonth(d.getMonth() + 1);
+  }
+
+  // Today line
+  var today = new Date();
+  today.setHours(0,0,0,0);
+  var todayX = Math.round((today - minDate) / 86400000) * dayWidth;
+  if (todayX >= 0 && todayX <= chartWidth) {
+    linesHtml += '<div class="gantt-today-line" style="left:' + todayX + 'px;height:' + (tasks.length * rowHeight) + 'px"></div>';
+  }
+
+  // Bars
+  var barsHtml = '';
+  tasks.forEach(function(t, i) {
+    var rowHtml = '<div class="gantt-row">';
+    if (t.start && t.finish) {
+      var s = new Date(t.start);
+      var e = new Date(t.finish);
+      var x1 = Math.round((s - minDate) / 86400000) * dayWidth;
+      var x2 = Math.round((e - minDate) / 86400000) * dayWidth;
+      var w = Math.max(x2 - x1, 4);
+      var cls = t.summary ? 'summary' : (t.critical ? 'critical' : 'normal');
+      rowHtml += '<div class="gantt-bar ' + cls + '" style="left:' + x1 + 'px;width:' + w + 'px" data-uid="' + t.uid + '" onclick="openGanttDatePicker(event,' + t.uid + ')"></div>';
+    }
+    rowHtml += '</div>';
+    barsHtml += rowHtml;
+  });
+
+  container.innerHTML =
+    '<div class="gantt-names" id="ganttNames">' + namesHtml + '</div>' +
+    '<div class="gantt-chart-wrap" id="ganttChartWrap">' +
+      '<div class="gantt-header" style="width:' + chartWidth + 'px">' + headerHtml + '</div>' +
+      '<div class="gantt-body" style="width:' + chartWidth + 'px">' + linesHtml + barsHtml + '</div>' +
+    '</div>';
+
+  // Sync scroll
+  var names = document.getElementById('ganttNames');
+  var chart = document.getElementById('ganttChartWrap');
+  chart.addEventListener('scroll', function() {
+    names.scrollTop = chart.scrollTop;
+  });
+  names.addEventListener('scroll', function() {
+    chart.scrollTop = names.scrollTop;
+  });
+
+  // Scroll to today
+  if (todayX > 200) {
+    chart.scrollLeft = todayX - 200;
+  }
+}
+
+// ============================================================
+// DATE PICKER
+// ============================================================
+window.openDatePicker = function(event, uid) {
+  event.stopPropagation();
+  var task = findTask(uid);
+  if (!task || task.summary) return;
+  showDatePopup(event.clientX, event.clientY, uid, task.start);
+};
+
+window.openGanttDatePicker = function(event, uid) {
+  event.stopPropagation();
+  var task = findTask(uid);
+  if (!task || task.summary) return;
+  showDatePopup(event.clientX, event.clientY, uid, task.start);
+};
+
+function showDatePopup(x, y, uid, currentDate) {
+  var popup = document.getElementById('datePopup');
+  var task = findTask(uid);
+  state.datePopupUid = uid;
+  document.getElementById('datePopupLabel').textContent = task ? task.name : 'Datum \u00e4ndern';
+  document.getElementById('datePopupInput').value = currentDate || '';
+  popup.style.left = Math.min(x, window.innerWidth - 260) + 'px';
+  popup.style.top = Math.min(y, window.innerHeight - 120) + 'px';
+  popup.classList.add('show');
+}
+
+window.closeDatePopup = function() {
+  document.getElementById('datePopup').classList.remove('show');
+  state.datePopupUid = null;
+};
+
+window.applyDateChange = function() {
+  var uid = state.datePopupUid;
+  var newDate = document.getElementById('datePopupInput').value;
+  if (!uid || !newDate) return;
+  closeDatePopup();
+
+  var result = cascade(state.tasks, uid, newDate);
+  state.tasks = result.updatedTasks;
+
+  if (result.changedUids.length > 0) {
+    showCascadeBanner(uid, result.changedUids);
+  }
+
+  applyFilters();
+};
+
+// Close popup on outside click
+document.addEventListener('click', function(e) {
+  var popup = document.getElementById('datePopup');
+  if (popup.classList.contains('show') && !popup.contains(e.target)) {
+    closeDatePopup();
+  }
+});
+
+// ============================================================
+// CASCADE ALGORITHM
+// ============================================================
+function cascade(tasks, changedUid, newStart) {
+  // Build maps
+  var map = {};
+  tasks.forEach(function(t) { map[t.uid] = Object.assign({}, t); });
+
+  // Build successor map
+  var succ = {};
+  tasks.forEach(function(t) {
+    (t.predecessors || []).forEach(function(p) {
+      if (!succ[p.uid]) succ[p.uid] = [];
+      succ[p.uid].push({uid: t.uid, type: p.type, lagDays: p.lagDays || 0});
+    });
+  });
+
+  // Update start task
+  var changed = map[changedUid];
+  if (!changed) return {updatedTasks: tasks, changedUids: []};
+
+  changed.start = newStart;
+  changed.finish = addWorkdays(newStart, changed.duration || 0);
+
+  var changedUids = [];
+  var queue = [changedUid];
+  var visited = {};
+  visited[changedUid] = true;
+
+  while (queue.length > 0) {
+    var uid = queue.shift();
+    var current = map[uid];
+    var successors = succ[uid] || [];
+
+    successors.forEach(function(s) {
+      var st = map[s.uid];
+      if (!st) return;
+
+      var minStart;
+      if (s.type === 1) { // FS
+        minStart = addWorkdaysStr(current.finish, s.lagDays);
+      } else if (s.type === 3) { // SS
+        minStart = addWorkdaysStr(current.start, s.lagDays);
+      } else if (s.type === 0) { // FF
+        minStart = addWorkdaysStr(current.finish, s.lagDays - (st.duration || 0));
+      } else { // SF (type 2)
+        minStart = addWorkdaysStr(current.start, s.lagDays - (st.duration || 0));
+      }
+
+      if (minStart > st.start) {
+        st.start = minStart;
+        st.finish = addWorkdays(minStart, st.duration || 0);
+        changedUids.push(st.uid);
+        if (!visited[st.uid]) {
+          visited[st.uid] = true;
+          queue.push(st.uid);
+        }
+      }
+    });
+  }
+
+  var updatedTasks = tasks.map(function(t) { return map[t.uid] || t; });
+  return {updatedTasks: updatedTasks, changedUids: changedUids};
+}
+
+// ============================================================
+// WORKDAY HELPERS
+// ============================================================
+function addWorkdays(dateStr, days) {
+  if (!dateStr) return dateStr;
+  var d = new Date(dateStr + 'T00:00:00');
+  var remaining = Math.round(days);
+  if (remaining <= 0) return dateStr;
+  while (remaining > 0) {
+    d.setDate(d.getDate() + 1);
+    var dow = d.getDay();
+    if (dow !== 0 && dow !== 6) remaining--;
+  }
+  return formatISODate(d);
+}
+
+function addWorkdaysStr(dateStr, days) {
+  if (!dateStr) return dateStr;
+  if (days === 0) return dateStr;
+  var d = new Date(dateStr + 'T00:00:00');
+  var remaining = Math.abs(Math.round(days));
+  var dir = days > 0 ? 1 : -1;
+  while (remaining > 0) {
+    d.setDate(d.getDate() + dir);
+    var dow = d.getDay();
+    if (dow !== 0 && dow !== 6) remaining--;
+  }
+  return formatISODate(d);
+}
+
+// ============================================================
+// CASCADE BANNER
+// ============================================================
+function showCascadeBanner(triggerUid, changedUids) {
+  var trigger = findTask(triggerUid);
+  var banner = document.getElementById('cascadeBanner');
+  var title = document.getElementById('bannerTitle');
+  var chips = document.getElementById('bannerChips');
+
+  title.innerHTML = '\u26A0 ACHTUNG \u2014 ' + changedUids.length + ' TERMINE VERSCHIEBEN SICH';
+  if (trigger) {
+    title.innerHTML += '<br><span style="font-size:12px;font-family:var(--font-mono);font-weight:400;color:var(--text)">Ausl\u00f6ser: ' + escHtml(trigger.name) + '</span>';
+  }
+
+  var chipsHtml = '';
+  changedUids.forEach(function(uid) {
+    var t = findTask(uid);
+    if (!t) return;
+    var cls = t.critical ? 'critical' : 'normal';
+    chipsHtml += '<span class="cascade-chip ' + cls + '">' + escHtml(t.name) + '</span>';
+  });
+  chips.innerHTML = chipsHtml;
+  banner.classList.add('show');
+}
+
+window.closeBanner = function() {
+  document.getElementById('cascadeBanner').classList.remove('show');
+};
+
+// ============================================================
+// UTILITY FUNCTIONS
+// ============================================================
+function findTask(uid) {
+  for (var i = 0; i < state.tasks.length; i++) {
+    if (state.tasks[i].uid === uid) return state.tasks[i];
+  }
+  return null;
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  var parts = d.split('-');
+  if (parts.length !== 3) return d;
+  return parts[2] + '.' + parts[1] + '.' + parts[0];
+}
+
+function formatISODate(d) {
+  var y = d.getFullYear();
+  var m = ('0' + (d.getMonth() + 1)).slice(-2);
+  var day = ('0' + d.getDate()).slice(-2);
+  return y + '-' + m + '-' + day;
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadProjects();
+
+})();
+</script>
+<?php endif; ?>
+
+</body>
+</html>
