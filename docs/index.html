@@ -1989,6 +1989,9 @@ window.openTaskDetail=function(uid){
   if(t.critical)badges+='<span class="admin-badge" style="background:var(--yellow-light);color:var(--yellow);">Kritischer Pfad</span>';
   $('tdBadges').innerHTML=badges;
 
+  var taskByUid={};
+  S.tasks.forEach(function(x){taskByUid[x.uid]=x;});
+
   var pc=t.percentComplete||0;
   var pcColor=pc>=100?'var(--green)':pc>=50?'var(--yellow)':'var(--red)';
 
@@ -2010,6 +2013,29 @@ window.openTaskDetail=function(uid){
     +'<div class="task-detail-progress-fill" id="tdProgressFill" style="width:'+pc+'%;background:'+pcColor+';"></div>'
     +'</div></div>';
 
+  // Predecessors (Vorarbeiten)
+  var preds=t.predecessors||[];
+  if(preds.length){
+    g+='<div class="task-detail-preds"><div class="td-label">Vorarbeiten ('+preds.length+')</div>';
+    preds.forEach(function(p){
+      var pt=taskByUid[p.uid];
+      var ppc=pt?(pt.percentComplete||0):0;
+      var dotCol=ppc>=100?'var(--green)':ppc>0?'var(--yellow)':'var(--red)';
+      var statusTxt=ppc>=100?'Fertig':ppc>0?ppc+'%':'Offen';
+      g+='<div class="task-detail-pred-item" style="cursor:pointer;" onclick="openTaskDetail('+(pt?pt.uid:0)+')">'
+        +'<div class="pred-status" style="background:'+dotCol+'"></div>'
+        +'<div class="pred-name">'+(pt?esc(pt.name):'UID '+p.uid)+'</div>'
+        +'<div class="pred-pct">'+statusTxt+'</div>'
+        +'</div>';
+    });
+    g+='</div>';
+  }
+
+  // Link to table view
+  g+='<div style="grid-column:1/-1;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">'
+    +'<a href="#" onclick="goToTaskInList('+t.uid+');return false;" style="display:inline-flex;align-items:center;gap:6px;color:var(--orange);font-size:13px;font-weight:600;text-decoration:none;">'
+    +'<span style="font-size:16px;">&#8594;</span> In Tabelle anzeigen</a></div>';
+
   $('tdGrid').innerHTML=g;
   $('taskDetailModal').classList.add('show');
 };
@@ -2030,6 +2056,24 @@ window.updateTaskProgress=function(val){
       if(S.pid){var d=sGet('p_'+S.pid,{});d.tasks=S.tasks;sSet('p_'+S.pid,d);}
     }
   }
+};
+
+window.goToTaskInList=function(uid){
+  closeTaskDetail();
+  // Switch to list view
+  S.view='list';
+  applyFilters();
+  switchView();
+  // Scroll to the task row after render
+  setTimeout(function(){
+    var row=document.querySelector('tr[data-uid="'+uid+'"]');
+    if(row){
+      row.scrollIntoView({behavior:'smooth',block:'center'});
+      row.style.transition='background 0.3s';
+      row.style.background='var(--orange-light,rgba(255,140,50,0.15))';
+      setTimeout(function(){row.style.background='';},2000);
+    }
+  },50);
 };
 
 window.closeTaskDetail=function(){
@@ -2138,7 +2182,7 @@ function renderList(){
     var pred=(row.predecessors||[]).map(function(p){var ty={0:'FF',1:'FS',2:'SF',3:'SS'};return p.uid+(ty[p.type]||'FS')+(p.lagDays?'+'+p.lagDays+'d':'');}).join(', ');
     var pc=row.percentComplete||0;
     var pcls=pc<30?'low':pc<70?'mid':'';
-    h+='<tr class="'+cls+'">';
+    h+='<tr class="'+cls+'" data-uid="'+row.uid+'">';
     h+='<td class="col-id">'+row.id+'</td>';
     h+='<td class="col-name" style="padding-left:'+(14+ind)+'px">'+esc(row.name)+'</td>';
     h+='<td><span class="col-date" onclick="openDP(event,'+row.uid+')">'+fmtDate(row.start)+'</span></td>';
