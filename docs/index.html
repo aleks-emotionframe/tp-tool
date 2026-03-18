@@ -354,33 +354,27 @@ body {
 /* --- TOP BAR --- */
 .topbar {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   flex-shrink: 0;
 }
-.topbar-row1 {
+.topbar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 24px;
-}
-.topbar-row2 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 24px 10px;
-  gap: 12px;
-  border-top: 1px solid var(--border);
-  background: var(--surface2);
+  gap: 10px;
+  flex-shrink: 0;
 }
 .topbar-title {
   font-size: 20px;
   font-weight: 700;
-  flex: 1;
+  flex-shrink: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 320px;
 }
 .topbar-search {
   padding: 8px 14px;
@@ -411,7 +405,6 @@ body {
 }
 .tab-btn:hover { color: var(--text2); }
 .tab-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-.topbar-actions { display: flex; gap: 8px; }
 .icon-btn {
   height: 36px; min-width: 36px; padding: 0 8px;
   display: flex; align-items: center; justify-content: center; gap: 4px;
@@ -442,7 +435,7 @@ body {
 .bug-btn:hover { background: var(--red-light); color: var(--red); border-color: var(--red); transform: translateY(-1px); }
 
 /* --- JOKE BAR --- */
-.joke-bar { display: flex; align-items: center; gap: 10px; }
+.joke-bar { display: flex; align-items: center; justify-content: center; gap: 10px; flex: 1; min-width: 0; }
 .joke-icon { font-size: 16px; flex-shrink: 0; }
 .joke-text { font-size: 13px; color: var(--text3); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .joke-btn { flex-shrink: 0; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--orange); background: none; color: var(--orange); font-family: var(--font); font-size: 12px; font-weight: 600; cursor: pointer; transition: var(--transition); white-space: nowrap; }
@@ -458,8 +451,29 @@ body {
 .joke-popup-close:hover { opacity: 0.9; }
 
 /* Confetti */
-.confetti-piece { position: fixed; z-index: 1300; pointer-events: none; width: 10px; height: 10px; opacity: 1; }
-@keyframes confetti-fall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+.confetti-piece { position: fixed; z-index: 1300; pointer-events: none; opacity: 1; }
+@keyframes confetti-sway-l {
+  0% { transform: translateY(0) translateX(0) rotate(0deg) scale(1); opacity: 1; }
+  25% { transform: translateY(25vh) translateX(-60px) rotate(240deg) scale(1.1); opacity: 1; }
+  50% { transform: translateY(50vh) translateX(40px) rotate(480deg) scale(0.9); opacity: 0.9; }
+  75% { transform: translateY(75vh) translateX(-30px) rotate(600deg) scale(0.7); opacity: 0.5; }
+  100% { transform: translateY(110vh) translateX(20px) rotate(900deg) scale(0.3); opacity: 0; }
+}
+@keyframes confetti-sway-r {
+  0% { transform: translateY(0) translateX(0) rotate(0deg) scale(1); opacity: 1; }
+  25% { transform: translateY(25vh) translateX(60px) rotate(-200deg) scale(1.1); opacity: 1; }
+  50% { transform: translateY(50vh) translateX(-40px) rotate(-440deg) scale(0.9); opacity: 0.9; }
+  75% { transform: translateY(75vh) translateX(30px) rotate(-640deg) scale(0.7); opacity: 0.5; }
+  100% { transform: translateY(110vh) translateX(-20px) rotate(-900deg) scale(0.3); opacity: 0; }
+}
+@keyframes confetti-burst-r {
+  0% { transform: translateX(0) translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateX(70vw) translateY(40vh) rotate(720deg); opacity: 0; }
+}
+@keyframes confetti-burst-l {
+  0% { transform: translateX(0) translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateX(-70vw) translateY(40vh) rotate(-720deg); opacity: 0; }
+}
 
 .save-flash {
   color: var(--green);
@@ -1411,29 +1425,25 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 
   <div class="main">
     <div class="topbar">
-      <div class="topbar-row1">
-        <div class="topbar-title" id="topTitle">Kein Projekt</div>
+      <div class="topbar-title" id="topTitle">Kein Projekt</div>
+      <div class="joke-bar" id="jokeBar">
+        <span class="joke-icon">&#9729;</span>
+        <span class="joke-text" id="jokeText"></span>
+        <button class="joke-btn" onclick="showJokeAnswer()">Aufl&ouml;sung &#127882;</button>
+      </div>
+      <div class="topbar-right">
         <input class="topbar-search" id="searchInput" type="text" placeholder="Vorgang suchen...">
         <div class="tab-group">
           <button class="tab-btn active" data-view="dashboard">Dashboard</button>
           <button class="tab-btn" data-view="list">Liste</button>
           <button class="tab-btn" data-view="gantt">Gantt</button>
         </div>
-        <div class="topbar-actions">
-          <button class="icon-btn" onclick="triggerXMLUpload()" title="XML Importieren" style="font-size:14px;font-weight:700;">&#8679; XML</button>
-          <input type="file" id="xmlUploadInput" accept=".xml" style="display:none" onchange="handleXMLUpload(this)">
-          <button class="icon-btn theme-btn" onclick="toggleTheme()" id="themeBtn" title="Dark/Light Mode">&#9790;</button>
-        </div>
+        <button class="icon-btn" onclick="triggerXMLUpload()" title="XML Importieren" style="font-size:14px;font-weight:700;">&#8679; XML</button>
+        <input type="file" id="xmlUploadInput" accept=".xml" style="display:none" onchange="handleXMLUpload(this)">
+        <button class="icon-btn theme-btn" onclick="toggleTheme()" id="themeBtn" title="Dark/Light Mode">&#9790;</button>
         <button class="bug-btn" onclick="openBugReport()">&#128027; Bug melden</button>
-        <span class="save-flash" id="saveFlash">Gespeichert</span>
       </div>
-      <div class="topbar-row2">
-        <div class="joke-bar" id="jokeBar">
-          <span class="joke-icon">&#9729;</span>
-          <span class="joke-text" id="jokeText"></span>
-          <button class="joke-btn" onclick="showJokeAnswer()">Aufl&ouml;sung &#127882;</button>
-        </div>
-      </div>
+      <span class="save-flash" id="saveFlash">Gespeichert</span>
     </div>
 
     <div class="kpi-strip" id="kpiStrip" style="display:none">
@@ -2610,30 +2620,73 @@ window.showJokeAnswer=function(){
 };
 window.closeJoke=function(){$('jokeOverlay').classList.remove('show');};
 function launchConfetti(){
-  var colors=['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff922b','#cc5de8','#20c997','#e64980'];
-  var shapes=['circle','rect','triangle'];
-  for(var i=0;i<80;i++){
+  var colors=['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff922b','#cc5de8','#20c997','#e64980','#f06595','#fcc419','#51cf66','#339af0','#ff8787','#ffe066'];
+  var emojis=['\ud83c\udf89','\ud83c\udf8a','\ud83e\udd73','\ud83d\ude02','\ud83d\udc4f','\u2b50','\ud83d\udca5','\ud83c\udf1f','\ud83d\ude4c','\ud83c\udf88'];
+  // Wave 1: massive confetti burst
+  for(var i=0;i<200;i++){
     (function(i){
       setTimeout(function(){
         var el=document.createElement('div');
         el.className='confetti-piece';
         var c=colors[Math.floor(Math.random()*colors.length)];
-        var s=shapes[Math.floor(Math.random()*shapes.length)];
-        var sz=6+Math.random()*10;
+        var sz=8+Math.random()*14;
+        var isRect=Math.random()>0.5;
         el.style.left=Math.random()*100+'vw';
-        el.style.top=-20+'px';
+        el.style.top=-20-Math.random()*60+'px';
         el.style.width=sz+'px';
-        el.style.height=(s==='rect'?sz*1.5:sz)+'px';
-        if(s==='circle'){el.style.borderRadius='50%';el.style.background=c;}
-        else if(s==='triangle'){el.style.width='0';el.style.height='0';el.style.borderLeft=sz/2+'px solid transparent';el.style.borderRight=sz/2+'px solid transparent';el.style.borderBottom=sz+'px solid '+c;el.style.background='none';}
-        else{el.style.borderRadius='2px';el.style.background=c;}
-        var dur=2+Math.random()*2;
-        el.style.animation='confetti-fall '+dur+'s ease-out forwards';
-        el.style.animationDelay='0s';
+        el.style.height=(isRect?sz*(1+Math.random()):sz)+'px';
+        el.style.borderRadius=isRect?(2+'px'):'50%';
+        el.style.background=c;
+        el.style.opacity=0.8+Math.random()*0.2;
+        var dur=2.5+Math.random()*3;
+        var sway=Math.random()>0.5?'confetti-sway-l':'confetti-sway-r';
+        el.style.animation=sway+' '+dur+'s ease-out forwards';
         document.body.appendChild(el);
-        setTimeout(function(){el.remove();},dur*1000+100);
-      },i*25);
+        setTimeout(function(){el.remove();},dur*1000+200);
+      },i*12);
     })(i);
+  }
+  // Wave 2: emoji explosion
+  for(var j=0;j<30;j++){
+    (function(j){
+      setTimeout(function(){
+        var el=document.createElement('div');
+        el.className='confetti-piece';
+        el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+        el.style.fontSize=(18+Math.random()*20)+'px';
+        el.style.left=Math.random()*100+'vw';
+        el.style.top=-30+'px';
+        el.style.width='auto';el.style.height='auto';
+        el.style.lineHeight='1';
+        var dur=3+Math.random()*2.5;
+        var sway=Math.random()>0.5?'confetti-sway-l':'confetti-sway-r';
+        el.style.animation=sway+' '+dur+'s ease-out forwards';
+        document.body.appendChild(el);
+        setTimeout(function(){el.remove();},dur*1000+200);
+      },500+j*60);
+    })(j);
+  }
+  // Wave 3: delayed second burst from sides
+  for(var k=0;k<80;k++){
+    (function(k){
+      setTimeout(function(){
+        var el=document.createElement('div');
+        el.className='confetti-piece';
+        var c=colors[Math.floor(Math.random()*colors.length)];
+        var sz=6+Math.random()*12;
+        var fromLeft=Math.random()>0.5;
+        el.style.left=fromLeft?(-10+'px'):(window.innerWidth+10+'px');
+        el.style.top=(Math.random()*60)+'vh';
+        el.style.width=sz+'px';
+        el.style.height=sz*(0.5+Math.random())+'px';
+        el.style.borderRadius=Math.random()>0.5?'50%':'3px';
+        el.style.background=c;
+        var dur=2+Math.random()*2;
+        el.style.animation=(fromLeft?'confetti-burst-r':'confetti-burst-l')+' '+dur+'s ease-out forwards';
+        document.body.appendChild(el);
+        setTimeout(function(){el.remove();},dur*1000+200);
+      },800+k*20);
+    })(k);
   }
 }
 initJoke();
