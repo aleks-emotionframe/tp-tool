@@ -743,18 +743,24 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 .pred-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; background: var(--surface3); color: var(--text2); font-size: 11px; font-weight: 500; cursor: pointer; transition: var(--transition); border: 1px solid transparent; }
 .pred-badge:hover { background: var(--orange-light); color: var(--orange); border-color: var(--orange); }
 .pred-badge .pred-icon { font-size: 13px; line-height: 1; }
-.pred-popover { position: fixed; z-index: 999; background: var(--surface1); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,0.18); padding: 0; min-width: 300px; max-width: 400px; max-height: 360px; display: none; overflow: hidden; }
+.pred-popover { position: fixed; z-index: 999; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 16px 48px rgba(0,0,0,0.22); padding: 0; min-width: 300px; max-width: 400px; max-height: 360px; display: none; overflow: hidden; }
 .pred-popover.show { display: flex; flex-direction: column; }
-.pred-popover-title { padding: 12px 16px 10px; font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); background: var(--surface2); flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pred-popover-list { overflow-y: auto; padding: 6px 0; }
-.pred-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; transition: background 0.1s; }
-.pred-item:hover { background: var(--surface2); }
+.pred-popover-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 10px 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--surface2); }
+.pred-popover-header span { font-size: 11px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+.pred-popover-close { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border); background: none; color: var(--text3); font-size: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); flex-shrink: 0; }
+.pred-popover-close:hover { background: var(--red-light); color: var(--red); border-color: var(--red); }
+.pred-popover-list { overflow-y: auto; padding: 4px 0; }
+.pred-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; transition: background 0.1s; cursor: pointer; }
+.pred-item:hover { background: rgba(255,140,50,0.08); }
 .pred-item-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .pred-item-info { flex: 1; min-width: 0; }
 .pred-item-name { font-size: 13px; font-weight: 500; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pred-item:hover .pred-item-name { color: var(--orange); }
 .pred-item-meta { font-size: 11px; color: var(--text3); margin-top: 2px; display: flex; align-items: center; gap: 6px; }
-.pred-item-meta .pred-type-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; background: var(--surface3); font-size: 10px; font-weight: 600; }
+.pred-item-meta .pred-type-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
 .pred-item-meta .pred-pct { font-variant-numeric: tabular-nums; }
+.pred-item-arrow { color: var(--text3); font-size: 14px; flex-shrink: 0; opacity: 0; transition: opacity 0.15s; }
+.pred-item:hover .pred-item-arrow { opacity: 1; color: var(--orange); }
 .col-id { color: var(--text3); font-variant-numeric: tabular-nums; font-size: 12px; }
 
 /* --- GANTT --- */
@@ -2364,7 +2370,7 @@ window.showPreds=function(ev,uid){
   var preds=task.predecessors||[];if(!preds.length)return;
   var tyNames={0:'EE',1:'EA',2:'AE',3:'AA'};
   var tyFull={0:'Ende\u2013Ende',1:'Ende\u2013Anfang',2:'Anfang\u2013Ende',3:'Anfang\u2013Anfang'};
-  var h='<div class="pred-popover-title">Vorg\u00e4nger</div>';
+  var h='<div class="pred-popover-header"><span>Vorg\u00e4nger</span><button class="pred-popover-close" onclick="closePreds()">&times;</button></div>';
   h+='<div class="pred-popover-list">';
   preds.forEach(function(p){
     var pt=findTask(p.uid);
@@ -2374,12 +2380,12 @@ window.showPreds=function(ev,uid){
     var ty=tyNames[p.type]||'EA';
     var tyTitle=tyFull[p.type]||'Ende\u2013Anfang';
     var lag=p.lagDays?(p.lagDays>0?'+'+p.lagDays+'d':p.lagDays+'d'):'';
-    h+='<div class="pred-item">';
+    h+='<div class="pred-item" onclick="jumpToTask('+p.uid+')">';
     h+='<div class="pred-item-dot" style="background:'+dot+'"></div>';
     h+='<div class="pred-item-info">';
     h+='<div class="pred-item-name" title="'+esc(name)+'">'+esc(name)+'</div>';
     h+='<div class="pred-item-meta"><span class="pred-type-tag" title="'+tyTitle+'">'+ty+(lag?' '+lag:'')+'</span><span class="pred-pct">'+pc+'%</span></div>';
-    h+='</div></div>';
+    h+='</div><span class="pred-item-arrow">&#8594;</span></div>';
   });
   h+='</div>';
   var pop=$('predPopover');
@@ -2391,6 +2397,25 @@ window.showPreds=function(ev,uid){
   pop.classList.add('show');
 };
 window.closePreds=function(){$('predPopover').classList.remove('show');};
+window.jumpToTask=function(uid){
+  closePreds();
+  // Ensure task is in filtered list
+  S.search='';S.critOnly=false;
+  var si=$('searchInput');if(si)si.value='';
+  var cb=$('critToggle');if(cb)cb.checked=false;
+  applyFilters();
+  requestAnimationFrame(function(){
+    setTimeout(function(){
+      var row=document.querySelector('tr[data-uid="'+uid+'"]');
+      if(row){
+        row.scrollIntoView({behavior:'smooth',block:'center'});
+        row.style.transition='background 0.3s';
+        row.style.background='rgba(255,140,50,0.15)';
+        setTimeout(function(){row.style.transition='background 1s';row.style.background='';},2000);
+      }
+    },100);
+  });
+};
 document.addEventListener('click',function(e){
   var pop=$('predPopover');
   if(pop.classList.contains('show')&&!pop.contains(e.target)&&!e.target.closest('.pred-badge'))closePreds();
