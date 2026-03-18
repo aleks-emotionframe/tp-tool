@@ -766,6 +766,57 @@ body {
   border: none; color: #fff;
 }
 .modal-btns .btn-primary:hover { box-shadow: 0 4px 16px rgba(232,96,10,0.25); }
+.modal-btns .btn-danger {
+  background: var(--red); border: none; color: #fff;
+}
+.modal-btns .btn-danger:hover { box-shadow: 0 4px 16px var(--red-glow); }
+
+/* --- USER MANAGEMENT --- */
+.user-section { margin-top: 4px; margin-bottom: 16px; }
+.user-add-row {
+  display: flex; gap: 8px; margin-bottom: 12px;
+}
+.user-add-row input {
+  flex: 1; padding: 10px 12px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: var(--font); font-size: 13px; outline: none;
+}
+.user-add-row input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-glow); }
+.user-add-row button {
+  padding: 8px 14px; background: var(--orange); color: #fff;
+  border: none; border-radius: var(--radius-sm);
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  cursor: pointer; white-space: nowrap; transition: var(--transition);
+}
+.user-add-row button:hover { box-shadow: 0 4px 12px rgba(232,96,10,0.25); }
+.user-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+.user-chip {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); font-size: 13px; color: var(--text);
+}
+.user-chip .user-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--orange-light), var(--orange-glow));
+  border: 1px solid var(--orange);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--orange);
+  flex-shrink: 0;
+}
+.user-chip .user-name { flex: 1; font-weight: 500; }
+.user-chip .user-remove {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; color: var(--text3);
+  cursor: pointer; font-size: 16px; transition: var(--transition);
+}
+.user-chip .user-remove:hover { background: var(--red-light); color: var(--red); }
+.user-empty {
+  padding: 16px; text-align: center; color: var(--text3);
+  font-size: 13px; font-style: italic;
+}
 
 /* --- SCROLLBAR --- */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -815,8 +866,7 @@ body {
     <div class="sidebar-projects" id="projectList"></div>
     <div class="sidebar-bottom">
       <button class="sidebar-btn primary" onclick="showNewDialog()">+ Neues Projekt</button>
-      <button class="sidebar-btn" onclick="doRename()">Umbenennen</button>
-      <button class="sidebar-btn danger" onclick="doDelete()">Projekt l&ouml;schen</button>
+      <button class="sidebar-btn" onclick="showEditDialog()">Projekt bearbeiten</button>
       <button class="sidebar-btn" onclick="doLogout()" style="margin-top:8px; font-size:12px; color:var(--text3)">Abmelden</button>
     </div>
   </div>
@@ -918,6 +968,28 @@ body {
     <div class="modal-btns">
       <button onclick="closeNewDialog()">Abbrechen</button>
       <button class="btn-primary" onclick="doCreate()">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="editModal">
+  <div class="modal" style="width:500px;">
+    <h3>Projekt bearbeiten</h3>
+    <label>Projektname</label>
+    <input type="text" id="editName" placeholder="Projektname">
+    <label>Benutzer</label>
+    <div class="user-section">
+      <div class="user-add-row">
+        <input type="text" id="editUserInput" placeholder="Name eingeben">
+        <button onclick="addProjectUser()">Hinzuf&uuml;gen</button>
+      </div>
+      <div class="user-list" id="editUserList"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-danger" onclick="doDeleteFromEdit()">L&ouml;schen</button>
+      <div style="flex:1"></div>
+      <button onclick="closeEditDialog()">Abbrechen</button>
+      <button class="btn-primary" onclick="saveEditDialog()">Speichern</button>
     </div>
   </div>
 </div>
@@ -1050,23 +1122,98 @@ function finishCreate(id,name,tasks,xml){
   closeNewDialog();S.pid=id;loadProjects();loadProject(id);
 }
 
-window.doRename=function(){
+/* ─── PROJEKT BEARBEITEN DIALOG ─── */
+window.showEditDialog=function(){
   if(!S.pid)return;
   var idx=getIdx(),cur=idx.find(function(p){return p.id==S.pid;});
-  var n=prompt('Neuer Projektname:',cur?cur.name:'');
-  if(!n||!n.trim())return;
-  n=n.trim();
-  idx.forEach(function(p){if(p.id==S.pid)p.name=n;});saveIdx(idx);
-  var d=sGet('p_'+S.pid,{});d.name=n;sSet('p_'+S.pid,d);
-  $('topTitle').textContent=n;loadProjects();
+  if(!cur)return;
+  $('editName').value=cur.name;
+  renderEditUsers();
+  $('editModal').classList.add('show');
+  $('editName').focus();
+};
+window.closeEditDialog=function(){$('editModal').classList.remove('show');};
+
+function getProjectUsers(){
+  var d=sGet('p_'+S.pid,{});
+  return d.users||[];
+}
+function setProjectUsers(users){
+  var d=sGet('p_'+S.pid,{});
+  d.users=users;
+  sSet('p_'+S.pid,d);
+}
+
+function renderEditUsers(){
+  var users=getProjectUsers();
+  var c=$('editUserList');
+  if(!users.length){
+    c.innerHTML='<div class="user-empty">Noch keine Benutzer zugeordnet</div>';
+    return;
+  }
+  c.innerHTML='';
+  users.forEach(function(name,i){
+    var initials=name.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2);
+    var el=document.createElement('div');
+    el.className='user-chip';
+    el.innerHTML='<div class="user-avatar">'+esc(initials)+'</div>'
+      +'<span class="user-name">'+esc(name)+'</span>'
+      +'<button class="user-remove" title="Entfernen">&times;</button>';
+    el.querySelector('.user-remove').onclick=function(){removeProjectUser(i);};
+    c.appendChild(el);
+  });
+}
+
+window.addProjectUser=function(){
+  var input=$('editUserInput');
+  var name=input.value.trim();
+  if(!name)return;
+  var users=getProjectUsers();
+  // Prevent duplicates
+  if(users.some(function(u){return u.toLowerCase()===name.toLowerCase();})){
+    input.value='';return;
+  }
+  users.push(name);
+  setProjectUsers(users);
+  input.value='';
+  renderEditUsers();
+};
+$('editUserInput').addEventListener('keydown',function(e){
+  if(e.key==='Enter'){e.preventDefault();addProjectUser();}
+});
+
+function removeProjectUser(i){
+  var users=getProjectUsers();
+  users.splice(i,1);
+  setProjectUsers(users);
+  renderEditUsers();
+}
+
+window.saveEditDialog=function(){
+  if(!S.pid)return;
+  var name=$('editName').value.trim();
+  if(!name){alert('Bitte Projektname eingeben');return;}
+  // Save name
+  var idx=getIdx();
+  idx.forEach(function(p){if(p.id==S.pid)p.name=name;});
+  saveIdx(idx);
+  var d=sGet('p_'+S.pid,{});d.name=name;sSet('p_'+S.pid,d);
+  $('topTitle').textContent=name;
+  loadProjects();
+  closeEditDialog();
+  // Flash
+  var f=$('saveFlash');f.textContent='Projekt gespeichert';
+  f.classList.add('show');
+  setTimeout(function(){f.classList.remove('show');f.textContent='Gespeichert';},2000);
 };
 
-window.doDelete=function(){
+window.doDeleteFromEdit=function(){
   if(!S.pid)return;
   if(!confirm('Projekt wirklich l\u00f6schen?'))return;
   saveIdx(getIdx().filter(function(p){return p.id!=S.pid;}));
   sDel('p_'+S.pid);S.pid=null;S.tasks=[];S.filtered=[];
   $('topTitle').textContent='Kein Projekt';
+  closeEditDialog();
   showEmpty(true);loadProjects();updateKPI();
 };
 
