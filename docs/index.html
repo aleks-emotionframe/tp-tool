@@ -818,6 +818,168 @@ body {
   font-size: 13px; font-style: italic;
 }
 
+/* --- ADMIN CENTER --- */
+.admin-overlay {
+  position: fixed; inset: 0; z-index: 800;
+  background: var(--bg);
+  display: none; flex-direction: column;
+  overflow: hidden;
+}
+.admin-overlay.show { display: flex; }
+.admin-header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 20px 32px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.admin-header h2 {
+  font-size: 20px; font-weight: 800;
+  background: linear-gradient(135deg, var(--orange), #fb923c);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; flex: 1;
+}
+.admin-close {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text2); font-size: 20px; cursor: pointer;
+  transition: var(--transition);
+}
+.admin-close:hover { background: var(--red-light); color: var(--red); border-color: var(--red); }
+.admin-body {
+  flex: 1; overflow-y: auto; padding: 24px 32px;
+}
+.admin-tabs {
+  display: flex; gap: 4px; margin-bottom: 24px;
+  background: var(--surface2); border-radius: var(--radius-sm);
+  padding: 4px; width: fit-content;
+}
+.admin-tab {
+  padding: 8px 20px; border-radius: var(--radius-xs);
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  background: none; border: none; color: var(--text3);
+  cursor: pointer; transition: var(--transition);
+}
+.admin-tab:hover { color: var(--text2); }
+.admin-tab.active {
+  background: var(--surface); color: var(--orange);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.admin-section { margin-bottom: 32px; }
+.admin-section-title {
+  font-size: 14px; font-weight: 700; color: var(--text);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.admin-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  margin-bottom: 12px; transition: var(--transition);
+}
+.admin-card:hover { border-color: var(--border2); box-shadow: var(--shadow); }
+.admin-card-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+}
+.admin-card-title {
+  font-size: 15px; font-weight: 600; color: var(--text); flex: 1;
+}
+.admin-card-meta {
+  font-size: 12px; color: var(--text3);
+}
+.admin-card-body { margin-top: 12px; }
+.admin-inline-edit {
+  padding: 8px 12px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--radius-xs);
+  font-family: var(--font); font-size: 14px; color: var(--text);
+  outline: none; width: 100%; max-width: 400px;
+}
+.admin-inline-edit:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-glow); }
+.admin-btn {
+  padding: 6px 14px; border-radius: var(--radius-xs);
+  font-family: var(--font); font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: var(--transition);
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--text2); white-space: nowrap;
+}
+.admin-btn:hover { border-color: var(--border2); color: var(--text); }
+.admin-btn.primary { background: var(--orange); border-color: var(--orange); color: #fff; }
+.admin-btn.primary:hover { box-shadow: 0 2px 8px rgba(232,96,10,0.3); }
+.admin-btn.danger { color: var(--red); border-color: transparent; background: none; }
+.admin-btn.danger:hover { background: var(--red-light); border-color: var(--red); }
+.admin-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 600;
+}
+.admin-badge.green { background: var(--green-light); color: var(--green); }
+.admin-badge.orange { background: var(--orange-light); color: var(--orange); }
+.admin-badge.blue { background: var(--blue-light); color: var(--blue); }
+.admin-badge.red { background: var(--red-light); color: var(--red); }
+.admin-users-grid {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;
+}
+.admin-user-tag {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 10px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 20px;
+  font-size: 12px; color: var(--text);
+}
+.admin-user-tag .tag-avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--orange-light), var(--orange-glow));
+  border: 1px solid var(--orange);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: var(--orange);
+}
+.admin-user-tag .tag-remove {
+  width: 18px; height: 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; color: var(--text3);
+  cursor: pointer; font-size: 14px; line-height: 1;
+}
+.admin-user-tag .tag-remove:hover { color: var(--red); }
+.admin-perm-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px; margin-top: 8px;
+}
+.admin-perm-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--radius-xs);
+  font-size: 13px; color: var(--text);
+}
+.admin-perm-item input[type="checkbox"] {
+  accent-color: var(--orange); width: 16px; height: 16px;
+}
+.admin-empty-msg {
+  padding: 32px; text-align: center; color: var(--text3);
+  font-size: 14px;
+}
+.admin-global-users { margin-top: 16px; }
+.admin-global-user-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+}
+.admin-global-user-row .user-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--orange-light), var(--orange-glow));
+  border: 2px solid var(--orange);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: var(--orange); flex-shrink: 0;
+}
+.admin-global-user-row .user-info { flex: 1; }
+.admin-global-user-row .user-info .name { font-size: 14px; font-weight: 600; color: var(--text); }
+.admin-global-user-row .user-info .projects-count { font-size: 12px; color: var(--text3); }
+.admin-role-select {
+  padding: 4px 8px; border-radius: var(--radius-xs);
+  border: 1px solid var(--border); background: var(--surface2);
+  font-family: var(--font); font-size: 12px; color: var(--text);
+  cursor: pointer; outline: none;
+}
+.admin-role-select:focus { border-color: var(--orange); }
+
 /* --- SCROLLBAR --- */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -866,7 +1028,7 @@ body {
     <div class="sidebar-projects" id="projectList"></div>
     <div class="sidebar-bottom">
       <button class="sidebar-btn primary" onclick="showNewDialog()">+ Neues Projekt</button>
-      <button class="sidebar-btn" onclick="showEditDialog()">Projekt bearbeiten</button>
+      <button class="sidebar-btn" onclick="openAdmin()">Admin Center</button>
       <button class="sidebar-btn" onclick="doLogout()" style="margin-top:8px; font-size:12px; color:var(--text3)">Abmelden</button>
     </div>
   </div>
@@ -957,6 +1119,30 @@ body {
   <div class="toast-chips" id="toastChips"></div>
 </div>
 
+<!-- ADMIN CENTER -->
+<div class="admin-overlay" id="adminOverlay">
+  <div class="admin-header">
+    <h2>Admin Center</h2>
+    <button class="admin-close" onclick="closeAdmin()" title="Schliessen">&times;</button>
+  </div>
+  <div class="admin-body">
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchAdminTab('projects',this)">Projekte</button>
+      <button class="admin-tab" onclick="switchAdminTab('users',this)">Benutzer</button>
+      <button class="admin-tab" onclick="switchAdminTab('permissions',this)">Berechtigungen</button>
+    </div>
+
+    <!-- TAB: Projekte -->
+    <div class="admin-tab-content" id="adminTabProjects"></div>
+
+    <!-- TAB: Benutzer -->
+    <div class="admin-tab-content" id="adminTabUsers" style="display:none"></div>
+
+    <!-- TAB: Berechtigungen -->
+    <div class="admin-tab-content" id="adminTabPermissions" style="display:none"></div>
+  </div>
+</div>
+
 <!-- NEW PROJECT MODAL -->
 <div class="modal-bg" id="newModal">
   <div class="modal">
@@ -972,27 +1158,6 @@ body {
   </div>
 </div>
 
-<div class="modal-bg" id="editModal">
-  <div class="modal" style="width:500px;">
-    <h3>Projekt bearbeiten</h3>
-    <label>Projektname</label>
-    <input type="text" id="editName" placeholder="Projektname">
-    <label>Benutzer</label>
-    <div class="user-section">
-      <div class="user-add-row">
-        <input type="text" id="editUserInput" placeholder="Name eingeben">
-        <button onclick="addProjectUser()">Hinzuf&uuml;gen</button>
-      </div>
-      <div class="user-list" id="editUserList"></div>
-    </div>
-    <div class="modal-btns">
-      <button class="btn-danger" onclick="doDeleteFromEdit()">L&ouml;schen</button>
-      <div style="flex:1"></div>
-      <button onclick="closeEditDialog()">Abbrechen</button>
-      <button class="btn-primary" onclick="saveEditDialog()">Speichern</button>
-    </div>
-  </div>
-</div>
 
 <script>
 (function(){
@@ -1122,100 +1287,6 @@ function finishCreate(id,name,tasks,xml){
   closeNewDialog();S.pid=id;loadProjects();loadProject(id);
 }
 
-/* ─── PROJEKT BEARBEITEN DIALOG ─── */
-window.showEditDialog=function(){
-  if(!S.pid)return;
-  var idx=getIdx(),cur=idx.find(function(p){return p.id==S.pid;});
-  if(!cur)return;
-  $('editName').value=cur.name;
-  renderEditUsers();
-  $('editModal').classList.add('show');
-  $('editName').focus();
-};
-window.closeEditDialog=function(){$('editModal').classList.remove('show');};
-
-function getProjectUsers(){
-  var d=sGet('p_'+S.pid,{});
-  return d.users||[];
-}
-function setProjectUsers(users){
-  var d=sGet('p_'+S.pid,{});
-  d.users=users;
-  sSet('p_'+S.pid,d);
-}
-
-function renderEditUsers(){
-  var users=getProjectUsers();
-  var c=$('editUserList');
-  if(!users.length){
-    c.innerHTML='<div class="user-empty">Noch keine Benutzer zugeordnet</div>';
-    return;
-  }
-  c.innerHTML='';
-  users.forEach(function(name,i){
-    var initials=name.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2);
-    var el=document.createElement('div');
-    el.className='user-chip';
-    el.innerHTML='<div class="user-avatar">'+esc(initials)+'</div>'
-      +'<span class="user-name">'+esc(name)+'</span>'
-      +'<button class="user-remove" title="Entfernen">&times;</button>';
-    el.querySelector('.user-remove').onclick=function(){removeProjectUser(i);};
-    c.appendChild(el);
-  });
-}
-
-window.addProjectUser=function(){
-  var input=$('editUserInput');
-  var name=input.value.trim();
-  if(!name)return;
-  var users=getProjectUsers();
-  // Prevent duplicates
-  if(users.some(function(u){return u.toLowerCase()===name.toLowerCase();})){
-    input.value='';return;
-  }
-  users.push(name);
-  setProjectUsers(users);
-  input.value='';
-  renderEditUsers();
-};
-$('editUserInput').addEventListener('keydown',function(e){
-  if(e.key==='Enter'){e.preventDefault();addProjectUser();}
-});
-
-function removeProjectUser(i){
-  var users=getProjectUsers();
-  users.splice(i,1);
-  setProjectUsers(users);
-  renderEditUsers();
-}
-
-window.saveEditDialog=function(){
-  if(!S.pid)return;
-  var name=$('editName').value.trim();
-  if(!name){alert('Bitte Projektname eingeben');return;}
-  // Save name
-  var idx=getIdx();
-  idx.forEach(function(p){if(p.id==S.pid)p.name=name;});
-  saveIdx(idx);
-  var d=sGet('p_'+S.pid,{});d.name=name;sSet('p_'+S.pid,d);
-  $('topTitle').textContent=name;
-  loadProjects();
-  closeEditDialog();
-  // Flash
-  var f=$('saveFlash');f.textContent='Projekt gespeichert';
-  f.classList.add('show');
-  setTimeout(function(){f.classList.remove('show');f.textContent='Gespeichert';},2000);
-};
-
-window.doDeleteFromEdit=function(){
-  if(!S.pid)return;
-  if(!confirm('Projekt wirklich l\u00f6schen?'))return;
-  saveIdx(getIdx().filter(function(p){return p.id!=S.pid;}));
-  sDel('p_'+S.pid);S.pid=null;S.tasks=[];S.filtered=[];
-  $('topTitle').textContent='Kein Projekt';
-  closeEditDialog();
-  showEmpty(true);loadProjects();updateKPI();
-};
 
 window.doSave=function(){
   if(!S.pid)return;
@@ -1547,6 +1618,284 @@ function parseDur(d,lag){
   if(m){var days=m[1]?parseInt(m[1]):0,hrs=m[2]?parseInt(m[2]):0,mins=m[3]?parseInt(m[3]):0;return days+Math.round((hrs+mins/60)/8*10)/10;}
   return 0;
 }
+
+/* ─── ADMIN CENTER ─── */
+var PERMS=[
+  {key:'edit_tasks',label:'Vorg\u00e4nge bearbeiten'},
+  {key:'edit_dates',label:'Termine \u00e4ndern'},
+  {key:'import_xml',label:'XML importieren'},
+  {key:'export_xml',label:'XML exportieren'},
+  {key:'delete_project',label:'Projekt l\u00f6schen'},
+  {key:'manage_users',label:'Benutzer verwalten'}
+];
+
+function getAllUsers(){
+  // Collect unique users across all projects
+  var idx=getIdx(),map={};
+  idx.forEach(function(p){
+    var d=sGet('p_'+p.id,{});
+    var users=d.users||[];
+    users.forEach(function(u){
+      if(!map[u.toLowerCase()]){map[u.toLowerCase()]={name:u,projects:[],role:d.userRoles&&d.userRoles[u]||'editor'};}
+      map[u.toLowerCase()].projects.push(p.name);
+    });
+  });
+  return Object.keys(map).map(function(k){return map[k];});
+}
+
+window.openAdmin=function(){
+  $('adminOverlay').classList.add('show');
+  // Reset to projects tab
+  switchAdminTab('projects',document.querySelector('.admin-tab'));
+};
+window.closeAdmin=function(){
+  $('adminOverlay').classList.remove('show');
+  // Refresh main view
+  loadProjects();
+  if(S.pid)loadProject(S.pid);
+};
+
+window.switchAdminTab=function(tab,btn){
+  // Update tab buttons
+  var tabs=document.querySelectorAll('.admin-tab');
+  tabs.forEach(function(t){t.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  // Show/hide content
+  $('adminTabProjects').style.display=tab==='projects'?'block':'none';
+  $('adminTabUsers').style.display=tab==='users'?'block':'none';
+  $('adminTabPermissions').style.display=tab==='permissions'?'block':'none';
+  // Render
+  if(tab==='projects')renderAdminProjects();
+  if(tab==='users')renderAdminUsers();
+  if(tab==='permissions')renderAdminPermissions();
+};
+
+function renderAdminProjects(){
+  var idx=getIdx(),c=$('adminTabProjects');
+  if(!idx.length){
+    c.innerHTML='<div class="admin-empty-msg">Keine Projekte vorhanden. Erstelle ein neues Projekt \u00fcber "+ Neues Projekt".</div>';
+    return;
+  }
+  var html='<div class="admin-section"><div class="admin-section-title">Alle Projekte ('+idx.length+')</div>';
+  idx.forEach(function(p){
+    var d=sGet('p_'+p.id,{});
+    var users=d.users||[];
+    var taskCount=(d.tasks||[]).length;
+    var isActive=S.pid==p.id;
+    html+='<div class="admin-card" id="apc_'+p.id+'">'
+      +'<div class="admin-card-header">'
+      +'<div class="admin-card-title"><input class="admin-inline-edit" value="'+esc(p.name)+'" onchange="adminRenameProject(\''+p.id+'\',this.value)" style="font-weight:600;"></div>'
+      +(isActive?'<span class="admin-badge green">Aktiv</span>':'')
+      +'<span class="admin-card-meta">'+taskCount+' Vorg\u00e4nge</span>'
+      +'</div>';
+    // Users section
+    html+='<div class="admin-card-body">'
+      +'<div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Zugewiesene Benutzer</div>'
+      +'<div class="admin-users-grid" id="apu_'+p.id+'">';
+    if(users.length){
+      users.forEach(function(u,i){
+        var ini=u.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2);
+        html+='<div class="admin-user-tag">'
+          +'<span class="tag-avatar">'+esc(ini)+'</span>'
+          +'<span>'+esc(u)+'</span>'
+          +'<button class="tag-remove" onclick="adminRemoveUser(\''+p.id+'\','+i+')">&times;</button>'
+          +'</div>';
+      });
+    } else {
+      html+='<span style="font-size:12px;color:var(--text3);font-style:italic;">Keine Benutzer zugewiesen</span>';
+    }
+    html+='</div>'
+      +'<div style="display:flex;gap:8px;margin-top:12px;align-items:center;">'
+      +'<input class="admin-inline-edit" id="apui_'+p.id+'" placeholder="Benutzer hinzuf\u00fcgen..." style="max-width:220px;padding:6px 10px;font-size:13px;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();adminAddUser(\''+p.id+'\');}">'
+      +'<button class="admin-btn primary" onclick="adminAddUser(\''+p.id+'\')">Hinzuf\u00fcgen</button>'
+      +'</div>'
+      +'</div>';
+    // Actions
+    html+='<div style="display:flex;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border);">'
+      +'<button class="admin-btn" onclick="adminLoadProject(\''+p.id+'\')">Projekt \u00f6ffnen</button>'
+      +'<div style="flex:1"></div>'
+      +'<button class="admin-btn danger" onclick="adminDeleteProject(\''+p.id+'\',\''+esc(p.name).replace(/'/g,"\\'")+'\')">L\u00f6schen</button>'
+      +'</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+function renderAdminUsers(){
+  var users=getAllUsers(),c=$('adminTabUsers');
+  var html='<div class="admin-section">'
+    +'<div class="admin-section-title">Alle Benutzer ('+users.length+')</div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:16px;">'
+    +'<input class="admin-inline-edit" id="adminNewUser" placeholder="Neuen Benutzer anlegen..." style="max-width:300px;" onkeydown="if(event.key===\'Enter\'){event.preventDefault();adminCreateUser();}">'
+    +'<button class="admin-btn primary" onclick="adminCreateUser()">Anlegen</button>'
+    +'</div>';
+  if(!users.length){
+    html+='<div class="admin-empty-msg">Noch keine Benutzer. F\u00fcge Benutzer \u00fcber die Projektverwaltung oder hier hinzu.</div>';
+  } else {
+    html+='<div class="admin-global-users">';
+    users.forEach(function(u){
+      var ini=u.name.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2);
+      html+='<div class="admin-global-user-row">'
+        +'<div class="user-avatar">'+esc(ini)+'</div>'
+        +'<div class="user-info">'
+        +'<div class="name">'+esc(u.name)+'</div>'
+        +'<div class="projects-count">'+u.projects.length+' Projekt'+(u.projects.length!==1?'e':'')+': '+esc(u.projects.join(', '))+'</div>'
+        +'</div>'
+        +'<button class="admin-btn danger" onclick="adminDeleteUser(\''+esc(u.name).replace(/'/g,"\\'")+'\')">Entfernen</button>'
+        +'</div>';
+    });
+    html+='</div>';
+  }
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+function renderAdminPermissions(){
+  var idx=getIdx(),c=$('adminTabPermissions');
+  if(!idx.length){
+    c.innerHTML='<div class="admin-empty-msg">Keine Projekte vorhanden.</div>';return;
+  }
+  var html='<div class="admin-section">'
+    +'<div class="admin-section-title">Berechtigungen pro Projekt</div>'
+    +'<p style="font-size:13px;color:var(--text3);margin-bottom:16px;">Lege fest, welche Rechte die Benutzer in jedem Projekt haben.</p>';
+  idx.forEach(function(p){
+    var d=sGet('p_'+p.id,{});
+    var users=d.users||[];
+    var perms=d.permissions||{};
+    html+='<div class="admin-card">'
+      +'<div class="admin-card-header"><div class="admin-card-title">'+esc(p.name)+'</div>'
+      +'<span class="admin-badge blue">'+users.length+' Benutzer</span></div>';
+    if(!users.length){
+      html+='<div style="font-size:13px;color:var(--text3);font-style:italic;padding:8px 0;">Keine Benutzer zugewiesen</div>';
+    } else {
+      users.forEach(function(u){
+        var uPerms=perms[u]||{};
+        var ini=u.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2);
+        html+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">'
+          +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
+          +'<span class="tag-avatar" style="width:24px;height:24px;font-size:10px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--orange-light);color:var(--orange);border:1px solid var(--orange);font-weight:700;">'+esc(ini)+'</span>'
+          +'<span style="font-size:13px;font-weight:600;">'+esc(u)+'</span>'
+          +'<select class="admin-role-select" onchange="adminSetRole(\''+p.id+'\',\''+esc(u).replace(/'/g,"\\'")+'\',this.value)">'
+          +'<option value="viewer"'+(uPerms._role==='viewer'?' selected':'')+'>Betrachter</option>'
+          +'<option value="editor"'+(!uPerms._role||uPerms._role==='editor'?' selected':'')+'>Bearbeiter</option>'
+          +'<option value="admin"'+(uPerms._role==='admin'?' selected':'')+'>Administrator</option>'
+          +'</select>'
+          +'</div>'
+          +'<div class="admin-perm-grid">';
+        PERMS.forEach(function(pm){
+          var checked=uPerms[pm.key]!==false;
+          if(uPerms._role==='viewer')checked=pm.key==='export_xml';
+          if(uPerms._role==='admin')checked=true;
+          html+='<label class="admin-perm-item">'
+            +'<input type="checkbox" '+(checked?'checked ':'')+' onchange="adminTogglePerm(\''+p.id+'\',\''+esc(u).replace(/'/g,"\\'")+'\',\''+pm.key+'\',this.checked)">'
+            +pm.label+'</label>';
+        });
+        html+='</div></div>';
+      });
+    }
+    html+='</div>';
+  });
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+window.adminRenameProject=function(id,name){
+  name=name.trim();if(!name)return;
+  var idx=getIdx();
+  idx.forEach(function(p){if(p.id==id)p.name=name;});
+  saveIdx(idx);
+  var d=sGet('p_'+id,{});d.name=name;sSet('p_'+id,d);
+  if(S.pid==id)$('topTitle').textContent=name;
+};
+
+window.adminAddUser=function(pid){
+  var input=document.getElementById('apui_'+pid);
+  if(!input)return;
+  var name=input.value.trim();if(!name)return;
+  var d=sGet('p_'+pid,{});
+  var users=d.users||[];
+  if(users.some(function(u){return u.toLowerCase()===name.toLowerCase();})){input.value='';return;}
+  users.push(name);d.users=users;sSet('p_'+pid,d);
+  input.value='';
+  renderAdminProjects();
+};
+
+window.adminRemoveUser=function(pid,i){
+  var d=sGet('p_'+pid,{});
+  var users=d.users||[];
+  users.splice(i,1);d.users=users;sSet('p_'+pid,d);
+  renderAdminProjects();
+};
+
+window.adminLoadProject=function(id){
+  closeAdmin();
+  loadProject(id);
+};
+
+window.adminDeleteProject=function(id,name){
+  if(!confirm('Projekt "'+name+'" wirklich l\u00f6schen?'))return;
+  saveIdx(getIdx().filter(function(p){return p.id!=id;}));
+  sDel('p_'+id);
+  if(S.pid==id){S.pid=null;S.tasks=[];S.filtered=[];$('topTitle').textContent='Kein Projekt';showEmpty(true);updateKPI();}
+  renderAdminProjects();
+};
+
+window.adminCreateUser=function(){
+  var input=$('adminNewUser');
+  var name=input.value.trim();if(!name){return;}
+  // Add to global user store
+  var gu=sGet('globalUsers',[]);
+  if(gu.some(function(u){return u.toLowerCase()===name.toLowerCase();})){input.value='';return;}
+  gu.push(name);sSet('globalUsers',gu);
+  input.value='';
+  renderAdminUsers();
+};
+
+window.adminDeleteUser=function(name){
+  if(!confirm('Benutzer "'+name+'" aus allen Projekten entfernen?'))return;
+  // Remove from all projects
+  var idx=getIdx();
+  idx.forEach(function(p){
+    var d=sGet('p_'+p.id,{});
+    if(d.users){
+      d.users=d.users.filter(function(u){return u.toLowerCase()!==name.toLowerCase();});
+      sSet('p_'+p.id,d);
+    }
+  });
+  // Remove from global
+  var gu=sGet('globalUsers',[]);
+  gu=gu.filter(function(u){return u.toLowerCase()!==name.toLowerCase();});
+  sSet('globalUsers',gu);
+  renderAdminUsers();
+};
+
+window.adminSetRole=function(pid,user,role){
+  var d=sGet('p_'+pid,{});
+  var perms=d.permissions||{};
+  var uPerms=perms[user]||{};
+  uPerms._role=role;
+  // Apply role defaults
+  if(role==='viewer'){
+    PERMS.forEach(function(pm){uPerms[pm.key]=pm.key==='export_xml';});
+  } else if(role==='admin'){
+    PERMS.forEach(function(pm){uPerms[pm.key]=true;});
+  } else {
+    PERMS.forEach(function(pm){uPerms[pm.key]=true;});
+    uPerms.delete_project=false;
+    uPerms.manage_users=false;
+  }
+  perms[user]=uPerms;d.permissions=perms;sSet('p_'+pid,d);
+  renderAdminPermissions();
+};
+
+window.adminTogglePerm=function(pid,user,key,val){
+  var d=sGet('p_'+pid,{});
+  var perms=d.permissions||{};
+  var uPerms=perms[user]||{};
+  uPerms[key]=val;
+  perms[user]=uPerms;d.permissions=perms;sSet('p_'+pid,d);
+};
 
 /* ─── XML UPLOAD (topbar + drag & drop) ─── */
 window.triggerXMLUpload=function(){
