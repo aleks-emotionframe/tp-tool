@@ -256,6 +256,14 @@ body {
   background-clip: text;
 }
 .sidebar-section { padding: 16px 12px 8px; }
+.sidebar-search {
+  width: 100%; box-sizing: border-box;
+  padding: 8px 12px; margin-bottom: 12px;
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-xs);
+  color: var(--text); font-family: var(--font); font-size: 13px; outline: none; transition: var(--transition);
+}
+.sidebar-search:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-glow); }
+.sidebar-search::placeholder { color: var(--text3); }
 .sidebar-label {
   font-size: 11px;
   font-weight: 600;
@@ -376,20 +384,6 @@ body {
   white-space: nowrap;
   max-width: 320px;
 }
-.topbar-search {
-  padding: 8px 14px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  color: var(--text);
-  font-family: var(--font);
-  font-size: 13px;
-  width: 220px;
-  outline: none;
-  transition: var(--transition);
-}
-.topbar-search:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-glow); }
-.topbar-search::placeholder { color: var(--text3); }
 .tab-group { display: flex; gap: 2px; background: var(--surface2); border-radius: var(--radius-xs); padding: 3px; }
 .tab-btn {
   padding: 6px 16px;
@@ -436,7 +430,6 @@ body {
 
 /* --- JOKE BAR --- */
 .joke-bar { display: flex; align-items: center; justify-content: center; gap: 10px; flex: 1; min-width: 0; }
-.joke-icon { font-size: 16px; flex-shrink: 0; }
 .joke-text { font-size: 13px; color: var(--text3); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .joke-btn { flex-shrink: 0; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--orange); background: none; color: var(--orange); font-family: var(--font); font-size: 12px; font-weight: 600; cursor: pointer; transition: var(--transition); white-space: nowrap; }
 .joke-btn:hover { background: var(--orange); color: #fff; transform: translateY(-1px); }
@@ -1412,6 +1405,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <h2>BAUTERM</h2>
     </div>
     <div class="sidebar-section">
+      <input class="sidebar-search" id="searchInput" type="text" placeholder="Vorgang suchen...">
       <div class="sidebar-label">Projekte</div>
     </div>
     <div class="sidebar-projects" id="projectList"></div>
@@ -1427,12 +1421,10 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     <div class="topbar">
       <div class="topbar-title" id="topTitle">Kein Projekt</div>
       <div class="joke-bar" id="jokeBar">
-        <span class="joke-icon">&#9729;</span>
         <span class="joke-text" id="jokeText"></span>
         <button class="joke-btn" onclick="showJokeAnswer()">Aufl&ouml;sung &#127882;</button>
       </div>
       <div class="topbar-right">
-        <input class="topbar-search" id="searchInput" type="text" placeholder="Vorgang suchen...">
         <div class="tab-group">
           <button class="tab-btn active" data-view="dashboard">Dashboard</button>
           <button class="tab-btn" data-view="list">Liste</button>
@@ -2653,7 +2645,7 @@ function launchConfetti(){
         var el=document.createElement('div');
         el.className='confetti-piece';
         el.textContent=emojis[Math.floor(Math.random()*emojis.length)];
-        el.style.fontSize=(18+Math.random()*20)+'px';
+        el.style.fontSize=(30+Math.random()*30)+'px';
         el.style.left=Math.random()*100+'vw';
         el.style.top=-30+'px';
         el.style.width='auto';el.style.height='auto';
