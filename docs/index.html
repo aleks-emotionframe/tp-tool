@@ -361,6 +361,20 @@ body {
 }
 .sidebar-add-folder:hover { border-color: var(--border); color: var(--text2); background: var(--surface2); }
 
+/* Folder color picker */
+.folder-color-grid {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; margin-bottom: 8px;
+}
+.folder-color-swatch {
+  width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+  border: 3px solid transparent; transition: var(--transition);
+  display: flex; align-items: center; justify-content: center;
+}
+.folder-color-swatch:hover { transform: scale(1.15); }
+.folder-color-swatch.selected { border-color: var(--text); box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text3); }
+.folder-color-swatch .check { display: none; font-size: 14px; color: #fff; font-weight: 700; }
+.folder-color-swatch.selected .check { display: block; }
+
 .sidebar-user {
   display: flex; align-items: center; gap: 10px;
   padding: 12px; margin: 0 12px 8px; border-radius: var(--radius-sm);
@@ -1734,6 +1748,25 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
   </div>
 </div>
 
+<!-- Folder Edit Modal -->
+<div class="modal-bg" id="folderEditModal">
+  <div class="modal" style="max-width:380px;">
+    <h3 id="folderEditTitle">Neuer Ordner</h3>
+    <label>Ordnername</label>
+    <input type="text" id="folderEditName" placeholder="z.B. Alte Projekte">
+    <label style="margin-top:4px;">Farbe</label>
+    <div class="folder-color-grid" id="folderColorGrid"></div>
+    <div id="folderEditDeleteWrap" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+      <button class="admin-btn danger" onclick="folderEditDelete()" style="width:100%;font-size:13px;">Ordner löschen</button>
+      <p style="font-size:11px;color:var(--text3);margin-top:4px;text-align:center;">Projekte werden nicht gelöscht, nur aus dem Ordner entfernt.</p>
+    </div>
+    <div class="modal-btns" style="margin-top:16px;">
+      <button onclick="closeFolderEdit()">Abbrechen</button>
+      <button class="btn-primary" onclick="saveFolderEdit()">Speichern</button>
+    </div>
+  </div>
+</div>
+
 <!-- Project Picker Modal (daily) -->
 <div class="modal-bg" id="projectPickerModal">
   <div class="modal" style="max-width:420px;">
@@ -1974,35 +2007,100 @@ function getProjectOrder(){
   return assigned;
 }
 
+var FOLDER_COLORS=[
+  {id:'gray',hex:'#6b7280',label:'Grau'},
+  {id:'orange',hex:'#e8600a',label:'Orange'},
+  {id:'blue',hex:'#3b82f6',label:'Blau'},
+  {id:'green',hex:'#22c55e',label:'Grün'},
+  {id:'red',hex:'#ef4444',label:'Rot'},
+  {id:'purple',hex:'#a855f7',label:'Violett'},
+  {id:'yellow',hex:'#eab308',label:'Gelb'},
+  {id:'pink',hex:'#ec4899',label:'Pink'},
+  {id:'teal',hex:'#14b8a6',label:'Türkis'},
+  {id:'brown',hex:'#a16207',label:'Braun'}
+];
+
+var _folderEditId=null;
+var _folderEditColor='gray';
+
+function renderFolderColorGrid(selectedId){
+  var grid=$('folderColorGrid');
+  grid.innerHTML='';
+  FOLDER_COLORS.forEach(function(c){
+    var sw=document.createElement('div');
+    sw.className='folder-color-swatch'+(c.id===selectedId?' selected':'');
+    sw.style.background=c.hex;
+    sw.title=c.label;
+    sw.innerHTML='<span class="check">&#10003;</span>';
+    sw.onclick=function(){
+      _folderEditColor=c.id;
+      grid.querySelectorAll('.folder-color-swatch').forEach(function(x){x.classList.remove('selected');});
+      sw.classList.add('selected');
+    };
+    grid.appendChild(sw);
+  });
+}
+
 window.createFolder=function(){
-  var name=prompt('Ordnername:');
-  if(!name||!name.trim())return;
-  var folders=getFolders();
-  folders.push({id:'f_'+Date.now(),name:name.trim(),collapsed:false,projects:[]});
-  saveFolders(folders);
-  loadProjects();
+  _folderEditId=null;
+  _folderEditColor='gray';
+  $('folderEditTitle').textContent='Neuer Ordner';
+  $('folderEditName').value='';
+  $('folderEditDeleteWrap').style.display='none';
+  renderFolderColorGrid('gray');
+  $('folderEditModal').classList.add('show');
+  setTimeout(function(){$('folderEditName').focus();},100);
 };
 
-window.renameFolder=function(fid,e){
-  e.stopPropagation();
+window.editFolder=function(fid,e){
+  if(e)e.stopPropagation();
   var folders=getFolders();
   var f=folders.find(function(x){return x.id===fid;});
   if(!f)return;
-  var name=prompt('Ordner umbenennen:',f.name);
-  if(!name||!name.trim())return;
-  f.name=name.trim();
+  _folderEditId=fid;
+  _folderEditColor=f.color||'gray';
+  $('folderEditTitle').textContent='Ordner bearbeiten';
+  $('folderEditName').value=f.name;
+  $('folderEditDeleteWrap').style.display='block';
+  renderFolderColorGrid(_folderEditColor);
+  $('folderEditModal').classList.add('show');
+  setTimeout(function(){$('folderEditName').focus();},100);
+};
+
+window.closeFolderEdit=function(){
+  $('folderEditModal').classList.remove('show');
+  _folderEditId=null;
+};
+
+window.saveFolderEdit=function(){
+  var name=$('folderEditName').value.trim();
+  if(!name){$('folderEditName').focus();return;}
+  var folders=getFolders();
+  if(_folderEditId){
+    var f=folders.find(function(x){return x.id===_folderEditId;});
+    if(f){f.name=name;f.color=_folderEditColor;}
+  } else {
+    folders.push({id:'f_'+Date.now(),name:name,collapsed:false,color:_folderEditColor,projects:[]});
+  }
   saveFolders(folders);
+  closeFolderEdit();
   loadProjects();
 };
 
-window.deleteFolder=function(fid,e){
-  e.stopPropagation();
-  if(!confirm('Ordner löschen? Projekte werden nicht gelöscht.'))return;
+window.folderEditDelete=function(){
+  if(!_folderEditId)return;
   var folders=getFolders();
-  folders=folders.filter(function(x){return x.id!==fid;});
+  folders=folders.filter(function(x){return x.id!==_folderEditId;});
   saveFolders(folders);
+  closeFolderEdit();
   loadProjects();
 };
+
+function getFolderColor(f){
+  var cid=f.color||'gray';
+  var c=FOLDER_COLORS.find(function(x){return x.id===cid;});
+  return c?c.hex:'#6b7280';
+}
 
 window.toggleFolder=function(fid){
   var folders=getFolders();
@@ -2116,13 +2214,13 @@ function loadProjects(){
 
     var header=document.createElement('div');
     header.className='folder-header';
+    var fColor=getFolderColor(f);
     var validProjects=(f.projects||[]).filter(function(pid){return !!projectMap[pid];});
-    header.innerHTML='<span class="folder-chevron'+(f.collapsed?' collapsed':'')+'" data-chevron="'+f.id+'">&#9660;</span>'
-      +'<span class="folder-name">'+esc(f.name)+'</span>'
+    header.innerHTML='<span class="folder-chevron'+(f.collapsed?' collapsed':'')+'" data-chevron="'+f.id+'" style="color:'+fColor+'">&#9660;</span>'
+      +'<span class="folder-name" style="color:'+fColor+'">'+esc(f.name)+'</span>'
       +'<span class="folder-count">'+validProjects.length+'</span>'
       +'<span class="folder-actions">'
-      +'<button onclick="renameFolder(\''+f.id+'\',event)" title="Umbenennen">&#9998;</button>'
-      +'<button onclick="deleteFolder(\''+f.id+'\',event)" title="L\u00f6schen">&times;</button>'
+      +'<button onclick="editFolder(\''+f.id+'\',event)" title="Bearbeiten">&#9998;</button>'
       +'</span>';
     header.onclick=function(){toggleFolder(f.id);};
     makeFolderDropTarget(header,f.id);
@@ -2131,6 +2229,8 @@ function loadProjects(){
     var children=document.createElement('div');
     children.className='folder-children'+(f.collapsed?' collapsed':'');
     children.setAttribute('data-folder-children',f.id);
+    children.style.borderLeft='2px solid '+fColor;
+    children.style.marginLeft='6px';
     if(!f.collapsed){children.style.maxHeight='none';}
 
     validProjects.forEach(function(pid){
