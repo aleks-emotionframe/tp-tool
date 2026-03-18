@@ -312,6 +312,55 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.project-item.drag-over { border-color: var(--orange); background: var(--orange-light); }
+.project-item.dragging { opacity: 0.4; }
+
+/* Folder styles */
+.folder-group { margin-bottom: 4px; }
+.folder-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 8px; border-radius: var(--radius-xs);
+  cursor: pointer; font-size: 12px; font-weight: 600;
+  color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px;
+  transition: var(--transition); user-select: none;
+  border: 1px solid transparent;
+}
+.folder-header:hover { background: var(--surface2); color: var(--text2); }
+.folder-header.drag-over { border-color: var(--orange); background: var(--orange-light); }
+.folder-chevron {
+  font-size: 10px; transition: transform 0.2s; display: inline-block; width: 12px; text-align: center;
+}
+.folder-chevron.collapsed { transform: rotate(-90deg); }
+.folder-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folder-count {
+  font-size: 10px; font-weight: 500; color: var(--text3);
+  background: var(--surface2); border-radius: 8px; padding: 1px 6px;
+}
+.folder-actions {
+  display: none; gap: 2px;
+}
+.folder-header:hover .folder-actions { display: flex; }
+.folder-actions button {
+  background: none; border: none; cursor: pointer; color: var(--text3);
+  font-size: 12px; padding: 0 3px; border-radius: 3px; line-height: 1;
+}
+.folder-actions button:hover { color: var(--text); background: var(--surface2); }
+.folder-children { padding-left: 8px; overflow: hidden; transition: max-height 0.25s ease; }
+.folder-children.collapsed { max-height: 0 !important; }
+.folder-drop-line {
+  height: 2px; background: var(--orange); border-radius: 1px;
+  margin: 1px 12px; opacity: 0; transition: opacity 0.15s;
+}
+.folder-drop-line.show { opacity: 1; }
+.sidebar-add-folder {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 8px; margin: 4px 0;
+  border-radius: var(--radius-xs); cursor: pointer;
+  font-size: 11px; color: var(--text3);
+  transition: var(--transition); border: 1px dashed transparent;
+}
+.sidebar-add-folder:hover { border-color: var(--border); color: var(--text2); background: var(--surface2); }
+
 .sidebar-user {
   display: flex; align-items: center; gap: 10px;
   padding: 12px; margin: 0 12px 8px; border-radius: var(--radius-sm);
@@ -1809,17 +1858,204 @@ window.doLogout=function(){sSet('auth',false);sDel('currentUser');S.currentUser=
 function getIdx(){return sGet('idx',[]);}
 function saveIdx(i){sSet('idx',i);}
 
+/* ─── FOLDER SYSTEM (per user) ─── */
+function getFolders(){
+  var un=sGet('currentUser','')||(S.currentUser?S.currentUser.username:'');
+  return sGet('folders_'+un,[]);
+}
+function saveFolders(f){
+  var un=sGet('currentUser','')||(S.currentUser?S.currentUser.username:'');
+  sSet('folders_'+un,f);
+}
+
+// Get ordered project IDs (folders track order; unassigned projects come first)
+function getProjectOrder(){
+  var folders=getFolders();
+  var assigned={};
+  folders.forEach(function(f){(f.projects||[]).forEach(function(pid){assigned[pid]=true;});});
+  return assigned;
+}
+
+window.createFolder=function(){
+  var name=prompt('Ordnername:');
+  if(!name||!name.trim())return;
+  var folders=getFolders();
+  folders.push({id:'f_'+Date.now(),name:name.trim(),collapsed:false,projects:[]});
+  saveFolders(folders);
+  loadProjects();
+};
+
+window.renameFolder=function(fid,e){
+  e.stopPropagation();
+  var folders=getFolders();
+  var f=folders.find(function(x){return x.id===fid;});
+  if(!f)return;
+  var name=prompt('Ordner umbenennen:',f.name);
+  if(!name||!name.trim())return;
+  f.name=name.trim();
+  saveFolders(folders);
+  loadProjects();
+};
+
+window.deleteFolder=function(fid,e){
+  e.stopPropagation();
+  if(!confirm('Ordner löschen? Projekte werden nicht gelöscht.'))return;
+  var folders=getFolders();
+  folders=folders.filter(function(x){return x.id!==fid;});
+  saveFolders(folders);
+  loadProjects();
+};
+
+window.toggleFolder=function(fid){
+  var folders=getFolders();
+  var f=folders.find(function(x){return x.id===fid;});
+  if(!f)return;
+  f.collapsed=!f.collapsed;
+  saveFolders(folders);
+  var children=document.querySelector('[data-folder-children="'+fid+'"]');
+  var chevron=document.querySelector('[data-chevron="'+fid+'"]');
+  if(children){children.classList.toggle('collapsed',f.collapsed);}
+  if(chevron){chevron.classList.toggle('collapsed',f.collapsed);}
+};
+
+/* ─── DRAG & DROP for projects ─── */
+var _dragPid=null;
+
+function makeProjectDraggable(el,pid){
+  el.setAttribute('draggable','true');
+  el.addEventListener('dragstart',function(e){
+    _dragPid=pid;
+    el.classList.add('dragging');
+    e.dataTransfer.effectAllowed='move';
+    e.dataTransfer.setData('text/plain',pid);
+  });
+  el.addEventListener('dragend',function(){
+    _dragPid=null;
+    el.classList.remove('dragging');
+    document.querySelectorAll('.drag-over').forEach(function(x){x.classList.remove('drag-over');});
+  });
+}
+
+function makeFolderDropTarget(headerEl,fid){
+  headerEl.addEventListener('dragover',function(e){
+    if(!_dragPid)return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect='move';
+    headerEl.classList.add('drag-over');
+  });
+  headerEl.addEventListener('dragleave',function(){headerEl.classList.remove('drag-over');});
+  headerEl.addEventListener('drop',function(e){
+    e.preventDefault();
+    headerEl.classList.remove('drag-over');
+    if(!_dragPid)return;
+    moveProjectToFolder(_dragPid,fid);
+  });
+}
+
+function makeRootDropTarget(el){
+  el.addEventListener('dragover',function(e){
+    if(!_dragPid)return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect='move';
+    el.classList.add('drag-over');
+  });
+  el.addEventListener('dragleave',function(){el.classList.remove('drag-over');});
+  el.addEventListener('drop',function(e){
+    e.preventDefault();
+    el.classList.remove('drag-over');
+    if(!_dragPid)return;
+    moveProjectToFolder(_dragPid,null);
+  });
+}
+
+function moveProjectToFolder(pid,targetFid){
+  var folders=getFolders();
+  // Remove from all folders
+  folders.forEach(function(f){
+    f.projects=f.projects.filter(function(id){return id!==pid;});
+  });
+  // Add to target folder
+  if(targetFid){
+    var tf=folders.find(function(x){return x.id===targetFid;});
+    if(tf){
+      tf.projects.push(pid);
+      tf.collapsed=false;
+    }
+  }
+  saveFolders(folders);
+  loadProjects();
+}
+
+/* ─── RENDER PROJECT LIST ─── */
+function renderProjectItem(p,container){
+  var d=document.createElement('div');
+  d.className='project-item'+(S.pid==p.id?' active':'');
+  d.setAttribute('data-pid',p.id);
+  d.innerHTML='<div class="dot"></div><div class="pname">'+esc(p.name)+'</div>';
+  d.onclick=function(){loadProject(p.id);};
+  makeProjectDraggable(d,p.id);
+  container.appendChild(d);
+}
+
 function loadProjects(){
   var idx=getIdx();S.projects=idx;
   var c=$('projectList');c.innerHTML='';
   if(!idx.length){c.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">Noch keine Projekte</div>';return;}
-  idx.forEach(function(p){
-    var d=document.createElement('div');
-    d.className='project-item'+(S.pid==p.id?' active':'');
-    d.innerHTML='<div class="dot"></div><div class="pname">'+esc(p.name)+'</div>';
-    d.onclick=function(){loadProject(p.id);};
-    c.appendChild(d);
+
+  var folders=getFolders();
+  var assigned=getProjectOrder();
+  var projectMap={};
+  idx.forEach(function(p){projectMap[p.id]=p;});
+
+  // Unassigned projects (not in any folder) — shown at top
+  var unassigned=idx.filter(function(p){return !assigned[p.id];});
+  unassigned.forEach(function(p){renderProjectItem(p,c);});
+
+  // Folders
+  folders.forEach(function(f){
+    var group=document.createElement('div');
+    group.className='folder-group';
+
+    var header=document.createElement('div');
+    header.className='folder-header';
+    var validProjects=(f.projects||[]).filter(function(pid){return !!projectMap[pid];});
+    header.innerHTML='<span class="folder-chevron'+(f.collapsed?' collapsed':'')+'" data-chevron="'+f.id+'">&#9660;</span>'
+      +'<span class="folder-name">'+esc(f.name)+'</span>'
+      +'<span class="folder-count">'+validProjects.length+'</span>'
+      +'<span class="folder-actions">'
+      +'<button onclick="renameFolder(\''+f.id+'\',event)" title="Umbenennen">&#9998;</button>'
+      +'<button onclick="deleteFolder(\''+f.id+'\',event)" title="L\u00f6schen">&times;</button>'
+      +'</span>';
+    header.onclick=function(){toggleFolder(f.id);};
+    makeFolderDropTarget(header,f.id);
+    group.appendChild(header);
+
+    var children=document.createElement('div');
+    children.className='folder-children'+(f.collapsed?' collapsed':'');
+    children.setAttribute('data-folder-children',f.id);
+    if(!f.collapsed){children.style.maxHeight='none';}
+
+    validProjects.forEach(function(pid){
+      var p=projectMap[pid];
+      if(p)renderProjectItem(p,children);
+    });
+    group.appendChild(children);
+    c.appendChild(group);
   });
+
+  // "Add folder" button at bottom
+  var addBtn=document.createElement('div');
+  addBtn.className='sidebar-add-folder';
+  addBtn.innerHTML='&#128193; Neuer Ordner';
+  addBtn.onclick=function(){createFolder();};
+  makeRootDropTarget(addBtn);
+  c.appendChild(addBtn);
+
+  // Make the empty area a drop target to move projects out of folders
+  var dropZone=document.createElement('div');
+  dropZone.style.cssText='flex:1;min-height:30px;';
+  makeRootDropTarget(dropZone);
+  c.appendChild(dropZone);
 }
 
 function loadProject(id){
