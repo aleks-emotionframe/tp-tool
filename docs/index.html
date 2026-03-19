@@ -1317,6 +1317,130 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 }
 .admin-role-select:focus { border-color: var(--orange); }
 
+/* --- SETTINGS STYLES --- */
+.settings-grid { display: flex; flex-direction: column; gap: 24px; }
+.settings-section { }
+.settings-section-header {
+  font-size: 13px; font-weight: 700; color: var(--orange);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 2px solid var(--orange-light);
+}
+.settings-row {
+  display: flex; align-items: center; gap: 16px;
+  padding: 14px 16px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  margin-bottom: 8px; transition: var(--transition);
+}
+.settings-row:hover { border-color: var(--border2); }
+.settings-row-info { flex: 1; min-width: 0; }
+.settings-row-label { font-size: 14px; font-weight: 600; color: var(--text); }
+.settings-row-desc { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.settings-row-control { flex-shrink: 0; }
+.settings-select {
+  padding: 8px 12px; border-radius: var(--radius-xs);
+  border: 1px solid var(--border); background: var(--surface2);
+  font-family: var(--font); font-size: 13px; color: var(--text);
+  cursor: pointer; outline: none; min-width: 160px;
+}
+.settings-select:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-glow); }
+.settings-input {
+  padding: 8px 12px; border-radius: var(--radius-xs);
+  border: 1px solid var(--border); background: var(--surface2);
+  font-family: var(--font); font-size: 13px; color: var(--text);
+  outline: none; width: 160px;
+}
+.settings-input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-glow); }
+.settings-toggle {
+  position: relative; width: 44px; height: 24px; cursor: pointer;
+}
+.settings-toggle input { opacity: 0; width: 0; height: 0; }
+.settings-toggle .toggle-slider {
+  position: absolute; inset: 0; background: var(--surface3);
+  border-radius: 12px; transition: 0.2s;
+}
+.settings-toggle .toggle-slider:before {
+  content: ''; position: absolute; width: 18px; height: 18px;
+  left: 3px; bottom: 3px; background: #fff;
+  border-radius: 50%; transition: 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.settings-toggle input:checked + .toggle-slider { background: var(--orange); }
+.settings-toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
+.settings-color-grid {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.settings-color-swatch {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid transparent; cursor: pointer;
+  transition: 0.15s; display: flex; align-items: center; justify-content: center;
+}
+.settings-color-swatch:hover { transform: scale(1.15); }
+.settings-color-swatch.active { border-color: var(--text); box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+.settings-color-swatch .swatch-check { color: #fff; font-size: 14px; font-weight: 700; display: none; }
+.settings-color-swatch.active .swatch-check { display: block; }
+.settings-storage-bar {
+  height: 8px; background: var(--surface3); border-radius: 4px;
+  overflow: hidden; margin-top: 8px; margin-bottom: 4px;
+}
+.settings-storage-fill {
+  height: 100%; background: linear-gradient(90deg, var(--orange), #fb923c);
+  border-radius: 4px; transition: width 0.3s;
+}
+.settings-info-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.settings-info-item {
+  padding: 12px; background: var(--surface2); border-radius: var(--radius-xs);
+}
+.settings-info-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+.settings-info-value { font-size: 16px; font-weight: 700; color: var(--text); margin-top: 4px; }
+.settings-danger-zone {
+  border: 1px solid var(--red); border-radius: var(--radius);
+  padding: 20px; margin-top: 16px;
+}
+.settings-danger-title {
+  font-size: 14px; font-weight: 700; color: var(--red); margin-bottom: 12px;
+}
+.log-entry {
+  display: flex; gap: 12px; padding: 10px 0;
+  border-bottom: 1px solid var(--border); font-size: 13px;
+  align-items: flex-start;
+}
+.log-entry:last-child { border-bottom: none; }
+.log-icon {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.log-icon.create { background: var(--green-light); color: var(--green); }
+.log-icon.edit { background: var(--blue-light); color: var(--blue); }
+.log-icon.delete { background: var(--red-light); color: var(--red); }
+.log-icon.login { background: var(--orange-light); color: var(--orange); }
+.log-icon.settings { background: var(--yellow-light); color: var(--yellow); }
+.log-icon.backup { background: var(--surface3); color: var(--text2); }
+.log-time { font-size: 12px; color: var(--text3); white-space: nowrap; min-width: 120px; }
+.log-content { flex: 1; }
+.log-user { font-weight: 600; color: var(--text); }
+.log-action { color: var(--text2); }
+.log-filter-bar {
+  display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.log-filter-btn {
+  padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+  background: var(--surface); font-family: var(--font); font-size: 12px;
+  font-weight: 600; color: var(--text3); cursor: pointer; transition: var(--transition);
+}
+.log-filter-btn:hover { color: var(--text2); border-color: var(--border2); }
+.log-filter-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+
+/* --- COMPACT MODE --- */
+.compact-mode .admin-card { padding: 14px; margin-bottom: 8px; }
+.compact-mode .settings-row { padding: 10px 12px; margin-bottom: 6px; }
+.compact-mode .admin-body { padding: 16px 24px; }
+.compact-mode .task-row { padding: 6px 12px; }
+.compact-mode .kpi-card { padding: 12px; }
+
 /* --- USER DETAIL CARD --- */
 .user-detail-card {
   background: var(--surface); border: 1px solid var(--border);
@@ -1646,6 +1770,8 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <button class="admin-tab" onclick="switchAdminTab('users',this)">Benutzer</button>
       <button class="admin-tab" onclick="switchAdminTab('permissions',this)">Berechtigungen</button>
       <button class="admin-tab" onclick="switchAdminTab('backup',this)">Backup</button>
+      <button class="admin-tab" onclick="switchAdminTab('settings',this)">Einstellungen</button>
+      <button class="admin-tab" onclick="switchAdminTab('logs',this)">Aktivit&auml;tslog</button>
     </div>
 
     <!-- TAB: Projekte -->
@@ -1659,6 +1785,12 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 
     <!-- TAB: Backup -->
     <div class="admin-tab-content" id="adminTabBackup" style="display:none"></div>
+
+    <!-- TAB: Einstellungen -->
+    <div class="admin-tab-content" id="adminTabSettings" style="display:none"></div>
+
+    <!-- TAB: Aktivitätslog -->
+    <div class="admin-tab-content" id="adminTabLogs" style="display:none"></div>
   </div>
 </div>
 
@@ -1966,13 +2098,46 @@ function showLogin(){
   $('loginScreen').classList.remove('hidden');
   $('appScreen').classList.add('hidden');
   S.currentUser=null;
+  // Apply welcome message if set
+  var _wm=getAppSettings().welcomeMessage;
+  var _wmEl=document.getElementById('loginWelcomeMsg');
+  if(_wm&&_wm.trim()){
+    if(!_wmEl){
+      _wmEl=document.createElement('div');
+      _wmEl.id='loginWelcomeMsg';
+      _wmEl.style.cssText='text-align:center;color:var(--text2);font-size:13px;margin-bottom:16px;padding:10px;background:var(--orange-light);border-radius:8px;';
+      var form=$('loginForm');
+      if(form)form.parentNode.insertBefore(_wmEl,form);
+    }
+    _wmEl.textContent=_wm;
+    _wmEl.style.display='';
+  } else if(_wmEl){
+    _wmEl.style.display='none';
+  }
+  // Apply maintenance mode notice
+  var _mm=getAppSettings().maintenanceMode;
+  var _mmEl=document.getElementById('loginMaintenanceMsg');
+  if(_mm){
+    if(!_mmEl){
+      _mmEl=document.createElement('div');
+      _mmEl.id='loginMaintenanceMsg';
+      _mmEl.style.cssText='text-align:center;color:var(--red);font-size:12px;font-weight:600;margin-bottom:12px;padding:8px;background:var(--red-light);border-radius:8px;';
+      var form=$('loginForm');
+      if(form)form.parentNode.insertBefore(_mmEl,form);
+    }
+    _mmEl.textContent='Wartungsmodus aktiv \u2013 nur Admins k\u00f6nnen sich anmelden';
+    _mmEl.style.display='';
+  } else if(_mmEl){
+    _mmEl.style.display='none';
+  }
 }
 function showApp(){
   $('loginScreen').classList.add('hidden');
   $('appScreen').classList.remove('hidden');
   updateUserDisplay();
   // Restore last view
-  var savedView=sGet('lastView','dashboard');
+  var _defView=getAppSettings().defaultView||'dashboard';
+  var savedView=sGet('lastView',_defView);
   if(savedView&&savedView!==S.view){
     S.view=savedView;
     document.querySelectorAll('.tab-btn').forEach(function(b){
@@ -2072,17 +2237,44 @@ $('loginForm').addEventListener('submit',function(e){
       requestAnimationFrame(function(){el.style.animation='';});
       return;
     }
+    if(getAppSettings().maintenanceMode&&user.role!=='admin'){
+      $('loginErr').textContent='Wartungsmodus aktiv. Nur Admins k\u00f6nnen sich anmelden.';
+      var el=$('loginErr');el.style.display='block';el.style.animation='none';
+      requestAnimationFrame(function(){el.style.animation='';});
+      return;
+    }
     sSet('auth',true);
     sSet('currentUser',user.username);
     S.currentUser=user;
+    localStorage.removeItem('login_fails_'+username.toLowerCase());
+    addLog('login','hat sich angemeldet');
     showApp();
   } else {
+    addLog('login','Fehlgeschlagener Login-Versuch','Benutzername: '+username);
+    // Max login attempts check
+    var _maxAttempts=getAppSettings().maxLoginAttempts;
+    if(_maxAttempts&&_maxAttempts>0&&user){
+      var _failKey='login_fails_'+username.toLowerCase();
+      var _fails=(parseInt(localStorage.getItem(_failKey))||0)+1;
+      localStorage.setItem(_failKey,_fails);
+      if(_fails>=_maxAttempts){
+        var users=getUsers();
+        users.forEach(function(u){if(u.username.toLowerCase()===username.toLowerCase())u.locked=true;});
+        saveUsers(users);
+        addLog('settings','Account gesperrt nach '+_fails+' Fehlversuchen',username);
+        localStorage.removeItem(_failKey);
+        $('loginErr').textContent='Account wurde nach '+_fails+' Fehlversuchen gesperrt.';
+        var el=$('loginErr');el.style.display='block';el.style.animation='none';
+        requestAnimationFrame(function(){el.style.animation='';});
+        return;
+      }
+    }
     $('loginErr').textContent='Falsches Passwort oder Benutzername';
     var el=$('loginErr');el.style.display='block';el.style.animation='none';
     requestAnimationFrame(function(){el.style.animation='';});
   }
 });
-window.doLogout=function(){sSet('auth',false);sDel('currentUser');S.currentUser=null;showLogin();};
+window.doLogout=function(){addLog('login','hat sich abgemeldet');sSet('auth',false);sDel('currentUser');S.currentUser=null;showLogin();};
 
 /* ─── PROJECTS ─── */
 function getIdx(){return sGet('idx',[]);}
@@ -2468,6 +2660,7 @@ window.doCreate=function(){
 function finishCreate(id,name,tasks,xml){
   var idx=getIdx();idx.unshift({id:id,name:name,ts:new Date().toISOString()});saveIdx(idx);
   sSet('p_'+id,{name:name,tasks:tasks,xml:xml});
+  addLog('create','Projekt erstellt',name+(tasks.length?' ('+tasks.length+' Vorg\u00e4nge)':''));
   closeNewDialog();S.pid=id;loadProjects();loadProject(id);
 }
 
@@ -3542,15 +3735,21 @@ window.switchAdminTab=function(tab,btn){
   tabs.forEach(function(t){t.classList.remove('active');});
   if(btn)btn.classList.add('active');
   // Show/hide content
-  $('adminTabProjects').style.display=tab==='projects'?'block':'none';
-  $('adminTabUsers').style.display=tab==='users'?'block':'none';
-  $('adminTabPermissions').style.display=tab==='permissions'?'block':'none';
-  $('adminTabBackup').style.display=tab==='backup'?'block':'none';
+  var allTabs=['Projects','Users','Permissions','Backup','Settings','Logs'];
+  allTabs.forEach(function(t){
+    var el=$('adminTab'+t);
+    if(el)el.style.display='none';
+  });
+  var tabMap={projects:'Projects',users:'Users',permissions:'Permissions',backup:'Backup',settings:'Settings',logs:'Logs'};
+  var el=$('adminTab'+(tabMap[tab]||'Projects'));
+  if(el)el.style.display='block';
   // Render
   if(tab==='projects')renderAdminProjects();
   if(tab==='users')renderAdminUsers();
   if(tab==='permissions')renderAdminPermissions();
   if(tab==='backup')renderAdminBackup();
+  if(tab==='settings')renderAdminSettings();
+  if(tab==='logs')renderAdminLogs();
 };
 
 function renderAdminProjects(){
@@ -3804,6 +4003,7 @@ function renderAdminBackup(){
 }
 
 window.adminDownloadBackup=function(){
+  addLog('backup','Backup heruntergeladen');
   var allData={};
   for(var i=0;i<localStorage.length;i++){
     var key=localStorage.key(i);
@@ -3888,6 +4088,7 @@ window.adminDoRestore=function(){
   }
   var data=window._pendingRestore;
   if(!data){alert('Keine Backup-Daten geladen.');return;}
+  addLog('backup','Backup wiederhergestellt');
   // Clear all BAUTERM keys
   var keysToRemove=[];
   for(var i=0;i<localStorage.length;i++){
@@ -3947,6 +4148,7 @@ window.adminDeleteProject=function(id,name){
   saveIdx(getIdx().filter(function(p){return p.id!=id;}));
   sDel('p_'+id);
   if(S.pid==id){S.pid=null;S.tasks=[];S.filtered=[];$('topTitle').textContent='Kein Projekt';showEmpty(true);updateKPI();}
+  addLog('delete','Projekt gel\u00f6scht',name);
   renderAdminProjects();
 };
 
@@ -3962,7 +4164,8 @@ window.adminCreateUser=function(){
   if(!fn||!fn.trim()){alert('Bitte Vorname eingeben');return;}
   if(!ln||!ln.trim()){alert('Bitte Nachname eingeben');return;}
   if(!un||!un.trim()){alert('Bitte Benutzername eingeben');return;}
-  if(!pw||pw.length<4){alert('Passwort muss mindestens 4 Zeichen haben');return;}
+  var _minPw=getAppSettings().minPasswordLength||4;
+  if(!pw||pw.length<_minPw){alert('Passwort muss mindestens '+_minPw+' Zeichen haben');return;}
   fn=fn.trim();ln=ln.trim();un=un.trim();
   var users=getUsers();
   if(users.some(function(u){return u.username.toLowerCase()===un.toLowerCase();})){
@@ -3975,6 +4178,7 @@ window.adminCreateUser=function(){
     email:(email||'').trim(),avatar:null,locked:false
   });
   saveUsers(users);
+  addLog('create','Benutzer erstellt',fn+' '+ln+' (@'+un+')');
   // Clear form
   ['ncFirstName','ncLastName','ncUsername','ncPassword','ncFirma','ncPhone','ncEmail'].forEach(function(id){
     var el=$(id);if(el)el.value='';
@@ -3984,6 +4188,7 @@ window.adminCreateUser=function(){
 
 window.adminDeleteUser=function(username){
   if(!confirm('Benutzer "'+username+'" wirklich l\u00f6schen? Alle Projektzuweisungen werden entfernt.'))return;
+  addLog('delete','Benutzer gel\u00f6scht',username);
   var users=getUsers();
   users=users.filter(function(u){return u.username.toLowerCase()!==username.toLowerCase();});
   saveUsers(users);
@@ -4138,8 +4343,9 @@ window.saveUserEdit=function(){
     if(u.username.toLowerCase()===origUn.toLowerCase()){
       u.firstName=fn;u.lastName=ln;u.displayName=fn+' '+ln;
       u.username=un;u.role=role;u.firma=firma;u.phone=phone;u.email=email;
-      if(pw&&pw.length>=4)u.password=pw;
-      else if(pw&&pw.length>0){alert('Passwort muss mindestens 4 Zeichen haben');return;}
+      var _minPw2=getAppSettings().minPasswordLength||4;
+      if(pw&&pw.length>=_minPw2)u.password=pw;
+      else if(pw&&pw.length>0){alert('Passwort muss mindestens '+_minPw2+' Zeichen haben');return;}
       u.avatar=_ueAvatarData;
     }
   });
@@ -4161,6 +4367,7 @@ window.saveUserEdit=function(){
     sSet('currentUser',un);
     updateUserDisplay();
   }
+  addLog('edit','Benutzer bearbeitet',fn+' '+ln+' (@'+un+')');
   closeUserEdit();
   renderAdminUsers();
 };
@@ -4190,6 +4397,551 @@ window.adminTogglePerm=function(pid,user,key,val){
   var uPerms=perms[user]||{};
   uPerms[key]=val;
   perms[user]=uPerms;d.permissions=perms;sSet('p_'+pid,d);
+};
+
+/* ─── ADMIN SETTINGS TAB ─── */
+function getAppSettings(){
+  return sGet('app_settings',{
+    appName:'BAUTERM',
+    defaultView:'dashboard',
+    dateFormat:'de-CH',
+    dailyPicker:true,
+    theme:'light',
+    accentColor:'#e8600a',
+    compactMode:false,
+    fontSize:'normal',
+    animationsEnabled:true,
+    minPasswordLength:4,
+    autoLogoutMinutes:0,
+    maxLoginAttempts:0,
+    requirePasswordChange:false,
+    showProjectStats:true,
+    defaultRole:'editor',
+    autoBackup:false,
+    autoBackupDays:7,
+    maxReuploadLogEntries:100,
+    sessionWarning:true,
+    welcomeMessage:'',
+    maintenanceMode:false,
+    debugMode:false
+  });
+}
+function saveAppSettings(s){sSet('app_settings',s);addLog('settings','Einstellungen ge\u00e4ndert');}
+
+function renderAdminSettings(){
+  var s=getAppSettings();
+  var c=$('adminTabSettings');
+  var html='<div class="settings-grid">';
+
+  // === ALLGEMEIN ===
+  html+='<div class="settings-section">'
+    +'<div class="settings-section-header">Allgemein</div>';
+
+  // App name
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">App-Name</div>'
+    +'<div class="settings-row-desc">Wird im Header und Login angezeigt</div>'
+    +'</div><div class="settings-row-control">'
+    +'<input class="settings-input" value="'+esc(s.appName||'BAUTERM')+'" onchange="adminUpdateSetting(\'appName\',this.value)">'
+    +'</div></div>';
+
+  // Default view
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Standard-Ansicht</div>'
+    +'<div class="settings-row-desc">Welche Ansicht beim \u00d6ffnen eines Projekts zuerst angezeigt wird</div>'
+    +'</div><div class="settings-row-control">'
+    +'<select class="settings-select" onchange="adminUpdateSetting(\'defaultView\',this.value)">'
+    +'<option value="dashboard"'+(s.defaultView==='dashboard'?' selected':'')+'>Dashboard</option>'
+    +'<option value="list"'+(s.defaultView==='list'?' selected':'')+'>Liste</option>'
+    +'<option value="gantt"'+(s.defaultView==='gantt'?' selected':'')+'>Gantt-Diagramm</option>'
+    +'</select></div></div>';
+
+  // Date format
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Datumsformat</div>'
+    +'<div class="settings-row-desc">Format f\u00fcr alle Datumsanzeigen</div>'
+    +'</div><div class="settings-row-control">'
+    +'<select class="settings-select" onchange="adminUpdateSetting(\'dateFormat\',this.value)">'
+    +'<option value="de-CH"'+(s.dateFormat==='de-CH'?' selected':'')+'>DD.MM.YYYY (Schweiz)</option>'
+    +'<option value="de-DE"'+(s.dateFormat==='de-DE'?' selected':'')+'>DD.MM.YYYY (Deutschland)</option>'
+    +'<option value="en-US"'+(s.dateFormat==='en-US'?' selected':'')+'>MM/DD/YYYY (US)</option>'
+    +'<option value="en-GB"'+(s.dateFormat==='en-GB'?' selected':'')+'>DD/MM/YYYY (UK)</option>'
+    +'<option value="iso"'+(s.dateFormat==='iso'?' selected':'')+'>YYYY-MM-DD (ISO)</option>'
+    +'</select></div></div>';
+
+  // Daily project picker
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">T\u00e4gliche Projektauswahl</div>'
+    +'<div class="settings-row-desc">Zeigt beim ersten \u00d6ffnen des Tages eine Projektauswahl an</div>'
+    +'</div><div class="settings-row-control">'
+    +'<label class="settings-toggle"><input type="checkbox"'+(s.dailyPicker!==false?' checked':'')+' onchange="adminUpdateSetting(\'dailyPicker\',this.checked)">'
+    +'<span class="toggle-slider"></span></label></div></div>';
+
+  // Welcome message
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Begr\u00fc\u00dfungsnachricht</div>'
+    +'<div class="settings-row-desc">Optionale Nachricht auf dem Login-Bildschirm</div>'
+    +'</div><div class="settings-row-control">'
+    +'<input class="settings-input" style="width:280px" placeholder="z.B. Willkommen bei BAUTERM!" value="'+esc(s.welcomeMessage||'')+'" onchange="adminUpdateSetting(\'welcomeMessage\',this.value)">'
+    +'</div></div>';
+
+  html+='</div>';
+
+  // === DARSTELLUNG ===
+  html+='<div class="settings-section">'
+    +'<div class="settings-section-header">Darstellung</div>';
+
+  // Theme
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Farbschema</div>'
+    +'<div class="settings-row-desc">Hell oder Dunkel</div>'
+    +'</div><div class="settings-row-control">'
+    +'<select class="settings-select" onchange="adminUpdateSetting(\'theme\',this.value);applyTheme(this.value);">'
+    +'<option value="light"'+(sGet('theme','light')==='light'?' selected':'')+'>Hell (Light)</option>'
+    +'<option value="dark"'+(sGet('theme','light')==='dark'?' selected':'')+'>Dunkel (Dark)</option>'
+    +'</select></div></div>';
+
+  // Accent color
+  var accentColors=[
+    {hex:'#e8600a',label:'Orange'},
+    {hex:'#2563eb',label:'Blau'},
+    {hex:'#16a34a',label:'Gr\u00fcn'},
+    {hex:'#dc2626',label:'Rot'},
+    {hex:'#a855f7',label:'Violett'},
+    {hex:'#ec4899',label:'Pink'},
+    {hex:'#14b8a6',label:'T\u00fcrkis'},
+    {hex:'#ca8a04',label:'Gold'}
+  ];
+  var currentAccent=s.accentColor||'#e8600a';
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Akzentfarbe</div>'
+    +'<div class="settings-row-desc">Prim\u00e4rfarbe der Oberfl\u00e4che</div>'
+    +'</div><div class="settings-row-control">'
+    +'<div class="settings-color-grid">';
+  accentColors.forEach(function(col){
+    var isActive=currentAccent===col.hex;
+    html+='<div class="settings-color-swatch'+(isActive?' active':'')+'" style="background:'+col.hex+';" onclick="adminUpdateAccentColor(\''+col.hex+'\')" title="'+col.label+'">'
+      +'<span class="swatch-check">\u2713</span></div>';
+  });
+  html+='</div></div></div>';
+
+  // Font size
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Schriftgr\u00f6\u00dfe</div>'
+    +'<div class="settings-row-desc">Globale Schriftgr\u00f6\u00dfe der Anwendung</div>'
+    +'</div><div class="settings-row-control">'
+    +'<select class="settings-select" onchange="adminUpdateSetting(\'fontSize\',this.value);applyFontSize(this.value);">'
+    +'<option value="small"'+(s.fontSize==='small'?' selected':'')+'>Klein (13px)</option>'
+    +'<option value="normal"'+(!s.fontSize||s.fontSize==='normal'?' selected':'')+'>Normal (14px)</option>'
+    +'<option value="large"'+(s.fontSize==='large'?' selected':'')+'>Gross (16px)</option>'
+    +'<option value="xlarge"'+(s.fontSize==='xlarge'?' selected':'')+'>Sehr Gross (18px)</option>'
+    +'</select></div></div>';
+
+  // Compact mode
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Kompakter Modus</div>'
+    +'<div class="settings-row-desc">Reduziert Abst\u00e4nde f\u00fcr mehr Inhalte auf dem Bildschirm</div>'
+    +'</div><div class="settings-row-control">'
+    +'<label class="settings-toggle"><input type="checkbox"'+(s.compactMode?' checked':'')+' onchange="adminUpdateSetting(\'compactMode\',this.checked);applyCompactMode(this.checked);">'
+    +'<span class="toggle-slider"></span></label></div></div>';
+
+  // Animations
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Animationen</div>'
+    +'<div class="settings-row-desc">Aktiviert oder deaktiviert \u00dcbergangsanimationen</div>'
+    +'</div><div class="settings-row-control">'
+    +'<label class="settings-toggle"><input type="checkbox"'+(s.animationsEnabled!==false?' checked':'')+' onchange="adminUpdateSetting(\'animationsEnabled\',this.checked);applyAnimations(this.checked);">'
+    +'<span class="toggle-slider"></span></label></div></div>';
+
+  html+='</div>';
+
+  // === SICHERHEIT ===
+  html+='<div class="settings-section">'
+    +'<div class="settings-section-header">Sicherheit</div>';
+
+  // Min password length
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Minimale Passwortl\u00e4nge</div>'
+    +'<div class="settings-row-desc">Mindestanzahl Zeichen f\u00fcr neue Passw\u00f6rter</div>'
+    +'</div><div class="settings-row-control">'
+    +'<select class="settings-select" onchange="adminUpdateSetting(\'minPasswordLength\',parseInt(this.value))">';
+  [4,6,8,10,12].forEach(function(n){
+    html+='<option value="'+n+'"'+(s.minPasswordLength===n?' selected':'')+'>'+n+' Zeichen</option>';
+  });
+  html+='</select></div></div>';
+
+  // Auto logout
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Automatisches Logout</div>'
+    +'<div class="settings-row-desc">Automatisch abmelden nach Inaktivit\u00e4t (0 = deaktiviert)</div>'
+    +'</div><div class="settings-row-control">'
+    +'<select class="settings-select" onchange="adminUpdateSetting(\'autoLogoutMinutes\',parseInt(this.value))">'
+    +'<option value="0"'+(!s.autoLogoutMinutes?' selected':'')+'>Deaktiviert</option>'
+    +'<option value="15"'+(s.autoLogoutMinutes===15?' selected':'')+'>15 Minuten</option>'
+    +'<option value="30"'+(s.autoLogoutMinutes===30?' selected':'')+'>30 Minuten</option>'
+    +'<option value="60"'+(s.autoLogoutMinutes===60?' selected':'')+'>1 Stunde</option>'
+    +'<option value="120"'+(s.autoLogoutMinutes===120?' selected':'')+'>2 Stunden</option>'
+    +'<option value="480"'+(s.autoLogoutMinutes===480?' selected':'')+'>8 Stunden</option>'
+    +'</select></div></div>';
+
+  // Max login attempts
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Max. Login-Versuche</div>'
+    +'<div class="settings-row-desc">Sperrt Account nach X fehlgeschlagenen Versuchen (0 = unbegrenzt)</div>'
+    +'</div><div class="settings-row-control">'
+    +'<select class="settings-select" onchange="adminUpdateSetting(\'maxLoginAttempts\',parseInt(this.value))">'
+    +'<option value="0"'+(!s.maxLoginAttempts?' selected':'')+'>Unbegrenzt</option>'
+    +'<option value="3"'+(s.maxLoginAttempts===3?' selected':'')+'>3 Versuche</option>'
+    +'<option value="5"'+(s.maxLoginAttempts===5?' selected':'')+'>5 Versuche</option>'
+    +'<option value="10"'+(s.maxLoginAttempts===10?' selected':'')+'>10 Versuche</option>'
+    +'</select></div></div>';
+
+  // Session warning
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Session-Warnung</div>'
+    +'<div class="settings-row-desc">Warnt den Benutzer bevor die Sitzung abl\u00e4uft</div>'
+    +'</div><div class="settings-row-control">'
+    +'<label class="settings-toggle"><input type="checkbox"'+(s.sessionWarning!==false?' checked':'')+' onchange="adminUpdateSetting(\'sessionWarning\',this.checked)">'
+    +'<span class="toggle-slider"></span></label></div></div>';
+
+  html+='</div>';
+
+  // === PROJEKTE & BERECHTIGUNGEN ===
+  html+='<div class="settings-section">'
+    +'<div class="settings-section-header">Projekte &amp; Berechtigungen</div>';
+
+  // Default role
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Standard-Rolle f\u00fcr neue Benutzer</div>'
+    +'<div class="settings-row-desc">Rolle die neuen Benutzern bei Projektzuweisung gegeben wird</div>'
+    +'</div><div class="settings-row-control">'
+    +'<select class="settings-select" onchange="adminUpdateSetting(\'defaultRole\',this.value)">'
+    +'<option value="viewer"'+(s.defaultRole==='viewer'?' selected':'')+'>Betrachter</option>'
+    +'<option value="editor"'+(!s.defaultRole||s.defaultRole==='editor'?' selected':'')+'>Bearbeiter</option>'
+    +'<option value="admin"'+(s.defaultRole==='admin'?' selected':'')+'>Administrator</option>'
+    +'</select></div></div>';
+
+  // Show project stats
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Projekt-Statistiken anzeigen</div>'
+    +'<div class="settings-row-desc">Zeigt KPI-Karten und Fortschrittsbalken im Dashboard</div>'
+    +'</div><div class="settings-row-control">'
+    +'<label class="settings-toggle"><input type="checkbox"'+(s.showProjectStats!==false?' checked':'')+' onchange="adminUpdateSetting(\'showProjectStats\',this.checked)">'
+    +'<span class="toggle-slider"></span></label></div></div>';
+
+  html+='</div>';
+
+  // === SPEICHER & DATEN ===
+  html+='<div class="settings-section">'
+    +'<div class="settings-section-header">Speicher &amp; Daten</div>';
+
+  // Storage info
+  var storageUsed=0;
+  try{
+    for(var i=0;i<localStorage.length;i++){
+      var key=localStorage.key(i);
+      if(key.indexOf(PFX)===0){
+        storageUsed+=localStorage.getItem(key).length*2;
+      }
+    }
+  }catch(e){}
+  var storageKB=Math.round(storageUsed/1024);
+  var storageMB=(storageUsed/(1024*1024)).toFixed(2);
+  var maxStorage=5*1024*1024; // 5MB typical
+  var storagePercent=Math.min(100,Math.round((storageUsed/maxStorage)*100));
+
+  var idx=getIdx();
+  var users=getUsers();
+  var totalTasks=0;
+  idx.forEach(function(p){var d=sGet('p_'+p.id,{});totalTasks+=(d.tasks||[]).length;});
+
+  html+='<div class="admin-card"><div class="admin-card-body">'
+    +'<div class="settings-info-grid">'
+    +'<div class="settings-info-item"><div class="settings-info-label">Projekte</div><div class="settings-info-value">'+idx.length+'</div></div>'
+    +'<div class="settings-info-item"><div class="settings-info-label">Vorg\u00e4nge gesamt</div><div class="settings-info-value">'+totalTasks+'</div></div>'
+    +'<div class="settings-info-item"><div class="settings-info-label">Benutzer</div><div class="settings-info-value">'+users.length+'</div></div>'
+    +'<div class="settings-info-item"><div class="settings-info-label">Speicherverbrauch</div><div class="settings-info-value">'+storageMB+' MB</div></div>'
+    +'</div>'
+    +'<div class="settings-storage-bar"><div class="settings-storage-fill" style="width:'+storagePercent+'%"></div></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);">'
+    +'<span>'+storageKB+' KB belegt</span><span>~5 MB verf\u00fcgbar</span></div>'
+    +'</div></div>';
+
+  // Auto backup
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Automatisches Backup</div>'
+    +'<div class="settings-row-desc">Erstellt automatisch regelm\u00e4\u00dfige Backups in IndexedDB</div>'
+    +'</div><div class="settings-row-control">'
+    +'<label class="settings-toggle"><input type="checkbox"'+(s.autoBackup?' checked':'')+' onchange="adminUpdateSetting(\'autoBackup\',this.checked)">'
+    +'<span class="toggle-slider"></span></label></div></div>';
+
+  // Max reupload log
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Max. Log-Eintr\u00e4ge</div>'
+    +'<div class="settings-row-desc">Maximale Anzahl der Aktivit\u00e4tslog-Eintr\u00e4ge (ältere werden gel\u00f6scht)</div>'
+    +'</div><div class="settings-row-control">'
+    +'<select class="settings-select" onchange="adminUpdateSetting(\'maxReuploadLogEntries\',parseInt(this.value))">'
+    +'<option value="50"'+(s.maxReuploadLogEntries===50?' selected':'')+'>50</option>'
+    +'<option value="100"'+(!s.maxReuploadLogEntries||s.maxReuploadLogEntries===100?' selected':'')+'>100</option>'
+    +'<option value="250"'+(s.maxReuploadLogEntries===250?' selected':'')+'>250</option>'
+    +'<option value="500"'+(s.maxReuploadLogEntries===500?' selected':'')+'>500</option>'
+    +'<option value="1000"'+(s.maxReuploadLogEntries===1000?' selected':'')+'>1000</option>'
+    +'</select></div></div>';
+
+  html+='</div>';
+
+  // === SYSTEM ===
+  html+='<div class="settings-section">'
+    +'<div class="settings-section-header">System</div>';
+
+  // Maintenance mode
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Wartungsmodus</div>'
+    +'<div class="settings-row-desc">Sperrt die App f\u00fcr alle Nicht-Admins</div>'
+    +'</div><div class="settings-row-control">'
+    +'<label class="settings-toggle"><input type="checkbox"'+(s.maintenanceMode?' checked':'')+' onchange="adminUpdateSetting(\'maintenanceMode\',this.checked)">'
+    +'<span class="toggle-slider"></span></label></div></div>';
+
+  // Debug mode
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Debug-Modus</div>'
+    +'<div class="settings-row-desc">Zeigt zus\u00e4tzliche technische Informationen an</div>'
+    +'</div><div class="settings-row-control">'
+    +'<label class="settings-toggle"><input type="checkbox"'+(s.debugMode?' checked':'')+' onchange="adminUpdateSetting(\'debugMode\',this.checked)">'
+    +'<span class="toggle-slider"></span></label></div></div>';
+
+  // App info
+  html+='<div class="admin-card" style="margin-top:8px;"><div class="admin-card-body">'
+    +'<div class="settings-info-grid">'
+    +'<div class="settings-info-item"><div class="settings-info-label">Version</div><div class="settings-info-value">2.0</div></div>'
+    +'<div class="settings-info-item"><div class="settings-info-label">Build</div><div class="settings-info-value">2026-03-19</div></div>'
+    +'<div class="settings-info-item"><div class="settings-info-label">Plattform</div><div class="settings-info-value">Web SPA</div></div>'
+    +'<div class="settings-info-item"><div class="settings-info-label">Storage-Engine</div><div class="settings-info-value">localStorage + IDB</div></div>'
+    +'</div></div></div>';
+
+  // Danger Zone
+  html+='<div class="settings-danger-zone">'
+    +'<div class="settings-danger-title">Gefahrenzone</div>'
+    +'<div class="settings-row" style="border-color:var(--red);"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Alle Einstellungen zur\u00fccksetzen</div>'
+    +'<div class="settings-row-desc">Setzt alle Einstellungen auf die Standardwerte zur\u00fcck</div>'
+    +'</div><div class="settings-row-control">'
+    +'<button class="admin-btn danger" onclick="adminResetSettings()">Zur\u00fccksetzen</button>'
+    +'</div></div>'
+    +'<div class="settings-row" style="border-color:var(--red);"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Aktivit\u00e4tslog l\u00f6schen</div>'
+    +'<div class="settings-row-desc">L\u00f6scht alle Eintr\u00e4ge im Aktivit\u00e4tslog</div>'
+    +'</div><div class="settings-row-control">'
+    +'<button class="admin-btn danger" onclick="adminClearLogs()">Log l\u00f6schen</button>'
+    +'</div></div>'
+    +'<div class="settings-row" style="border-color:var(--red);"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Alle Daten l\u00f6schen</div>'
+    +'<div class="settings-row-desc">L\u00f6scht ALLE Daten unwiderruflich (Projekte, Benutzer, Einstellungen)</div>'
+    +'</div><div class="settings-row-control">'
+    +'<button class="admin-btn danger" onclick="adminFactoryReset()">Alles l\u00f6schen</button>'
+    +'</div></div>'
+    +'</div>';
+
+  html+='</div>';
+
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+window.adminUpdateSetting=function(key,val){
+  var s=getAppSettings();
+  s[key]=val;
+  saveAppSettings(s);
+  // Live feedback
+  if(key==='appName'){
+    var h=$('topTitle');
+    // Update login screen title if visible
+    var lt=document.querySelector('.login-title');
+    if(lt)lt.textContent=val||'BAUTERM';
+  }
+};
+
+window.adminUpdateAccentColor=function(hex){
+  var s=getAppSettings();
+  s.accentColor=hex;
+  saveAppSettings(s);
+  applyAccentColor(hex);
+  renderAdminSettings();
+};
+
+function applyAccentColor(hex){
+  if(!hex||hex==='#e8600a')return;
+  // Generate light variant
+  var r=parseInt(hex.substr(1,2),16),g=parseInt(hex.substr(3,2),16),b=parseInt(hex.substr(5,2),16);
+  var light='rgba('+r+','+g+','+b+',0.08)';
+  var glow='rgba('+r+','+g+','+b+',0.10)';
+  var dim='rgba('+Math.max(0,r-30)+','+Math.max(0,g-30)+','+Math.max(0,b-30)+',1)';
+  document.documentElement.style.setProperty('--orange',hex);
+  document.documentElement.style.setProperty('--orange-light',light);
+  document.documentElement.style.setProperty('--orange-glow',glow);
+  document.documentElement.style.setProperty('--orange-dim',dim);
+}
+
+function applyFontSize(size){
+  var map={small:'13px',normal:'14px',large:'16px',xlarge:'18px'};
+  document.documentElement.style.setProperty('--base-font-size',map[size]||'14px');
+  document.body.style.fontSize=map[size]||'14px';
+}
+
+function applyCompactMode(on){
+  if(on){
+    document.documentElement.classList.add('compact-mode');
+  } else {
+    document.documentElement.classList.remove('compact-mode');
+  }
+}
+
+function applyAnimations(on){
+  if(!on){
+    document.documentElement.style.setProperty('--transition','none');
+  } else {
+    document.documentElement.style.setProperty('--transition','all 0.2s cubic-bezier(0.4, 0, 0.2, 1)');
+  }
+}
+
+window.adminResetSettings=function(){
+  if(!confirm('Alle Einstellungen wirklich zur\u00fccksetzen?'))return;
+  sDel('app_settings');
+  // Reset visual changes
+  document.documentElement.style.removeProperty('--orange');
+  document.documentElement.style.removeProperty('--orange-light');
+  document.documentElement.style.removeProperty('--orange-glow');
+  document.documentElement.style.removeProperty('--orange-dim');
+  document.documentElement.style.removeProperty('--base-font-size');
+  document.body.style.fontSize='';
+  document.documentElement.classList.remove('compact-mode');
+  document.documentElement.style.setProperty('--transition','all 0.2s cubic-bezier(0.4, 0, 0.2, 1)');
+  applyTheme('light');
+  addLog('settings','Einstellungen zur\u00fcckgesetzt');
+  renderAdminSettings();
+};
+
+window.adminClearLogs=function(){
+  if(!confirm('Aktivit\u00e4tslog wirklich l\u00f6schen?'))return;
+  sSet('activity_log',[]);
+  sSet('reupload_log',[]);
+  renderAdminSettings();
+};
+
+window.adminFactoryReset=function(){
+  var pw=prompt('Bitte Admin-Passwort eingeben um ALLE Daten zu l\u00f6schen:');
+  if(!pw)return;
+  var users=getUsers();
+  var admin=users.find(function(u){return u.role==='admin';});
+  if(!admin||admin.password!==pw){alert('Falsches Passwort.');return;}
+  if(!confirm('LETZTE WARNUNG: Alle Projekte, Benutzer und Einstellungen werden unwiderruflich gel\u00f6scht!'))return;
+  var keysToRemove=[];
+  for(var i=0;i<localStorage.length;i++){
+    var key=localStorage.key(i);
+    if(key.indexOf(PFX)===0)keysToRemove.push(key);
+  }
+  keysToRemove.forEach(function(k){localStorage.removeItem(k);});
+  alert('Alle Daten wurden gel\u00f6scht. Die Seite wird neu geladen.');
+  location.reload();
+};
+
+/* ─── ACTIVITY LOG ─── */
+function addLog(type,msg,detail){
+  var logs=sGet('activity_log',[]);
+  var s=getAppSettings();
+  var max=s.maxReuploadLogEntries||100;
+  logs.push({
+    timestamp:new Date().toISOString(),
+    type:type,
+    user:sGet('currentUser','')||(S.currentUser?S.currentUser.username:'System'),
+    message:msg,
+    detail:detail||''
+  });
+  if(logs.length>max)logs=logs.slice(logs.length-max);
+  sSet('activity_log',logs);
+}
+
+function renderAdminLogs(){
+  var c=$('adminTabLogs');
+  var logs=sGet('activity_log',[]);
+  var reuploadLogs=sGet('reupload_log',[]);
+  // Merge reupload logs into display
+  reuploadLogs.forEach(function(rl){
+    if(!logs.some(function(l){return l.timestamp===rl.timestamp&&l.type==='edit';})){
+      logs.push({timestamp:rl.timestamp,type:'edit',user:rl.user||'',message:'XML re-upload: '+rl.projectName,detail:''});
+    }
+  });
+  logs.sort(function(a,b){return a.timestamp<b.timestamp?1:-1;});
+
+  var html='<div class="admin-section">'
+    +'<div class="admin-section-title">Aktivit\u00e4tslog <span class="admin-badge blue">'+logs.length+' Eintr\u00e4ge</span></div>';
+
+  // Filter buttons
+  html+='<div class="log-filter-bar">'
+    +'<button class="log-filter-btn active" onclick="filterLogs(\'all\',this)">Alle</button>'
+    +'<button class="log-filter-btn" onclick="filterLogs(\'login\',this)">Login</button>'
+    +'<button class="log-filter-btn" onclick="filterLogs(\'create\',this)">Erstellt</button>'
+    +'<button class="log-filter-btn" onclick="filterLogs(\'edit\',this)">Bearbeitet</button>'
+    +'<button class="log-filter-btn" onclick="filterLogs(\'delete\',this)">Gel\u00f6scht</button>'
+    +'<button class="log-filter-btn" onclick="filterLogs(\'settings\',this)">Einstellungen</button>'
+    +'<button class="log-filter-btn" onclick="filterLogs(\'backup\',this)">Backup</button>'
+    +'</div>';
+
+  if(!logs.length){
+    html+='<div class="admin-empty-msg">Noch keine Aktivit\u00e4ten aufgezeichnet.</div>';
+  } else {
+    html+='<div class="admin-card"><div class="admin-card-body" style="max-height:500px;overflow-y:auto;" id="logEntries">';
+    var iconMap={create:'+',edit:'\u270E',delete:'\u2715',login:'\u2192',settings:'\u2699',backup:'\u21E9'};
+    logs.forEach(function(log){
+      var d=new Date(log.timestamp);
+      var icon=iconMap[log.type]||'\u2022';
+      var iconClass=log.type||'settings';
+      html+='<div class="log-entry" data-type="'+esc(log.type||'settings')+'">'
+        +'<div class="log-icon '+iconClass+'">'+icon+'</div>'
+        +'<div class="log-time">'+d.toLocaleString('de-CH')+'</div>'
+        +'<div class="log-content">'
+        +'<span class="log-user">'+esc(log.user||'System')+'</span> '
+        +'<span class="log-action">'+esc(log.message||'')+'</span>'
+        +(log.detail?'<div style="font-size:11px;color:var(--text3);margin-top:2px;">'+esc(log.detail)+'</div>':'')
+        +'</div></div>';
+    });
+    html+='</div></div>';
+  }
+
+  // Export log
+  if(logs.length){
+    html+='<div style="margin-top:12px;display:flex;gap:8px;">'
+      +'<button class="admin-btn" onclick="adminExportLogs()">Log exportieren (CSV)</button>'
+      +'<button class="admin-btn danger" onclick="adminClearLogs();renderAdminLogs();">Log l\u00f6schen</button>'
+      +'</div>';
+  }
+
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+window.filterLogs=function(type,btn){
+  document.querySelectorAll('.log-filter-btn').forEach(function(b){b.classList.remove('active');});
+  if(btn)btn.classList.add('active');
+  var entries=document.querySelectorAll('.log-entry');
+  entries.forEach(function(el){
+    if(type==='all'){el.style.display='';return;}
+    el.style.display=el.getAttribute('data-type')===type?'':'none';
+  });
+};
+
+window.adminExportLogs=function(){
+  var logs=sGet('activity_log',[]);
+  var csv='Zeitstempel;Benutzer;Typ;Aktion;Detail\n';
+  logs.forEach(function(l){
+    csv+='"'+l.timestamp+'";"'+esc(l.user||'')+'";'+esc(l.type||'')+'";"'+esc(l.message||'')+'";'+'"'+esc(l.detail||'')+'"\n';
+  });
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='bauterm-log-'+new Date().toISOString().substring(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };
 
 /* ─── XML UPLOAD (topbar + drag & drop) ─── */
@@ -4427,6 +5179,34 @@ document.addEventListener('drop',function(e){
 _tryRestoreFromIDB(function(){
   // Apply saved theme (default: light)
   applyTheme(sGet('theme','light'));
+
+  // Apply saved settings
+  var _initSettings=getAppSettings();
+  if(_initSettings.accentColor&&_initSettings.accentColor!=='#e8600a')applyAccentColor(_initSettings.accentColor);
+  if(_initSettings.fontSize&&_initSettings.fontSize!=='normal')applyFontSize(_initSettings.fontSize);
+  if(_initSettings.compactMode)applyCompactMode(true);
+  if(_initSettings.animationsEnabled===false)applyAnimations(false);
+
+  // Auto-logout timer
+  var _autoLogoutTimer=null;
+  function resetAutoLogout(){
+    if(_autoLogoutTimer)clearTimeout(_autoLogoutTimer);
+    var mins=getAppSettings().autoLogoutMinutes;
+    if(mins&&mins>0&&sGet('auth',false)){
+      _autoLogoutTimer=setTimeout(function(){
+        if(sGet('auth',false)){
+          addLog('login','Automatisch abgemeldet (Inaktivit\u00e4t)');
+          sSet('auth',false);sDel('currentUser');S.currentUser=null;
+          alert('Du wurdest wegen Inaktivit\u00e4t automatisch abgemeldet.');
+          showLogin();
+        }
+      },mins*60*1000);
+    }
+  }
+  ['click','keydown','mousemove','touchstart'].forEach(function(ev){
+    document.addEventListener(ev,resetAutoLogout,{passive:true});
+  });
+  resetAutoLogout();
 
   // Check auth and restore user
   if(sGet('auth',false)){
