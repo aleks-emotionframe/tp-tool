@@ -1606,11 +1606,11 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     </div>
     <p class="login-sub">Terminprogramm f&uuml;r Bauleiter</p>
     <form id="loginForm">
-      <input class="login-input" type="text" id="loginUser" placeholder="Benutzername" autocomplete="username" autofocus>
+      <input class="login-input" type="text" id="loginUser" placeholder="E-Mail Adresse" autocomplete="username" autofocus>
       <input class="login-input" type="password" id="loginPw" placeholder="Passwort" autocomplete="current-password" style="margin-top:8px;">
       <button class="login-btn" type="submit">Einloggen</button>
     </form>
-    <div class="login-error" id="loginErr">Falsches Passwort oder Benutzername</div>
+    <div class="login-error" id="loginErr">Falsches Passwort oder E-Mail</div>
   </div>
 </div>
 
@@ -1835,13 +1835,12 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     <div class="user-edit-grid">
       <div><label>Vorname *</label><input type="text" id="ueFirstName"></div>
       <div><label>Nachname *</label><input type="text" id="ueLastName"></div>
-      <div><label>Benutzername *</label><input type="text" id="ueUsername"></div>
+      <div><label>E-Mail Adresse *</label><input type="email" id="ueEmail"></div>
       <div><label>Rolle</label>
         <select id="ueRole"></select>
       </div>
       <div><label>Firma</label><input type="text" id="ueFirma"></div>
       <div><label>Telefonnummer</label><input type="tel" id="uePhone"></div>
-      <div class="full-width"><label>E-Mail Adresse</label><input type="email" id="ueEmail"></div>
       <div class="full-width"><label>Neues Passwort (leer lassen um nicht zu ändern)</label><input type="password" id="uePassword" placeholder="Neues Passwort..."></div>
     </div>
     <input type="hidden" id="ueOrigUsername">
@@ -2279,7 +2278,7 @@ $('loginForm').addEventListener('submit',function(e){
         return;
       }
     }
-    $('loginErr').textContent='Falsches Passwort oder Benutzername';
+    $('loginErr').textContent='Falsches Passwort oder E-Mail';
     var el=$('loginErr');el.style.display='block';el.style.animation='none';
     requestAnimationFrame(function(){el.style.animation='';});
   }
@@ -4089,11 +4088,10 @@ function renderAdminUsers(){
     +'<div class="create-user-grid">'
     +'<div><label>Vorname *</label><input type="text" id="ncFirstName" placeholder="Max"></div>'
     +'<div><label>Nachname *</label><input type="text" id="ncLastName" placeholder="Mustermann"></div>'
-    +'<div><label>Benutzername *</label><input type="text" id="ncUsername" placeholder="mmustermann"></div>'
+    +'<div><label>E-Mail Adresse *</label><input type="email" id="ncEmail" placeholder="max@firma.de"></div>'
     +'<div><label>Passwort *</label><input type="password" id="ncPassword" placeholder="Min. 4 Zeichen"></div>'
     +'<div><label>Firma</label><input type="text" id="ncFirma" placeholder="Firma GmbH"></div>'
     +'<div><label>Telefonnummer</label><input type="tel" id="ncPhone" placeholder="+49 123 456789"></div>'
-    +'<div><label>E-Mail Adresse</label><input type="email" id="ncEmail" placeholder="max@firma.de"></div>'
     +'<div><label>Rolle</label><select id="ncRole">'+getRoles().map(function(r){return '<option value="'+esc(r.id)+'"'+(r.id==='user'?' selected':'')+'>'+esc(r.name)+'</option>';}).join('')+'</select></div>'
     +'</div>'
     +'<div class="create-user-actions">'
@@ -4122,8 +4120,7 @@ function renderAdminUsers(){
         +(isCurrent?' <span class="admin-badge green">Eingeloggt</span>':'')
         +'</div>'
         +'<div class="user-detail-meta">'
-        +'<span>@'+esc(u.username)+'</span>'
-        +(u.email?'<span>'+esc(u.email)+'</span>':'')
+        +'<span>'+esc(u.username)+'</span>'
         +(u.phone?'<span>'+esc(u.phone)+'</span>':'')
         +(u.firma?'<span>'+esc(u.firma)+'</span>':'')
         +'</div>'
@@ -4417,32 +4414,32 @@ window.adminDeleteProject=function(id,name){
 window.adminCreateUser=function(){
   var fn=($('ncFirstName')||{}).value;
   var ln=($('ncLastName')||{}).value;
-  var un=($('ncUsername')||{}).value;
+  var email=($('ncEmail')||{}).value;
   var pw=($('ncPassword')||{}).value;
   var firma=($('ncFirma')||{}).value;
   var phone=($('ncPhone')||{}).value;
-  var email=($('ncEmail')||{}).value;
   var role=($('ncRole')||{}).value||'user';
   if(!fn||!fn.trim()){alert('Bitte Vorname eingeben');return;}
   if(!ln||!ln.trim()){alert('Bitte Nachname eingeben');return;}
-  if(!un||!un.trim()){alert('Bitte Benutzername eingeben');return;}
+  if(!email||!email.trim()){alert('Bitte E-Mail Adresse eingeben');return;}
+  var un=email.trim();
   var _minPw=getAppSettings().minPasswordLength||4;
   if(!pw||pw.length<_minPw){alert('Passwort muss mindestens '+_minPw+' Zeichen haben');return;}
   fn=fn.trim();ln=ln.trim();un=un.trim();
   var users=getUsers();
   if(users.some(function(u){return u.username.toLowerCase()===un.toLowerCase();})){
-    alert('Benutzername "'+un+'" existiert bereits');return;
+    alert('Ein Benutzer mit dieser E-Mail existiert bereits');return;
   }
   users.push({
     username:un,password:pw,firstName:fn,lastName:ln,
     displayName:fn+' '+ln,role:role,
     firma:(firma||'').trim(),phone:(phone||'').trim(),
-    email:(email||'').trim(),avatar:null,locked:false
+    email:un,avatar:null,locked:false
   });
   saveUsers(users);
-  addLog('create','Benutzer erstellt',fn+' '+ln+' (@'+un+')');
+  addLog('create','Benutzer erstellt',fn+' '+ln+' ('+un+')');
   // Clear form
-  ['ncFirstName','ncLastName','ncUsername','ncPassword','ncFirma','ncPhone','ncEmail'].forEach(function(id){
+  ['ncFirstName','ncLastName','ncPassword','ncFirma','ncPhone','ncEmail'].forEach(function(id){
     var el=$(id);if(el)el.value='';
   });
   renderAdminUsers();
@@ -4501,14 +4498,13 @@ window.adminSendInviteEmail=function(){
   var email=($('ncEmail')||{}).value;
   var fn=($('ncFirstName')||{}).value||'';
   var ln=($('ncLastName')||{}).value||'';
-  var un=($('ncUsername')||{}).value||'';
   if(!email||!email.trim()){alert('Bitte E-Mail Adresse eingeben');return;}
   var name=(fn+' '+ln).trim()||'Benutzer';
   var subject=encodeURIComponent('Einladung zu BAUTERM');
   var body=encodeURIComponent('Hallo '+name+',\n\ndu wurdest zu BAUTERM eingeladen!\n\n'
     +'Bitte registriere dich unter folgendem Link:\n'
     +window.location.origin+window.location.pathname+'#register\n\n'
-    +'Dein Benutzername: '+un+'\n\n'
+    +'Dein Login: '+email.trim()+'\n\n'
     +'Bitte setze dir bei der ersten Anmeldung ein sicheres Passwort.\n\n'
     +'Viele Gr\u00fc\u00dfe,\nDein BAUTERM-Team');
   window.open('mailto:'+encodeURIComponent(email.trim())+'?subject='+subject+'&body='+body,'_blank');
@@ -4522,14 +4518,13 @@ window.openUserEdit=function(username){
   $('ueOrigUsername').value=user.username;
   $('ueFirstName').value=user.firstName||'';
   $('ueLastName').value=user.lastName||'';
-  $('ueUsername').value=user.username;
+  $('ueEmail').value=user.email||user.username||'';
   // Populate role dropdown dynamically
   var roleSelect=$('ueRole');
   roleSelect.innerHTML=getRoles().map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.name)+'</option>';}).join('');
   roleSelect.value=user.role||'user';
   $('ueFirma').value=user.firma||'';
   $('uePhone').value=user.phone||'';
-  $('ueEmail').value=user.email||'';
   $('uePassword').value='';
   $('userEditTitle').textContent=getUserDisplayName(user)+' bearbeiten';
   _ueAvatarData=user.avatar||null;
@@ -4588,26 +4583,26 @@ window.saveUserEdit=function(){
   var origUn=$('ueOrigUsername').value;
   var fn=$('ueFirstName').value.trim();
   var ln=$('ueLastName').value.trim();
-  var un=$('ueUsername').value.trim();
+  var email=$('ueEmail').value.trim();
   var role=$('ueRole').value;
   var firma=$('ueFirma').value.trim();
   var phone=$('uePhone').value.trim();
-  var email=$('ueEmail').value.trim();
   var pw=$('uePassword').value;
   if(!fn){alert('Bitte Vorname eingeben');return;}
   if(!ln){alert('Bitte Nachname eingeben');return;}
-  if(!un){alert('Bitte Benutzername eingeben');return;}
+  if(!email){alert('Bitte E-Mail Adresse eingeben');return;}
+  var un=email;
   var users=getUsers();
   // Check username conflict
   if(un.toLowerCase()!==origUn.toLowerCase()){
     if(users.some(function(u){return u.username.toLowerCase()===un.toLowerCase();})){
-      alert('Benutzername "'+un+'" existiert bereits');return;
+      alert('Ein Benutzer mit dieser E-Mail existiert bereits');return;
     }
   }
   users.forEach(function(u){
     if(u.username.toLowerCase()===origUn.toLowerCase()){
       u.firstName=fn;u.lastName=ln;u.displayName=fn+' '+ln;
-      u.username=un;u.role=role;u.firma=firma;u.phone=phone;u.email=email;
+      u.username=un;u.role=role;u.firma=firma;u.phone=phone;u.email=un;
       var _minPw2=getAppSettings().minPasswordLength||4;
       if(pw&&pw.length>=_minPw2)u.password=pw;
       else if(pw&&pw.length>0){alert('Passwort muss mindestens '+_minPw2+' Zeichen haben');return;}
