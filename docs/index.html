@@ -1811,10 +1811,95 @@ function fmtDate(d){if(!d)return'\u2013';var p=d.split('-');return p.length===3?
 function fmtISO(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 function findTask(uid){for(var i=0;i<S.tasks.length;i++){if(S.tasks[i].uid===uid)return S.tasks[i];}return null;}
 
-/* ─── STORAGE ─── */
+/* ─── STORAGE (localStorage + IndexedDB mirror) ─── */
+var _idb=null;
+function _openIDB(cb){
+  if(_idb){cb(_idb);return;}
+  try{
+    var req=indexedDB.open('bauterm_backup',1);
+    req.onupgradeneeded=function(e){e.target.result.createObjectStore('kv');};
+    req.onsuccess=function(e){_idb=e.target.result;cb(_idb);};
+    req.onerror=function(){cb(null);};
+  }catch(e){cb(null);}
+}
+function _idbSet(k,v){
+  _openIDB(function(db){
+    if(!db)return;
+    try{var tx=db.transaction('kv','readwrite');tx.objectStore('kv').put(v,PFX+k);}catch(e){}
+  });
+}
+function _idbDel(k){
+  _openIDB(function(db){
+    if(!db)return;
+    try{var tx=db.transaction('kv','readwrite');tx.objectStore('kv').delete(PFX+k);}catch(e){}
+  });
+}
+function _idbGetAll(cb){
+  _openIDB(function(db){
+    if(!db){cb(null);return;}
+    try{
+      var tx=db.transaction('kv','readonly');
+      var store=tx.objectStore('kv');
+      var req=store.openCursor();
+      var result={};
+      req.onsuccess=function(e){
+        var cursor=e.target.result;
+        if(cursor){result[cursor.key]=cursor.value;cursor.continue();}
+        else{cb(result);}
+      };
+      req.onerror=function(){cb(null);};
+    }catch(e){cb(null);}
+  });
+}
 function sGet(k,f){try{var v=localStorage.getItem(PFX+k);return v!==null?JSON.parse(v):f;}catch(e){return f;}}
-function sSet(k,v){try{localStorage.setItem(PFX+k,JSON.stringify(v));}catch(e){}}
-function sDel(k){localStorage.removeItem(PFX+k);}
+function sSet(k,v){
+  var json=JSON.stringify(v);
+  try{localStorage.setItem(PFX+k,json);}
+  catch(e){
+    console.error('localStorage write failed for key '+k,e);
+    alert('Speicherfehler! Der Browser-Speicher ist möglicherweise voll. Bitte exportiere deine Daten (Admin Center → Backup).');
+  }
+  _idbSet(k,json);
+}
+function sDel(k){localStorage.removeItem(PFX+k);_idbDel(k);}
+
+/* Seed IndexedDB with existing localStorage data (once) */
+function _seedIDB(){
+  _openIDB(function(db){
+    if(!db)return;
+    try{
+      var tx=db.transaction('kv','readwrite');
+      var store=tx.objectStore('kv');
+      for(var i=0;i<localStorage.length;i++){
+        var key=localStorage.key(i);
+        if(key.indexOf(PFX)===0){store.put(localStorage.getItem(key),key);}
+      }
+    }catch(e){}
+  });
+}
+
+/* Restore from IndexedDB if localStorage was cleared */
+function _tryRestoreFromIDB(cb){
+  // Check if localStorage has any bt_ data
+  var hasLocal=false;
+  for(var i=0;i<localStorage.length;i++){
+    if(localStorage.key(i).indexOf(PFX)===0){hasLocal=true;break;}
+  }
+  if(hasLocal){_seedIDB();cb();return;}
+  // localStorage is empty — try IndexedDB
+  _idbGetAll(function(data){
+    if(!data||Object.keys(data).length===0){cb();return;}
+    console.log('Restoring '+Object.keys(data).length+' keys from IndexedDB backup...');
+    var restored=0;
+    for(var key in data){
+      if(key.indexOf(PFX)===0){
+        try{localStorage.setItem(key,typeof data[key]==='string'?data[key]:JSON.stringify(data[key]));restored++;}catch(e){}
+      }
+    }
+    if(restored>0){console.log('Restored '+restored+' entries from IndexedDB backup.');}
+    cb();
+  });
+}
 
 /* ─── THEME ─── */
 function applyTheme(theme){
@@ -4338,15 +4423,18 @@ document.addEventListener('drop',function(e){
 });
 
 /* ─── INIT ─── */
-// Apply saved theme (default: light)
-applyTheme(sGet('theme','light'));
+// Restore from IndexedDB if localStorage was wiped, then boot
+_tryRestoreFromIDB(function(){
+  // Apply saved theme (default: light)
+  applyTheme(sGet('theme','light'));
 
-// Check auth and restore user
-if(sGet('auth',false)){
-  var savedUsername=sGet('currentUser',null);
-  if(savedUsername){S.currentUser=findUser(savedUsername);}
-  showApp();
-}else{showLogin();}
+  // Check auth and restore user
+  if(sGet('auth',false)){
+    var savedUsername=sGet('currentUser',null);
+    if(savedUsername){S.currentUser=findUser(savedUsername);}
+    showApp();
+  }else{showLogin();}
+});
 
 })();
 </script>
