@@ -4138,22 +4138,26 @@ function renderAdminUsers(){
       html+='<div class="user-detail-projects">'
         +'<div class="proj-label">Zugewiesene Projekte</div>'
         +'<div class="user-project-tags">';
-      uProjects.forEach(function(pr){
-        html+='<span class="user-project-tag">'+esc(pr.name)
-          +'<button class="tag-x" onclick="adminUnassignProject(\''+uEsc+'\',\''+esc(pr.id)+'\')">&times;</button></span>';
-      });
-      // Add project dropdown
-      var available=idx.filter(function(p){return !uProjects.some(function(up){return up.id===p.id;});});
-      if(available.length){
-        html+='<select class="proj-add-select" onchange="adminAssignProject(\''+uEsc+'\',this.value);this.selectedIndex=0;">'
-          +'<option value="">+ Projekt</option>';
-        available.forEach(function(p){
-          html+='<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>';
+      if(u.role==='admin'){
+        html+='<span style="font-size:12px;color:var(--text3);font-style:italic;">Zugriff auf alle Projekte</span>';
+      } else {
+        uProjects.forEach(function(pr){
+          html+='<span class="user-project-tag">'+esc(pr.name)
+            +'<button class="tag-x" onclick="adminUnassignProject(\''+uEsc+'\',\''+esc(pr.id)+'\')">&times;</button></span>';
         });
-        html+='</select>';
-      }
-      if(!uProjects.length&&!available.length){
-        html+='<span style="font-size:12px;color:var(--text3);font-style:italic;">Keine Projekte vorhanden</span>';
+        // Add project dropdown
+        var available=idx.filter(function(p){return !uProjects.some(function(up){return up.id===p.id;});});
+        if(available.length){
+          html+='<select class="proj-add-select" onchange="adminAssignProject(\''+uEsc+'\',this.value);this.selectedIndex=0;">'
+            +'<option value="">+ Projekt</option>';
+          available.forEach(function(p){
+            html+='<option value="'+esc(p.id)+'">'+esc(p.name)+'</option>';
+          });
+          html+='</select>';
+        }
+        if(!uProjects.length&&!available.length){
+          html+='<span style="font-size:12px;color:var(--text3);font-style:italic;">Keine Projekte vorhanden</span>';
+        }
       }
       html+='</div></div>';
 
