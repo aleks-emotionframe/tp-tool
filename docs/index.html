@@ -3706,10 +3706,47 @@ var PERMS=[
   {key:'manage_users',label:'Benutzer verwalten'}
 ];
 
+var ROLE_COLORS=[
+  {hex:'#e8600a',label:'Orange'},
+  {hex:'#ef4444',label:'Rot'},
+  {hex:'#f59e0b',label:'Gelb'},
+  {hex:'#22c55e',label:'Gr\u00fcn'},
+  {hex:'#06b6d4',label:'Cyan'},
+  {hex:'#3b82f6',label:'Blau'},
+  {hex:'#6366f1',label:'Indigo'},
+  {hex:'#8b5cf6',label:'Violett'},
+  {hex:'#ec4899',label:'Pink'},
+  {hex:'#78716c',label:'Grau'},
+  {hex:'#1e293b',label:'Dunkel'}
+];
+
 var DEFAULT_ROLES=[
   {id:'admin',name:'Administrator',color:'#e8600a',system:true,permissions:{edit_tasks:true,edit_dates:true,import_xml:true,export_xml:true,delete_project:true,manage_users:true}},
   {id:'user',name:'Benutzer',color:'#3b82f6',system:true,permissions:{edit_tasks:true,edit_dates:true,import_xml:false,export_xml:true,delete_project:false,manage_users:false}}
 ];
+
+function _roleColorGrid(selectedColor,targetId){
+  var h='<div class="settings-color-grid" style="margin-top:6px;">';
+  ROLE_COLORS.forEach(function(c){
+    var active=selectedColor===c.hex;
+    h+='<div class="settings-color-swatch'+(active?' active':'')+'" style="background:'+c.hex+';" onclick="selectRoleColor(this,\''+targetId+'\',\''+c.hex+'\')" title="'+c.label+'">'
+      +'<span class="swatch-check">\u2713</span></div>';
+  });
+  h+='</div>';
+  return h;
+}
+
+window.selectRoleColor=function(el,targetId,color){
+  el.parentNode.querySelectorAll('.settings-color-swatch').forEach(function(s){s.classList.remove('active');});
+  el.classList.add('active');
+  var input=$(targetId);
+  if(input){input.value=color;}
+  // If it's a role edit (targetId starts with 'rc_'), save immediately
+  if(targetId.indexOf('rc_')===0){
+    var roleId=targetId.substring(3);
+    adminChangeRoleColor(roleId,color);
+  }
+};
 
 function getRoles(){
   var roles=sGet('roles',null);
@@ -3730,9 +3767,9 @@ function renderAdminRoles(){
   // --- Create Role Card ---
   html+='<div class="create-user-card">'
     +'<div class="create-user-header"><h4>Neue Rolle erstellen</h4></div>'
-    +'<div class="create-user-grid">'
-    +'<div><label>Rollenname *</label><input type="text" id="nrName" placeholder="z.B. Bauleiter"></div>'
-    +'<div><label>Farbe</label><input type="color" id="nrColor" value="#6366f1" style="width:100%;height:36px;border:1px solid var(--border);border-radius:var(--radius-xs);cursor:pointer;"></div>'
+    +'<div style="margin-bottom:12px;"><label>Rollenname *</label><input type="text" id="nrName" placeholder="z.B. Bauleiter" style="width:100%;max-width:300px;"></div>'
+    +'<div><label>Farbe</label><input type="hidden" id="nrColor" value="#6366f1">'
+    +_roleColorGrid('#6366f1','nrColor')
     +'</div>'
     +'<div style="margin-top:12px;"><label style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Berechtigungen</label>'
     +'<div class="admin-perm-grid" style="margin-top:8px;">';
@@ -3767,19 +3804,19 @@ function renderAdminRoles(){
     PERMS.forEach(function(pm){
       var checked=role.permissions[pm.key]===true;
       html+='<label class="admin-perm-item">'
-        +'<input type="checkbox" '+(checked?'checked ':'')+' onchange="adminUpdateRolePerm(\''+rEsc+'\',\''+pm.key+'\',this.checked)"'
-        +(role.system&&role.id==='admin'?' disabled':'')+'>'
+        +'<input type="checkbox" '+(checked?'checked ':'')+' onchange="adminUpdateRolePerm(\''+rEsc+'\',\''+pm.key+'\',this.checked)">'
         +pm.label+'</label>';
     });
     html+='</div>';
 
-    // Inline rename + color
-    if(role.id!=='admin'){
-      html+='<div style="display:flex;gap:8px;margin-top:12px;align-items:center;">'
-        +'<input class="admin-inline-edit" value="'+esc(role.name)+'" onchange="adminRenameRole(\''+rEsc+'\',this.value)" style="max-width:200px;padding:6px 10px;font-size:13px;">'
-        +'<input type="color" value="'+esc(role.color)+'" onchange="adminChangeRoleColor(\''+rEsc+'\',this.value)" style="width:36px;height:32px;border:1px solid var(--border);border-radius:var(--radius-xs);cursor:pointer;padding:2px;">'
-        +'</div>';
-    }
+    // Inline rename + color swatches
+    html+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">'
+      +'<input class="admin-inline-edit" value="'+esc(role.name)+'" onchange="adminRenameRole(\''+rEsc+'\',this.value)" style="max-width:200px;padding:6px 10px;font-size:13px;">'
+      +'</div>'
+      +'<input type="hidden" id="rc_'+esc(role.id)+'" value="'+esc(role.color)+'">'
+      +_roleColorGrid(role.color,'rc_'+role.id)
+      +'</div>';
 
     // Member list
     var members=users.filter(function(u){return u.role===role.id;});
