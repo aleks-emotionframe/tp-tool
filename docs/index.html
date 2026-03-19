@@ -3757,7 +3757,7 @@ function renderAdminRoles(){
       +'</div>'
       +'<div style="display:flex;align-items:center;gap:8px;">'
       +'<span class="admin-badge blue">'+memberCount+' Benutzer</span>'
-      +(role.system?'':'<button class="admin-btn danger" onclick="adminDeleteRole(\''+rEsc+'\')" style="padding:4px 10px;font-size:12px;">L\u00f6schen</button>')
+      +(role.id==='admin'?'':'<button class="admin-btn danger" onclick="adminDeleteRole(\''+rEsc+'\')" style="padding:4px 10px;font-size:12px;">L\u00f6schen</button>')
       +'</div></div>';
 
     // Permissions edit
@@ -3774,7 +3774,7 @@ function renderAdminRoles(){
     html+='</div>';
 
     // Inline rename + color
-    if(!role.system){
+    if(role.id!=='admin'){
       html+='<div style="display:flex;gap:8px;margin-top:12px;align-items:center;">'
         +'<input class="admin-inline-edit" value="'+esc(role.name)+'" onchange="adminRenameRole(\''+rEsc+'\',this.value)" style="max-width:200px;padding:6px 10px;font-size:13px;">'
         +'<input type="color" value="'+esc(role.color)+'" onchange="adminChangeRoleColor(\''+rEsc+'\',this.value)" style="width:36px;height:32px;border:1px solid var(--border);border-radius:var(--radius-xs);cursor:pointer;padding:2px;">'
@@ -3843,17 +3843,22 @@ window.adminCreateRole=function(){
 window.adminDeleteRole=function(roleId){
   var role=findRole(roleId);
   if(!role){return;}
-  if(role.system){alert('Systemrollen k\u00f6nnen nicht gel\u00f6scht werden');return;}
+  if(roleId==='admin'){alert('Die Administrator-Rolle kann nicht gel\u00f6scht werden');return;}
+  var roles=getRoles();
   var users=getUsers();
   var affected=users.filter(function(u){return u.role===roleId;});
+  // Find fallback role (first non-deleted role that isn't admin)
+  var fallback=roles.find(function(r){return r.id!==roleId&&r.id!=='admin';});
+  var fallbackId=fallback?fallback.id:'admin';
+  var fallbackName=fallback?fallback.name:'Administrator';
   var msg='Rolle "'+role.name+'" wirklich l\u00f6schen?';
-  if(affected.length){msg+='\n\n'+affected.length+' Benutzer werden auf "Benutzer" zur\u00fcckgesetzt.';}
+  if(affected.length){msg+='\n\n'+affected.length+' Benutzer werden auf "'+fallbackName+'" umgestellt.';}
   if(!confirm(msg))return;
-  // Reset affected users to 'user'
+  // Reset affected users to fallback role
   if(affected.length){
-    users.forEach(function(u){if(u.role===roleId)u.role='user';});
+    users.forEach(function(u){if(u.role===roleId)u.role=fallbackId;});
     saveUsers(users);
-    if(S.currentUser&&S.currentUser.role===roleId){S.currentUser.role='user';updateUserDisplay();}
+    if(S.currentUser&&S.currentUser.role===roleId){S.currentUser.role=fallbackId;updateUserDisplay();}
   }
   var roles=getRoles().filter(function(r){return r.id!==roleId;});
   saveRoles(roles);
