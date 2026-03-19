@@ -3000,6 +3000,10 @@ window.updateTaskProgress=function(val){
     if(t){
       t.percentComplete=val;
       autoSave();
+      // Live-refresh dashboard, KPIs and list
+      updateKPI();
+      if(S.view==='dashboard')renderDashboard();
+      applyFilters();
     }
   }
 };
@@ -3023,6 +3027,7 @@ window.editProgressInline=function(ev,uid){
     var val=Math.max(0,Math.min(100,parseInt(inp.value)||0));
     t.percentComplete=val;
     autoSave();
+    updateKPI();
     applyFilters();
   }
   inp.addEventListener('keydown',function(e){
@@ -3065,6 +3070,10 @@ window.goToTaskInList=function(uid){
 
 window.closeTaskDetail=function(){
   $('taskDetailModal').classList.remove('show');
+  // Refresh view after potential progress changes
+  updateKPI();
+  if(S.view==='dashboard')renderDashboard();
+  applyFilters();
 };
 
 // Close on backdrop click
