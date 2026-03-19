@@ -1774,6 +1774,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     <div class="admin-tabs">
       <button class="admin-tab active" onclick="switchAdminTab('projects',this)">Projekte</button>
       <button class="admin-tab" onclick="switchAdminTab('users',this)">Benutzer</button>
+      <button class="admin-tab" onclick="switchAdminTab('roles',this)">Rollen</button>
       <button class="admin-tab" onclick="switchAdminTab('permissions',this)">Berechtigungen</button>
       <button class="admin-tab" onclick="switchAdminTab('backup',this)">Backup</button>
       <button class="admin-tab" onclick="switchAdminTab('settings',this)">Einstellungen</button>
@@ -1785,6 +1786,9 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 
     <!-- TAB: Benutzer -->
     <div class="admin-tab-content" id="adminTabUsers" style="display:none"></div>
+
+    <!-- TAB: Rollen -->
+    <div class="admin-tab-content" id="adminTabRoles" style="display:none"></div>
 
     <!-- TAB: Berechtigungen -->
     <div class="admin-tab-content" id="adminTabPermissions" style="display:none"></div>
@@ -1833,7 +1837,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <div><label>Nachname *</label><input type="text" id="ueLastName"></div>
       <div><label>Benutzername *</label><input type="text" id="ueUsername"></div>
       <div><label>Rolle</label>
-        <select id="ueRole"><option value="user">Benutzer</option><option value="admin">Administrator</option></select>
+        <select id="ueRole"></select>
       </div>
       <div><label>Firma</label><input type="text" id="ueFirma"></div>
       <div><label>Telefonnummer</label><input type="tel" id="uePhone"></div>
@@ -2224,7 +2228,7 @@ function updateUserDisplay(){
     var dn=getUserDisplayName(S.currentUser);
     el.innerHTML=renderAvatar(S.currentUser,32)
       +'<div class="sidebar-user-info"><div class="sidebar-user-name">'+esc(dn)+'</div>'
-      +'<div class="sidebar-user-role">'+esc(S.currentUser.role==='admin'?'Administrator':'Benutzer')+'</div></div>';
+      +'<div class="sidebar-user-role">'+esc(getRoleDisplay(S.currentUser.role))+'</div></div>';
     el.style.display='flex';
   } else {
     el.style.display='none';
@@ -3702,6 +3706,205 @@ var PERMS=[
   {key:'manage_users',label:'Benutzer verwalten'}
 ];
 
+var DEFAULT_ROLES=[
+  {id:'admin',name:'Administrator',color:'#e8600a',system:true,permissions:{edit_tasks:true,edit_dates:true,import_xml:true,export_xml:true,delete_project:true,manage_users:true}},
+  {id:'user',name:'Benutzer',color:'#3b82f6',system:true,permissions:{edit_tasks:true,edit_dates:true,import_xml:false,export_xml:true,delete_project:false,manage_users:false}}
+];
+
+function getRoles(){
+  var roles=sGet('roles',null);
+  if(!roles){roles=DEFAULT_ROLES.map(function(r){return Object.assign({},r,{permissions:Object.assign({},r.permissions)});});sSet('roles',roles);}
+  return roles;
+}
+function saveRoles(r){sSet('roles',r);}
+function findRole(id){return getRoles().find(function(r){return r.id===id;});}
+function getRoleDisplay(roleId){var r=findRole(roleId);return r?r.name:(roleId==='admin'?'Administrator':'Benutzer');}
+function getRoleColor(roleId){var r=findRole(roleId);return r?r.color:(roleId==='admin'?'#e8600a':'#3b82f6');}
+
+function renderAdminRoles(){
+  var roles=getRoles(),users=getUsers(),c=$('adminTabRoles');
+  var html='<div class="admin-section">'
+    +'<div class="admin-section-title">Rollen verwalten ('+roles.length+')</div>'
+    +'<p style="font-size:13px;color:var(--text3);margin-bottom:16px;">Erstelle und verwalte Rollen mit individuellen Berechtigungen. Weise dann Benutzern die passende Rolle zu.</p>';
+
+  // --- Create Role Card ---
+  html+='<div class="create-user-card">'
+    +'<div class="create-user-header"><h4>Neue Rolle erstellen</h4></div>'
+    +'<div class="create-user-grid">'
+    +'<div><label>Rollenname *</label><input type="text" id="nrName" placeholder="z.B. Bauleiter"></div>'
+    +'<div><label>Farbe</label><input type="color" id="nrColor" value="#6366f1" style="width:100%;height:36px;border:1px solid var(--border);border-radius:var(--radius-xs);cursor:pointer;"></div>'
+    +'</div>'
+    +'<div style="margin-top:12px;"><label style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Berechtigungen</label>'
+    +'<div class="admin-perm-grid" style="margin-top:8px;">';
+  PERMS.forEach(function(pm){
+    html+='<label class="admin-perm-item"><input type="checkbox" id="nrPerm_'+pm.key+'"> '+pm.label+'</label>';
+  });
+  html+='</div></div>'
+    +'<div class="create-user-actions">'
+    +'<button class="admin-btn primary" onclick="adminCreateRole()">Rolle erstellen</button>'
+    +'</div></div>';
+
+  // --- Role List ---
+  roles.forEach(function(role){
+    var memberCount=users.filter(function(u){return u.role===role.id;}).length;
+    var rEsc=esc(role.id).replace(/'/g,"\\'");
+    html+='<div class="admin-card" style="margin-top:12px;" id="roleCard_'+esc(role.id)+'">'
+      +'<div class="admin-card-header">'
+      +'<div style="display:flex;align-items:center;gap:10px;">'
+      +'<span style="width:16px;height:16px;border-radius:50%;background:'+esc(role.color)+';display:inline-block;flex-shrink:0;"></span>'
+      +'<div class="admin-card-title" style="margin:0;">'+esc(role.name)+'</div>'
+      +(role.system?'<span class="admin-badge" style="background:var(--surface3);color:var(--text3);">System</span>':'')
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px;">'
+      +'<span class="admin-badge blue">'+memberCount+' Benutzer</span>'
+      +(role.system?'':'<button class="admin-btn danger" onclick="adminDeleteRole(\''+rEsc+'\')" style="padding:4px 10px;font-size:12px;">L\u00f6schen</button>')
+      +'</div></div>';
+
+    // Permissions edit
+    html+='<div class="admin-card-body">'
+      +'<div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Berechtigungen</div>'
+      +'<div class="admin-perm-grid">';
+    PERMS.forEach(function(pm){
+      var checked=role.permissions[pm.key]===true;
+      html+='<label class="admin-perm-item">'
+        +'<input type="checkbox" '+(checked?'checked ':'')+' onchange="adminUpdateRolePerm(\''+rEsc+'\',\''+pm.key+'\',this.checked)"'
+        +(role.system&&role.id==='admin'?' disabled':'')+'>'
+        +pm.label+'</label>';
+    });
+    html+='</div>';
+
+    // Inline rename + color
+    if(!role.system){
+      html+='<div style="display:flex;gap:8px;margin-top:12px;align-items:center;">'
+        +'<input class="admin-inline-edit" value="'+esc(role.name)+'" onchange="adminRenameRole(\''+rEsc+'\',this.value)" style="max-width:200px;padding:6px 10px;font-size:13px;">'
+        +'<input type="color" value="'+esc(role.color)+'" onchange="adminChangeRoleColor(\''+rEsc+'\',this.value)" style="width:36px;height:32px;border:1px solid var(--border);border-radius:var(--radius-xs);cursor:pointer;padding:2px;">'
+        +'</div>';
+    }
+
+    // Member list
+    var members=users.filter(function(u){return u.role===role.id;});
+    if(members.length){
+      html+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">'
+        +'<div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Zugewiesene Benutzer</div>'
+        +'<div class="admin-users-grid">';
+      members.forEach(function(u){
+        var dn=getUserDisplayName(u);
+        var uEsc=esc(u.username).replace(/'/g,"\\'");
+        html+='<div class="admin-user-tag">'
+          +renderAvatar(u,22)
+          +'<span>'+esc(dn)+'</span>'
+          +'</div>';
+      });
+      html+='</div></div>';
+    }
+
+    // Assign user dropdown
+    var unassigned=users.filter(function(u){return u.role!==role.id;});
+    if(unassigned.length){
+      html+='<div style="margin-top:8px;">'
+        +'<select class="proj-add-select" onchange="adminAssignRole(this.value,\''+rEsc+'\');this.selectedIndex=0;">'
+        +'<option value="">+ Benutzer zuweisen</option>';
+      unassigned.forEach(function(u){
+        html+='<option value="'+esc(u.username)+'">'+esc(getUserDisplayName(u))+' (@'+esc(u.username)+')</option>';
+      });
+      html+='</select></div>';
+    }
+
+    html+='</div></div>';
+  });
+
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+window.adminCreateRole=function(){
+  var name=($('nrName')||{}).value;
+  var color=($('nrColor')||{}).value||'#6366f1';
+  if(!name||!name.trim()){alert('Bitte Rollenname eingeben');return;}
+  name=name.trim();
+  var id=name.toLowerCase().replace(/[^a-z0-9_-]/g,'_').replace(/_+/g,'_');
+  var roles=getRoles();
+  if(roles.some(function(r){return r.id===id||r.name.toLowerCase()===name.toLowerCase();})){
+    alert('Eine Rolle mit diesem Namen existiert bereits');return;
+  }
+  var permissions={};
+  PERMS.forEach(function(pm){
+    var el=$('nrPerm_'+pm.key);
+    permissions[pm.key]=el?el.checked:false;
+  });
+  roles.push({id:id,name:name,color:color,system:false,permissions:permissions});
+  saveRoles(roles);
+  addLog('create','Rolle erstellt',name);
+  var el=$('nrName');if(el)el.value='';
+  PERMS.forEach(function(pm){var cb=$('nrPerm_'+pm.key);if(cb)cb.checked=false;});
+  renderAdminRoles();
+};
+
+window.adminDeleteRole=function(roleId){
+  var role=findRole(roleId);
+  if(!role){return;}
+  if(role.system){alert('Systemrollen k\u00f6nnen nicht gel\u00f6scht werden');return;}
+  var users=getUsers();
+  var affected=users.filter(function(u){return u.role===roleId;});
+  var msg='Rolle "'+role.name+'" wirklich l\u00f6schen?';
+  if(affected.length){msg+='\n\n'+affected.length+' Benutzer werden auf "Benutzer" zur\u00fcckgesetzt.';}
+  if(!confirm(msg))return;
+  // Reset affected users to 'user'
+  if(affected.length){
+    users.forEach(function(u){if(u.role===roleId)u.role='user';});
+    saveUsers(users);
+    if(S.currentUser&&S.currentUser.role===roleId){S.currentUser.role='user';updateUserDisplay();}
+  }
+  var roles=getRoles().filter(function(r){return r.id!==roleId;});
+  saveRoles(roles);
+  addLog('delete','Rolle gel\u00f6scht',role.name);
+  renderAdminRoles();
+};
+
+window.adminRenameRole=function(roleId,newName){
+  if(!newName||!newName.trim())return;
+  var roles=getRoles();
+  var role=roles.find(function(r){return r.id===roleId;});
+  if(!role)return;
+  role.name=newName.trim();
+  saveRoles(roles);
+  addLog('edit','Rolle umbenannt',newName);
+  renderAdminRoles();
+};
+
+window.adminChangeRoleColor=function(roleId,newColor){
+  var roles=getRoles();
+  var role=roles.find(function(r){return r.id===roleId;});
+  if(!role)return;
+  role.color=newColor;
+  saveRoles(roles);
+};
+
+window.adminUpdateRolePerm=function(roleId,key,val){
+  var roles=getRoles();
+  var role=roles.find(function(r){return r.id===roleId;});
+  if(!role)return;
+  role.permissions[key]=val;
+  saveRoles(roles);
+};
+
+window.adminAssignRole=function(username,roleId){
+  if(!username)return;
+  var users=getUsers();
+  users.forEach(function(u){
+    if(u.username.toLowerCase()===username.toLowerCase()){
+      u.role=roleId;
+    }
+  });
+  saveUsers(users);
+  if(S.currentUser&&S.currentUser.username.toLowerCase()===username.toLowerCase()){
+    S.currentUser.role=roleId;
+    updateUserDisplay();
+  }
+  addLog('edit','Rolle zugewiesen',username+' \u2192 '+getRoleDisplay(roleId));
+  renderAdminRoles();
+};
+
 function getAllUsersWithProjects(){
   // Merge registered users + project-assigned users
   var registered=getUsers();
@@ -3750,17 +3953,18 @@ window.switchAdminTab=function(tab,btn){
   tabs.forEach(function(t){t.classList.remove('active');});
   if(btn)btn.classList.add('active');
   // Show/hide content
-  var allTabs=['Projects','Users','Permissions','Backup','Settings','Logs'];
+  var allTabs=['Projects','Users','Roles','Permissions','Backup','Settings','Logs'];
   allTabs.forEach(function(t){
     var el=$('adminTab'+t);
     if(el)el.style.display='none';
   });
-  var tabMap={projects:'Projects',users:'Users',permissions:'Permissions',backup:'Backup',settings:'Settings',logs:'Logs'};
+  var tabMap={projects:'Projects',users:'Users',roles:'Roles',permissions:'Permissions',backup:'Backup',settings:'Settings',logs:'Logs'};
   var el=$('adminTab'+(tabMap[tab]||'Projects'));
   if(el)el.style.display='block';
   // Render
   if(tab==='projects')renderAdminProjects();
   if(tab==='users')renderAdminUsers();
+  if(tab==='roles')renderAdminRoles();
   if(tab==='permissions')renderAdminPermissions();
   if(tab==='backup')renderAdminBackup();
   if(tab==='settings')renderAdminSettings();
@@ -3848,7 +4052,7 @@ function renderAdminUsers(){
     +'<div><label>Firma</label><input type="text" id="ncFirma" placeholder="Firma GmbH"></div>'
     +'<div><label>Telefonnummer</label><input type="tel" id="ncPhone" placeholder="+49 123 456789"></div>'
     +'<div><label>E-Mail Adresse</label><input type="email" id="ncEmail" placeholder="max@firma.de"></div>'
-    +'<div><label>Rolle</label><select id="ncRole"><option value="user">Benutzer</option><option value="admin">Administrator</option></select></div>'
+    +'<div><label>Rolle</label><select id="ncRole">'+getRoles().map(function(r){return '<option value="'+esc(r.id)+'"'+(r.id==='user'?' selected':'')+'>'+esc(r.name)+'</option>';}).join('')+'</select></div>'
     +'</div>'
     +'<div class="create-user-actions">'
     +'<button class="admin-btn" onclick="adminSendInviteEmail()">Per E-Mail einladen</button>'
@@ -3871,7 +4075,7 @@ function renderAdminUsers(){
         +renderAvatar(u,56)
         +'<div class="user-detail-info">'
         +'<div class="user-detail-name">'+esc(dn)
-        +' <span class="admin-badge '+(u.role==='admin'?'orange':'blue')+'">'+esc(u.role==='admin'?'Admin':'Benutzer')+'</span>'
+        +' <span class="admin-badge" style="background:'+getRoleColor(u.role)+'22;color:'+getRoleColor(u.role)+';">'+esc(getRoleDisplay(u.role))+'</span>'
         +(u.locked?' <span class="admin-badge red">Gesperrt</span>':'')
         +(isCurrent?' <span class="admin-badge green">Eingeloggt</span>':'')
         +'</div>'
@@ -3950,6 +4154,7 @@ function renderAdminPermissions(){
           +'<option value="viewer"'+(uPerms._role==='viewer'?' selected':'')+'>Betrachter</option>'
           +'<option value="editor"'+(!uPerms._role||uPerms._role==='editor'?' selected':'')+'>Bearbeiter</option>'
           +'<option value="admin"'+(uPerms._role==='admin'?' selected':'')+'>Administrator</option>'
+          +getRoles().filter(function(r){return !r.system;}).map(function(r){return '<option value="'+esc(r.id)+'"'+(uPerms._role===r.id?' selected':'')+'>'+esc(r.name)+'</option>';}).join('')
           +'</select>'
           +'</div>'
           +'<div class="admin-perm-grid">';
@@ -4276,7 +4481,10 @@ window.openUserEdit=function(username){
   $('ueFirstName').value=user.firstName||'';
   $('ueLastName').value=user.lastName||'';
   $('ueUsername').value=user.username;
-  $('ueRole').value=user.role||'user';
+  // Populate role dropdown dynamically
+  var roleSelect=$('ueRole');
+  roleSelect.innerHTML=getRoles().map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.name)+'</option>';}).join('');
+  roleSelect.value=user.role||'user';
   $('ueFirma').value=user.firma||'';
   $('uePhone').value=user.phone||'';
   $('ueEmail').value=user.email||'';
@@ -4397,10 +4605,16 @@ window.adminSetRole=function(pid,user,role){
     PERMS.forEach(function(pm){uPerms[pm.key]=pm.key==='export_xml';});
   } else if(role==='admin'){
     PERMS.forEach(function(pm){uPerms[pm.key]=true;});
-  } else {
+  } else if(role==='editor'){
     PERMS.forEach(function(pm){uPerms[pm.key]=true;});
     uPerms.delete_project=false;
     uPerms.manage_users=false;
+  } else {
+    // Custom role: apply its permissions
+    var customRole=findRole(role);
+    if(customRole){
+      PERMS.forEach(function(pm){uPerms[pm.key]=customRole.permissions[pm.key]===true;});
+    }
   }
   perms[user]=uPerms;d.permissions=perms;sSet('p_'+pid,d);
   renderAdminPermissions();
