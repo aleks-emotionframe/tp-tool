@@ -3087,6 +3087,8 @@ window.closeKompaktDetail=function(){
 var _tdUid=null;
 window.openTaskDetail=function(uid){
   var t=findTask(uid);if(!t)return;
+  // Close kompakt detail popup if open, so task detail appears on top
+  if($('kompaktDetailModal').classList.contains('show'))closeKompaktDetail();
   _tdUid=uid;
   var today=fmtISO(new Date());
 
