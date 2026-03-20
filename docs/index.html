@@ -4131,10 +4131,14 @@ window.adminCreateRole=function(){
   var color=($('nrColor')||{}).value||'#6366f1';
   if(!name||!name.trim()){alert('Bitte Rollenname eingeben');return;}
   name=name.trim();
-  var id=name.toLowerCase().replace(/[^a-z0-9_-]/g,'_').replace(/_+/g,'_');
   var roles=getRoles();
-  if(roles.some(function(r){return r.id===id||r.name.toLowerCase()===name.toLowerCase();})){
+  if(roles.some(function(r){return r.name.toLowerCase()===name.toLowerCase();})){
     alert('Eine Rolle mit diesem Namen existiert bereits');return;
+  }
+  var id=name.toLowerCase().replace(/[^a-z0-9_-]/g,'_').replace(/_+/g,'_');
+  // Ensure unique ID (in case a renamed role still holds the old ID)
+  if(roles.some(function(r){return r.id===id;})){
+    id=id+'_'+Date.now().toString(36);
   }
   var permissions={};
   PERMS.forEach(function(pm){
