@@ -438,14 +438,37 @@ body {
   flex-shrink: 0;
   margin-left: auto;
 }
+.search-wrapper { position: relative; }
 .topbar-search {
   padding: 7px 12px; width: 180px;
   background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-xs);
   color: var(--text); font-family: var(--font); font-size: 13px; outline: none;
   transition: var(--transition);
 }
-.topbar-search:focus { border-color: var(--orange); width: 240px; }
+.topbar-search:focus { border-color: var(--orange); width: 280px; }
 .topbar-search::placeholder { color: var(--text3); }
+.search-dropdown {
+  display: none; position: absolute; top: 100%; left: 0; right: 0;
+  margin-top: 4px; min-width: 340px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-lg);
+  max-height: 320px; overflow-y: auto; z-index: 800;
+}
+.search-dropdown.show { display: block; }
+.search-result {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px; cursor: pointer; font-size: 13px;
+  border-bottom: 1px solid var(--border); transition: var(--transition);
+}
+.search-result:last-child { border-bottom: none; }
+.search-result:hover, .search-result.active { background: var(--row-hover); }
+.search-result-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-result-name mark { background: var(--orange-light); color: var(--orange); font-weight: 600; border-radius: 2px; padding: 0 1px; }
+.search-result-meta { font-size: 11px; color: var(--text3); white-space: nowrap; }
+.search-result-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.search-no-results { padding: 14px; text-align: center; color: var(--text3); font-size: 13px; }
 .topbar-title {
   font-size: 20px;
   font-weight: 700;
@@ -1688,7 +1711,10 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         <button class="joke-btn" onclick="showJokeAnswer()">Aufl&ouml;sung &#127882;</button>
       </div>
       <div class="topbar-right">
-        <input class="topbar-search" id="searchInput" type="text" placeholder="Vorgang suchen...">
+        <div class="search-wrapper">
+          <input class="topbar-search" id="searchInput" type="text" placeholder="Vorgang suchen..." autocomplete="off">
+          <div class="search-dropdown" id="searchDropdown"></div>
+        </div>
         <button class="icon-btn" id="xmlUploadBtn" onclick="triggerXMLUpload()" title="XML Importieren" style="font-size:14px;font-weight:700;">&#8679; XML</button>
         <input type="file" id="xmlUploadInput" accept=".xml" style="display:none" onchange="handleXMLUpload(this)">
         <button class="icon-btn theme-btn" onclick="toggleTheme()" id="themeBtn" title="Dark/Light Mode">&#9790;</button>
@@ -2780,7 +2806,83 @@ function updateKPI(){
 }
 
 /* ─── FILTER ─── */
-$('searchInput').addEventListener('input',function(){S.search=this.value.toLowerCase();applyFilters();});
+var _searchIdx=-1;
+$('searchInput').addEventListener('input',function(){
+  S.search=this.value.toLowerCase();
+  applyFilters();
+  updateSearchDropdown(this.value);
+});
+$('searchInput').addEventListener('keydown',function(e){
+  var dd=$('searchDropdown');
+  var items=dd.querySelectorAll('.search-result');
+  if(!items.length)return;
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    _searchIdx=Math.min(_searchIdx+1,items.length-1);
+    items.forEach(function(el,i){el.classList.toggle('active',i===_searchIdx);});
+    items[_searchIdx].scrollIntoView({block:'nearest'});
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    _searchIdx=Math.max(_searchIdx-1,0);
+    items.forEach(function(el,i){el.classList.toggle('active',i===_searchIdx);});
+    items[_searchIdx].scrollIntoView({block:'nearest'});
+  } else if(e.key==='Enter'&&_searchIdx>=0){
+    e.preventDefault();
+    items[_searchIdx].click();
+  } else if(e.key==='Escape'){
+    closeSearchDropdown();
+  }
+});
+$('searchInput').addEventListener('focus',function(){
+  if(this.value.trim().length>=1)updateSearchDropdown(this.value);
+});
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.search-wrapper'))closeSearchDropdown();
+});
+
+function updateSearchDropdown(val){
+  var dd=$('searchDropdown');
+  _searchIdx=-1;
+  if(!val||val.trim().length<1||!S.tasks.length){
+    dd.classList.remove('show');return;
+  }
+  var q=val.toLowerCase();
+  var today=fmtISO(new Date());
+  var matches=S.tasks.filter(function(t){
+    return !t.summary&&t.name.toLowerCase().indexOf(q)>=0;
+  }).slice(0,12);
+  if(!matches.length){
+    dd.innerHTML='<div class="search-no-results">Kein Vorgang gefunden</div>';
+    dd.classList.add('show');return;
+  }
+  var html='';
+  matches.forEach(function(t){
+    var pct=t.percentComplete||0;
+    var dotColor=pct>=100?'background:var(--green)':
+      (t.finish&&t.finish<today&&pct<100?'background:var(--red)':'background:var(--orange)');
+    // Highlight matching text
+    var idx=t.name.toLowerCase().indexOf(q);
+    var nameParts=esc(t.name.substring(0,idx))+'<mark>'+esc(t.name.substring(idx,idx+q.length))+'</mark>'+esc(t.name.substring(idx+q.length));
+    html+='<div class="search-result" data-uid="'+t.uid+'">'
+      +'<div class="search-result-dot" style="'+dotColor+'"></div>'
+      +'<div class="search-result-name">'+nameParts+'</div>'
+      +'<div class="search-result-meta">'+pct+'%</div>'
+      +'</div>';
+  });
+  dd.innerHTML=html;
+  dd.classList.add('show');
+  dd.querySelectorAll('.search-result').forEach(function(el){
+    el.addEventListener('click',function(){
+      openTaskDetail(parseInt(this.dataset.uid));
+      closeSearchDropdown();
+    });
+  });
+}
+function closeSearchDropdown(){
+  $('searchDropdown').classList.remove('show');
+  _searchIdx=-1;
+}
+
 $('critOnly').addEventListener('change',function(){S.critOnly=this.checked;applyFilters();});
 $('hideCompleted').addEventListener('change',function(){S.hideCompleted=this.checked;applyFilters();});
 
