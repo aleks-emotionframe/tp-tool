@@ -650,6 +650,21 @@ body {
 }
 .dash-item { cursor: pointer; }
 
+/* --- COMPACT VIEW --- */
+.kompakt-summary {
+  display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  cursor: pointer; transition: var(--transition); margin-bottom: 10px;
+}
+.kompakt-summary:hover { box-shadow: var(--shadow); border-color: var(--text3); }
+.kompakt-summary .dash-panel-icon { flex-shrink: 0; }
+.kompakt-summary-title { font-size: 14px; font-weight: 700; flex: 1; }
+.kompakt-summary-count {
+  font-size: 12px; font-weight: 600; padding: 2px 10px;
+  border-radius: 20px; white-space: nowrap;
+}
+.kompakt-summary-hint { font-size: 12px; color: var(--text3); }
+
 /* --- TASK DETAIL POPUP --- */
 .task-detail-modal {
   background: var(--surface); border: 1px solid var(--border);
@@ -1649,6 +1664,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <div class="topbar-right">
         <div class="tab-group">
           <button class="tab-btn active" data-view="dashboard">Dashboard</button>
+          <button class="tab-btn" data-view="kompakt">Kompakt</button>
           <button class="tab-btn" data-view="list">Liste</button>
           <button class="tab-btn" data-view="gantt">Gantt</button>
         </div>
@@ -1705,6 +1721,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         </div>
       </div>
       <div id="dashboardView" style="display:none;overflow:auto;padding:20px 24px;"></div>
+      <div id="kompaktView" style="display:none;overflow:auto;padding:20px 24px;"></div>
       <div id="listView" style="display:none;height:100%;overflow:auto;"></div>
       <div id="ganttView" style="display:none;height:100%;overflow:hidden;"></div>
     </div>
@@ -1862,6 +1879,21 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     <div class="modal-btns">
       <button onclick="closeNewDialog()">Abbrechen</button>
       <button class="btn-primary" onclick="doCreate()">Erstellen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Kompakt Panel Detail Modal -->
+<div class="modal-bg" id="kompaktDetailModal">
+  <div class="task-detail-modal" style="width:700px;">
+    <div class="task-detail-header">
+      <div style="flex:1;min-width:0;">
+        <h3 id="kompaktDetailTitle"></h3>
+      </div>
+      <button class="task-detail-close" onclick="closeKompaktDetail()">&times;</button>
+    </div>
+    <div class="task-detail-body" style="padding:0;">
+      <div id="kompaktDetailBody"></div>
     </div>
   </div>
 </div>
@@ -2756,6 +2788,7 @@ document.querySelectorAll('.tab-btn').forEach(function(b){
 
 function renderView(){
   $('dashboardView').style.display='none';
+  $('kompaktView').style.display='none';
   $('listView').style.display='none';
   $('ganttView').style.display='none';
   $('filterBar').style.display='none';
@@ -2763,6 +2796,9 @@ function renderView(){
   if(S.view==='dashboard'){
     $('dashboardView').style.display='block';
     renderDashboard();
+  }else if(S.view==='kompakt'){
+    $('kompaktView').style.display='block';
+    renderKompakt();
   }else if(S.view==='list'){
     $('listView').style.display='block';
     $('filterBar').style.display='flex';
@@ -2783,28 +2819,18 @@ function dashItem(t,dotColor,extras){
     +'</div>';
 }
 
-function renderDashboard(){
-  var c=$('dashboardView');
-  if(!S.tasks.length){c.innerHTML='';return;}
-
+function getDashCategories(){
   var today=fmtISO(new Date());
   var work=S.tasks.filter(function(t){return !t.summary;});
-
-  // Build UID->task lookup
   var taskByUid={};
   S.tasks.forEach(function(t){taskByUid[t.uid]=t;});
 
-  // 1. CRITICAL TASKS (not 100% done, on critical path)
   var critTasks=work.filter(function(t){
     return t.critical&&(t.percentComplete||0)<100;
   });
-
-  // 2. OVERDUE / DELAYED TASKS
   var overdue=work.filter(function(t){
     return t.finish&&t.finish<today&&(t.percentComplete||0)<100;
   });
-
-  // 3. TASKS READY TO START
   var ready=work.filter(function(t){
     if((t.percentComplete||0)>=100) return false;
     var preds=t.predecessors||[];
@@ -2834,6 +2860,16 @@ function renderDashboard(){
 
   var readyNow=ready.filter(function(t){return !t.start||t.start<=today;});
   var readyEarly=ready.filter(function(t){return t.start&&t.start>today;});
+
+  return {today:today,critTasks:critTasks,overdue:overdue,readyNow:readyNow,readyEarly:readyEarly};
+}
+
+function renderDashboard(){
+  var c=$('dashboardView');
+  if(!S.tasks.length){c.innerHTML='';return;}
+
+  var cat=getDashCategories();
+  var today=cat.today,critTasks=cat.critTasks,overdue=cat.overdue,readyNow=cat.readyNow,readyEarly=cat.readyEarly;
 
   // Build panels as array (for drag reorder)
   var panels=[];
@@ -2925,6 +2961,106 @@ function renderDashboard(){
   // Init drag & drop on panels
   initDashDragDrop();
 }
+
+/* ─── COMPACT VIEW ─── */
+function renderKompakt(){
+  var c=$('kompaktView');
+  if(!S.tasks.length){c.innerHTML='';return;}
+
+  var cat=getDashCategories();
+  var today=cat.today;
+
+  // "Bereit zum Starten" full panel at top
+  var html='<div class="dash-panel full" style="margin-bottom:16px;">'
+    +'<div class="dash-panel-header">'
+    +'<div class="dash-panel-icon green">&#10003;</div>'
+    +'<div class="dash-panel-title">Bereit zum Starten</div>'
+    +'<div class="dash-panel-count" style="background:var(--green-light);color:var(--green);">'+cat.readyNow.length+'</div>'
+    +'</div><div class="dash-panel-body">';
+  if(cat.readyNow.length){
+    cat.readyNow.forEach(function(t){
+      var hasPreds=(t.predecessors||[]).length>0;
+      html+=dashItem(t,'green',
+        (hasPreds?'<div class="dash-item-badge green">Vorarbeiten fertig</div>':'<div class="dash-item-badge green">Keine Abh\u00e4ngigkeiten</div>')
+        +'<div class="dash-item-meta">'+fmtDate(t.start)+'</div>');
+    });
+  } else {
+    html+='<div class="dash-empty">Keine Vorg\u00e4nge bereit zum sofortigen Start.</div>';
+  }
+  html+='</div></div>';
+
+  // 3 clickable summary bars
+  var summaries=[
+    {id:'overdue',icon:'&#9888;',iconCls:'red',title:'Verz\u00f6gerungen',count:cat.overdue.length,countBg:'background:var(--red-light);color:var(--red)'},
+    {id:'critical',icon:'&#9888;',iconCls:'yellow',title:'Kritischer Pfad',count:cat.critTasks.length,countBg:'background:var(--yellow-light);color:var(--yellow)'},
+    {id:'early',icon:'&#8634;',iconCls:'blue',title:'K\u00f6nnen fr\u00fcher starten',count:cat.readyEarly.length,countBg:'background:var(--blue-light);color:var(--blue)'}
+  ];
+
+  summaries.forEach(function(s){
+    html+='<div class="kompakt-summary" onclick="openKompaktDetail(\''+s.id+'\')">'
+      +'<div class="dash-panel-icon '+s.iconCls+'">'+s.icon+'</div>'
+      +'<div class="kompakt-summary-title">'+s.title+'</div>'
+      +'<div class="kompakt-summary-count" style="'+s.countBg+'">'+s.count+'</div>'
+      +'<div class="kompakt-summary-hint">Details &#8250;</div>'
+      +'</div>';
+  });
+
+  c.innerHTML=html;
+}
+
+window.openKompaktDetail=function(panelId){
+  var cat=getDashCategories();
+  var today=cat.today;
+  var title='',body='';
+
+  if(panelId==='overdue'){
+    title='Verz\u00f6gerungen';
+    if(cat.overdue.length){
+      cat.overdue.forEach(function(t){
+        var daysLate=Math.ceil((new Date(today)-new Date(t.finish))/86400000);
+        body+=dashItem(t,'red',
+          '<div class="dash-item-badge red">'+daysLate+' Tag'+(daysLate!==1?'e':'')+' \u00fcberf\u00e4llig</div>'
+          +'<div class="dash-item-meta">Frist: '+fmtDate(t.finish)+'</div>'
+          +'<div class="dash-item-meta">'+((t.percentComplete||0))+'%</div>');
+      });
+    } else {
+      body='<div class="dash-empty">Keine Verz\u00f6gerungen.</div>';
+    }
+  } else if(panelId==='critical'){
+    title='Kritischer Pfad';
+    if(cat.critTasks.length){
+      cat.critTasks.forEach(function(t){
+        var isOverdue=t.finish&&t.finish<today;
+        body+=dashItem(t,isOverdue?'red':'yellow',
+          (isOverdue?'<div class="dash-item-badge red">\u00dcberf\u00e4llig</div>':'')
+          +'<div class="dash-item-meta">'+fmtDate(t.start)+' \u2013 '+fmtDate(t.finish)+'</div>'
+          +'<div class="dash-item-meta">'+((t.percentComplete||0))+'%</div>');
+      });
+    } else {
+      body='<div class="dash-empty">Keine kritischen Vorg\u00e4nge.</div>';
+    }
+  } else if(panelId==='early'){
+    title='K\u00f6nnen fr\u00fcher starten';
+    if(cat.readyEarly.length){
+      cat.readyEarly.forEach(function(t){
+        var daysEarly=Math.ceil((new Date(t.start)-new Date(today))/86400000);
+        body+=dashItem(t,'blue',
+          '<div class="dash-item-badge blue">Vorarbeiten fertig</div>'
+          +'<div class="dash-item-meta">Geplant: '+fmtDate(t.start)+' (in '+daysEarly+'d)</div>');
+      });
+    } else {
+      body='<div class="dash-empty">Keine Vorg\u00e4nge k\u00f6nnen vorgezogen werden.</div>';
+    }
+  }
+
+  $('kompaktDetailTitle').textContent=title;
+  $('kompaktDetailBody').innerHTML=body;
+  $('kompaktDetailModal').classList.add('show');
+};
+
+window.closeKompaktDetail=function(){
+  $('kompaktDetailModal').classList.remove('show');
+};
 
 /* ─── TASK DETAIL POPUP ─── */
 var _tdUid=null;
@@ -3089,6 +3225,9 @@ window.closeTaskDetail=function(){
 // Close on backdrop click
 $('taskDetailModal').addEventListener('click',function(e){
   if(e.target===$('taskDetailModal'))closeTaskDetail();
+});
+$('kompaktDetailModal').addEventListener('click',function(e){
+  if(e.target===$('kompaktDetailModal'))closeKompaktDetail();
 });
 
 /* ─── DASHBOARD DRAG & DROP ─── */
