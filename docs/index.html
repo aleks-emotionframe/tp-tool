@@ -455,21 +455,30 @@ body {
   white-space: nowrap;
   max-width: 320px;
 }
-.tab-group { display: flex; gap: 2px; background: var(--surface2); border-radius: var(--radius-xs); padding: 3px; }
-.tab-btn {
-  padding: 6px 16px;
+/* Sidebar view tabs */
+.sidebar-tabs {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+  background: var(--surface2); border-radius: var(--radius-xs); padding: 4px;
+}
+.sidebar-tab {
+  padding: 8px 6px;
   border: none;
   border-radius: var(--radius-xs);
   background: none;
   color: var(--text3);
   font-family: var(--font);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
+  text-align: center;
 }
-.tab-btn:hover { color: var(--text2); }
-.tab-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.sidebar-tab:hover { color: var(--text); background: var(--surface); }
+.sidebar-tab.active {
+  background: var(--orange);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(232,96,10,0.3);
+}
 .icon-btn {
   height: 36px; min-width: 36px; padding: 0 8px;
   display: flex; align-items: center; justify-content: center; gap: 4px;
@@ -1656,7 +1665,14 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     </div>
     <div class="sidebar-section">
       <input class="sidebar-search" id="searchInput" type="text" placeholder="Suche, was immer du willst ;)">
-      <div class="sidebar-label">Projekte</div>
+      <div class="sidebar-label">Ansicht</div>
+      <div class="sidebar-tabs" id="sidebarTabs">
+        <button class="sidebar-tab active" data-view="dashboard">Dashboard</button>
+        <button class="sidebar-tab" data-view="kompakt">Kompakt</button>
+        <button class="sidebar-tab" data-view="list">Liste</button>
+        <button class="sidebar-tab" data-view="gantt">Gantt</button>
+      </div>
+      <div class="sidebar-label" style="margin-top:14px;">Projekte</div>
     </div>
     <div class="sidebar-projects" id="projectList"></div>
     <div class="sidebar-user" id="currentUserDisplay" style="display:none;"></div>
@@ -1675,12 +1691,6 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         <button class="joke-btn" onclick="showJokeAnswer()">Aufl&ouml;sung &#127882;</button>
       </div>
       <div class="topbar-right">
-        <div class="tab-group">
-          <button class="tab-btn active" data-view="dashboard">Dashboard</button>
-          <button class="tab-btn" data-view="kompakt">Kompakt</button>
-          <button class="tab-btn" data-view="list">Liste</button>
-          <button class="tab-btn" data-view="gantt">Gantt</button>
-        </div>
         <button class="icon-btn" id="xmlUploadBtn" onclick="triggerXMLUpload()" title="XML Importieren" style="font-size:14px;font-weight:700;">&#8679; XML</button>
         <input type="file" id="xmlUploadInput" accept=".xml" style="display:none" onchange="handleXMLUpload(this)">
         <button class="icon-btn theme-btn" onclick="toggleTheme()" id="themeBtn" title="Dark/Light Mode">&#9790;</button>
@@ -2194,7 +2204,7 @@ function showApp(){
   var savedView=sGet('lastView',_defView);
   if(savedView&&savedView!==S.view){
     S.view=savedView;
-    document.querySelectorAll('.tab-btn').forEach(function(b){
+    document.querySelectorAll('.sidebar-tab').forEach(function(b){
       b.classList.toggle('active',b.dataset.view===savedView);
     });
   }
@@ -2789,9 +2799,9 @@ function applyFilters(){
 }
 
 /* ─── VIEW SWITCHING ─── */
-document.querySelectorAll('.tab-btn').forEach(function(b){
+document.querySelectorAll('.sidebar-tab').forEach(function(b){
   b.addEventListener('click',function(){
-    document.querySelectorAll('.tab-btn').forEach(function(x){x.classList.remove('active');});
+    document.querySelectorAll('.sidebar-tab').forEach(function(x){x.classList.remove('active');});
     this.classList.add('active');
     S.view=this.dataset.view;
     sSet('lastView',S.view);
@@ -3216,7 +3226,7 @@ window.goToTaskInList=function(uid){
   // Switch to list view
   S.view='list';
   // Update tab buttons
-  document.querySelectorAll('.tab-btn').forEach(function(b){
+  document.querySelectorAll('.sidebar-tab').forEach(function(b){
     b.classList.toggle('active',b.dataset.view==='list');
   });
   applyFilters(); // this calls renderView() which renders the list
