@@ -2710,7 +2710,16 @@ function loadProject(id){
   updateXmlUploadBtn();
 }
 
+function userHasPerm(key){
+  if(!S.currentUser)return false;
+  if(S.currentUser.role==='admin')return true;
+  var role=findRole(S.currentUser.role);
+  if(role&&role.permissions)return role.permissions[key]===true;
+  return false;
+}
+
 window.showNewDialog=function(){
+  if(!userHasPerm('create_project')){alert('Du hast keine Berechtigung, Projekte zu erstellen.');return;}
   $('newModal').classList.add('show');
   $('newName').value='';
   // Reset file input properly
@@ -3974,6 +3983,7 @@ var PERMS=[
   {key:'edit_dates',label:'Termine \u00e4ndern'},
   {key:'import_xml',label:'XML importieren'},
   {key:'export_xml',label:'XML exportieren'},
+  {key:'create_project',label:'Projekt erstellen'},
   {key:'delete_project',label:'Projekt l\u00f6schen'},
   {key:'manage_users',label:'Benutzer verwalten'}
 ];
@@ -3993,8 +4003,8 @@ var ROLE_COLORS=[
 ];
 
 var DEFAULT_ROLES=[
-  {id:'admin',name:'Administrator',color:'#e8600a',system:true,permissions:{edit_tasks:true,edit_dates:true,import_xml:true,export_xml:true,delete_project:true,manage_users:true}},
-  {id:'user',name:'Benutzer',color:'#3b82f6',system:true,permissions:{edit_tasks:true,edit_dates:true,import_xml:false,export_xml:true,delete_project:false,manage_users:false}}
+  {id:'admin',name:'Administrator',color:'#e8600a',system:true,permissions:{edit_tasks:true,edit_dates:true,import_xml:true,export_xml:true,create_project:true,delete_project:true,manage_users:true}},
+  {id:'user',name:'Benutzer',color:'#3b82f6',system:true,permissions:{edit_tasks:true,edit_dates:true,import_xml:false,export_xml:true,create_project:false,delete_project:false,manage_users:false}}
 ];
 
 function _roleColorGrid(selectedColor,targetId){
@@ -4958,6 +4968,7 @@ window.adminSetRole=function(pid,user,role){
     PERMS.forEach(function(pm){uPerms[pm.key]=true;});
   } else if(role==='editor'){
     PERMS.forEach(function(pm){uPerms[pm.key]=true;});
+    uPerms.create_project=false;
     uPerms.delete_project=false;
     uPerms.manage_users=false;
   } else {
