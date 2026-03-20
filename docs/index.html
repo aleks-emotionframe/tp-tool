@@ -651,10 +651,17 @@ body {
 .dash-item { cursor: pointer; }
 
 /* --- COMPACT VIEW --- */
+.kompakt-layout {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; height: 100%;
+}
+.kompakt-left { min-height: 0; display: flex; flex-direction: column; }
+.kompakt-left .dash-panel { display: flex; flex-direction: column; overflow: hidden; }
+.kompakt-left .dash-panel-body { flex: 1; overflow-y: auto; }
+.kompakt-right { display: flex; flex-direction: column; gap: 10px; }
 .kompakt-summary {
-  display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+  display: flex; align-items: center; gap: 12px; padding: 18px 18px;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  cursor: pointer; transition: var(--transition); margin-bottom: 10px;
+  cursor: pointer; transition: var(--transition); flex: 1;
 }
 .kompakt-summary:hover { box-shadow: var(--shadow); border-color: var(--text3); }
 .kompakt-summary .dash-panel-icon { flex-shrink: 0; }
@@ -664,6 +671,9 @@ body {
   border-radius: 20px; white-space: nowrap;
 }
 .kompakt-summary-hint { font-size: 12px; color: var(--text3); }
+@media(max-width:768px){
+  .kompakt-layout { grid-template-columns: 1fr; }
+}
 
 /* --- TASK DETAIL POPUP --- */
 .task-detail-modal {
@@ -2970,13 +2980,17 @@ function renderKompakt(){
   var cat=getDashCategories();
   var today=cat.today;
 
-  // "Bereit zum Starten" full panel at top
-  var html='<div class="dash-panel full" style="margin-bottom:16px;">'
+  // Two-column layout: left = Bereit zum Starten, right = 3 summary bars
+  var html='<div class="kompakt-layout">';
+
+  // LEFT: "Bereit zum Starten" full list
+  html+='<div class="kompakt-left">'
+    +'<div class="dash-panel" style="height:100%;">'
     +'<div class="dash-panel-header">'
     +'<div class="dash-panel-icon green">&#10003;</div>'
     +'<div class="dash-panel-title">Bereit zum Starten</div>'
     +'<div class="dash-panel-count" style="background:var(--green-light);color:var(--green);">'+cat.readyNow.length+'</div>'
-    +'</div><div class="dash-panel-body">';
+    +'</div><div class="dash-panel-body" style="max-height:none;">';
   if(cat.readyNow.length){
     cat.readyNow.forEach(function(t){
       var hasPreds=(t.predecessors||[]).length>0;
@@ -2987,9 +3001,10 @@ function renderKompakt(){
   } else {
     html+='<div class="dash-empty">Keine Vorg\u00e4nge bereit zum sofortigen Start.</div>';
   }
-  html+='</div></div>';
+  html+='</div></div></div>';
 
-  // 3 clickable summary bars
+  // RIGHT: 3 clickable summary cards stacked
+  html+='<div class="kompakt-right">';
   var summaries=[
     {id:'overdue',icon:'&#9888;',iconCls:'red',title:'Verz\u00f6gerungen',count:cat.overdue.length,countBg:'background:var(--red-light);color:var(--red)'},
     {id:'critical',icon:'&#9888;',iconCls:'yellow',title:'Kritischer Pfad',count:cat.critTasks.length,countBg:'background:var(--yellow-light);color:var(--yellow)'},
@@ -3005,6 +3020,7 @@ function renderKompakt(){
       +'</div>';
   });
 
+  html+='</div></div>';
   c.innerHTML=html;
 }
 
