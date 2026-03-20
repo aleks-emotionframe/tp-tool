@@ -3920,6 +3920,7 @@ window.adminChangeRoleColor=function(roleId,newColor){
   if(!role)return;
   role.color=newColor;
   saveRoles(roles);
+  renderAdminRoles();
 };
 
 window.adminUpdateRolePerm=function(roleId,key,val){
@@ -3928,6 +3929,7 @@ window.adminUpdateRolePerm=function(roleId,key,val){
   if(!role)return;
   role.permissions[key]=val;
   saveRoles(roles);
+  renderAdminRoles();
 };
 
 window.adminAssignRole=function(username,roleId){
@@ -4381,6 +4383,8 @@ window.adminRenameProject=function(id,name){
   saveIdx(idx);
   var d=sGet('p_'+id,{});d.name=name;sSet('p_'+id,d);
   if(S.pid==id)$('topTitle').textContent=name;
+  loadProjects();
+  renderAdminProjects();
 };
 
 window.adminAddUser=function(pid){
@@ -4668,6 +4672,7 @@ window.adminTogglePerm=function(pid,user,key,val){
   var uPerms=perms[user]||{};
   uPerms[key]=val;
   perms[user]=uPerms;d.permissions=perms;sSet('p_'+pid,d);
+  renderAdminPermissions();
 };
 
 /* ─── ADMIN SETTINGS TAB ─── */
