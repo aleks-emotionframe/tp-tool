@@ -652,16 +652,17 @@ body {
 
 /* --- COMPACT VIEW --- */
 .kompakt-layout {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px; height: 100%;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  height: 100%; min-height: 0;
 }
-.kompakt-left { min-height: 0; display: flex; flex-direction: column; }
-.kompakt-left .dash-panel { display: flex; flex-direction: column; overflow: hidden; }
-.kompakt-left .dash-panel-body { flex: 1; overflow-y: auto; }
-.kompakt-right { display: flex; flex-direction: column; gap: 10px; }
+.kompakt-left { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.kompakt-left .dash-panel { display: flex; flex-direction: column; overflow: hidden; flex: 1; min-height: 0; }
+.kompakt-left .dash-panel-body { flex: 1; overflow-y: auto; min-height: 0; }
+.kompakt-right { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
 .kompakt-summary {
   display: flex; align-items: center; gap: 12px; padding: 18px 18px;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  cursor: pointer; transition: var(--transition); flex: 1;
+  cursor: pointer; transition: var(--transition); flex: 1; min-height: 0;
 }
 .kompakt-summary:hover { box-shadow: var(--shadow); border-color: var(--text3); }
 .kompakt-summary .dash-panel-icon { flex-shrink: 0; }
@@ -778,7 +779,9 @@ body {
 .counter-text { margin-left: auto; }
 
 /* --- CONTENT --- */
-.content-area { flex: 1; overflow: auto; background: var(--bg); }
+.content-area { flex: 1; overflow: auto; background: var(--bg); display: flex; flex-direction: column; }
+.content-area > div { flex-shrink: 0; }
+.content-area > #kompaktView { flex: 1; flex-shrink: 1; }
 
 /* --- EMPTY STATE --- */
 .empty-state {
@@ -1731,7 +1734,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         </div>
       </div>
       <div id="dashboardView" style="display:none;overflow:auto;padding:20px 24px;"></div>
-      <div id="kompaktView" style="display:none;overflow:auto;padding:20px 24px;"></div>
+      <div id="kompaktView" style="display:none;overflow:hidden;padding:20px 24px;box-sizing:border-box;min-height:0;"></div>
       <div id="listView" style="display:none;height:100%;overflow:auto;"></div>
       <div id="ganttView" style="display:none;height:100%;overflow:hidden;"></div>
     </div>
@@ -2802,12 +2805,14 @@ function renderView(){
   $('listView').style.display='none';
   $('ganttView').style.display='none';
   $('filterBar').style.display='none';
+  $('contentArea').style.overflow='auto';
   if(S.pid)$('kpiStrip').style.display='grid';
   if(S.view==='dashboard'){
     $('dashboardView').style.display='block';
     renderDashboard();
   }else if(S.view==='kompakt'){
-    $('kompaktView').style.display='block';
+    $('kompaktView').style.display='flex';
+    $('contentArea').style.overflow='hidden';
     renderKompakt();
   }else if(S.view==='list'){
     $('listView').style.display='block';
