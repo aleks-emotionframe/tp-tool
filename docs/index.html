@@ -3905,10 +3905,39 @@ window.adminDeleteRole=function(roleId){
 
 window.adminRenameRole=function(roleId,newName){
   if(!newName||!newName.trim())return;
+  newName=newName.trim();
   var roles=getRoles();
   var role=roles.find(function(r){return r.id===roleId;});
   if(!role)return;
-  role.name=newName.trim();
+  var newId=newName.toLowerCase().replace(/[^a-z0-9_-]/g,'_').replace(/_+/g,'_');
+  // Check for duplicate (ignore self)
+  if(newId!==roleId&&roles.some(function(r){return r.id!==roleId&&(r.id===newId||r.name.toLowerCase()===newName.toLowerCase());})){
+    alert('Eine Rolle mit diesem Namen existiert bereits');return;
+  }
+  var oldId=role.id;
+  role.name=newName;
+  if(!role.system&&newId!==oldId){
+    role.id=newId;
+    // Migrate user role references
+    var users=getUsers();
+    users.forEach(function(u){if(u.role===oldId)u.role=newId;});
+    saveUsers(users);
+    if(S.currentUser&&S.currentUser.role===oldId)S.currentUser.role=newId;
+    // Migrate project permission role references
+    var idx=getIdx();
+    idx.forEach(function(p){
+      var d=sGet('p_'+p.id,{});
+      var perms=d.permissions||{};
+      var changed=false;
+      Object.keys(perms).forEach(function(u){
+        if(perms[u]._role===oldId){perms[u]._role=newId;changed=true;}
+      });
+      if(changed){d.permissions=perms;sSet('p_'+p.id,d);}
+    });
+    // Migrate default role setting
+    var s=getAppSettings();
+    if(s.defaultRole===oldId){s.defaultRole=newId;saveAppSettings(s);}
+  }
   saveRoles(roles);
   addLog('edit','Rolle umbenannt',newName);
   renderAdminRoles();
