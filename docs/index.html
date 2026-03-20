@@ -4891,6 +4891,7 @@ function renderAdminSettings(){
     +'<option value="viewer"'+(s.defaultRole==='viewer'?' selected':'')+'>Betrachter</option>'
     +'<option value="editor"'+(!s.defaultRole||s.defaultRole==='editor'?' selected':'')+'>Bearbeiter</option>'
     +'<option value="admin"'+(s.defaultRole==='admin'?' selected':'')+'>Administrator</option>'
+    +getRoles().filter(function(r){return !r.system;}).map(function(r){return '<option value="'+esc(r.id)+'"'+(s.defaultRole===r.id?' selected':'')+'>'+esc(r.name)+'</option>';}).join('')
     +'</select></div></div>';
 
   // Show project stats
