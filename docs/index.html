@@ -1652,7 +1652,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
           <button class="tab-btn" data-view="list">Liste</button>
           <button class="tab-btn" data-view="gantt">Gantt</button>
         </div>
-        <button class="icon-btn" onclick="triggerXMLUpload()" title="XML Importieren" style="font-size:14px;font-weight:700;">&#8679; XML</button>
+        <button class="icon-btn" id="xmlUploadBtn" onclick="triggerXMLUpload()" title="XML Importieren" style="font-size:14px;font-weight:700;">&#8679; XML</button>
         <input type="file" id="xmlUploadInput" accept=".xml" style="display:none" onchange="handleXMLUpload(this)">
         <button class="icon-btn theme-btn" onclick="toggleTheme()" id="themeBtn" title="Dark/Light Mode">&#9790;</button>
         <button class="bug-btn" onclick="openBugReport()">&#128027; Bug melden</button>
@@ -2628,6 +2628,7 @@ function loadProject(id){
   loadProjects();
   updateKPI();
   applyFilters();
+  updateXmlUploadBtn();
 }
 
 window.showNewDialog=function(){
@@ -4690,6 +4691,7 @@ function getAppSettings(){
     autoBackup:false,
     autoBackupDays:7,
     maxReuploadLogEntries:100,
+    xmlUploadOnlyOnCreate:false,
     sessionWarning:true,
     welcomeMessage:'',
     maintenanceMode:false,
@@ -4897,6 +4899,14 @@ function renderAdminSettings(){
     +'<div class="settings-row-desc">Zeigt KPI-Karten und Fortschrittsbalken im Dashboard</div>'
     +'</div><div class="settings-row-control">'
     +'<label class="settings-toggle"><input type="checkbox"'+(s.showProjectStats!==false?' checked':'')+' onchange="adminUpdateSetting(\'showProjectStats\',this.checked)">'
+    +'<span class="toggle-slider"></span></label></div></div>';
+
+  // XML upload only on create
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">XML-Upload nur bei Erstellung</div>'
+    +'<div class="settings-row-desc">Normale Benutzer k\u00f6nnen XML nur beim Erstellen eines Projekts hochladen. Ein erneuter Upload ist nur f\u00fcr Administratoren m\u00f6glich.</div>'
+    +'</div><div class="settings-row-control">'
+    +'<label class="settings-toggle"><input type="checkbox"'+(s.xmlUploadOnlyOnCreate?' checked':'')+' onchange="adminUpdateSetting(\'xmlUploadOnlyOnCreate\',this.checked)">'
     +'<span class="toggle-slider"></span></label></div></div>';
 
   html+='</div>';
@@ -5223,12 +5233,29 @@ function projectHasSchedule(){
   return (d.tasks&&d.tasks.length>0);
 }
 
+function isXmlUploadBlocked(){
+  var s=getAppSettings();
+  if(!s.xmlUploadOnlyOnCreate)return false;
+  if(S.currentUser&&S.currentUser.role==='admin')return false;
+  return projectHasSchedule();
+}
+
+function updateXmlUploadBtn(){
+  var btn=$('xmlUploadBtn');
+  if(!btn)return;
+  btn.style.display=isXmlUploadBlocked()?'none':'';
+}
+
 window.triggerXMLUpload=function(){
   if(!S.pid){
     var idx=getIdx();
     if(idx.length>0){
       loadProject(idx[0].id);
     }
+  }
+  if(isXmlUploadBlocked()){
+    alert('XML-Upload ist nur beim Erstellen eines Projekts erlaubt. Wende dich an einen Administrator f\u00fcr einen erneuten Upload.');
+    return;
   }
   if(projectHasSchedule()){
     showXmlReuploadModal();
@@ -5363,6 +5390,7 @@ function doXMLImport(tasks,xmlStr){
   var f=$('saveFlash');f.textContent=tasks.length+' Vorg\u00e4nge importiert';
   f.classList.add('show');
   setTimeout(function(){f.classList.remove('show');f.textContent='Gespeichert';},3000);
+  updateXmlUploadBtn();
 }
 
 window.handleXMLUpload=function(input){
@@ -5422,6 +5450,10 @@ document.addEventListener('drop',function(e){
   if(!e.dataTransfer||!e.dataTransfer.files||!e.dataTransfer.files.length)return;
   var file=e.dataTransfer.files[0];
   if(!file.name.toLowerCase().endsWith('.xml')){alert('Bitte eine XML-Datei ablegen.');return;}
+  if(S.pid&&isXmlUploadBlocked()){
+    alert('XML-Upload ist nur beim Erstellen eines Projekts erlaubt. Wende dich an einen Administrator f\u00fcr einen erneuten Upload.');
+    return;
+  }
   // If no project, create one with filename
   if(!S.pid){
     var name=file.name.replace(/\.xml$/i,'');
