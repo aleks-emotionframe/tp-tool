@@ -2174,13 +2174,13 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 <div class="modal-bg" id="ferienFullModal" style="z-index:1100;">
   <div class="modal" style="max-width:95vw;width:95vw;max-height:90vh;padding:24px;display:flex;flex-direction:column;">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-      <div class="ferien-title">Ferienkalender \u2013 Grossansicht</div>
+      <div class="ferien-title">Ferienkalender &#8211; Grossansicht</div>
       <div class="ferien-nav" style="margin-left:auto;">
         <button onclick="ferienPrevFull()">&#8249;</button>
         <div class="ferien-month" id="ferienFullMonth"></div>
         <button onclick="ferienNextFull()">&#8250;</button>
       </div>
-      <button onclick="$('ferienFullModal').classList.remove('show')" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);margin-left:8px;">&times;</button>
+      <button onclick="closeFerienFull()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);margin-left:8px;">&times;</button>
     </div>
     <div id="ferienFullContent" style="overflow:auto;flex:1;"></div>
   </div>
@@ -4501,6 +4501,7 @@ function renderFerienFull(){
   html+='</div>';
   $('ferienFullContent').innerHTML=html;
 }
+window.closeFerienFull=function(){document.getElementById('ferienFullModal').classList.remove('show');};
 window.ferienPrevFull=function(){_ferienMonth--;if(_ferienMonth<0){_ferienMonth=11;_ferienYear--;}renderFerienFull();};
 window.ferienNextFull=function(){_ferienMonth++;if(_ferienMonth>11){_ferienMonth=0;_ferienYear++;}renderFerienFull();};
 
