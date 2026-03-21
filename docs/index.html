@@ -2268,7 +2268,21 @@ function showLogin(){
   }
 }
 /* ─── CHANGELOG ─── */
-function getChangelog(){return sGet('changelog',[]);}
+var CHANGELOG_SEED=[
+  {version:'1.5.0',date:'2026-03-21',published:false,items:[
+    {tag:'neu',text:'Projekt\u00fcbergreifende Suche \u2013 Vorg\u00e4nge k\u00f6nnen jetzt \u00fcber alle Projekte hinweg gefunden werden'},
+    {tag:'neu',text:'Berechtigung \u00abProjekt erstellen\u00bb \u2013 kann pro Rolle aktiviert oder deaktiviert werden'},
+    {tag:'neu',text:'\u00abMein Profil\u00bb \u2013 Nicht-Admins k\u00f6nnen ihr eigenes Profil bearbeiten'},
+    {tag:'neu',text:'\u00c4nderungsprotokoll \u2013 Neue Funktionen werden nach dem Login angezeigt'},
+    {tag:'update',text:'Rollen & Berechtigungen \u2013 Neue Berechtigung \u00abProjekt erstellen\u00bb hinzugef\u00fcgt'},
+    {tag:'update',text:'Admin Center \u2013 Neuer Tab \u00abChangelog\u00bb zur Verwaltung von \u00c4nderungsmeldungen'}
+  ]}
+];
+function getChangelog(){
+  var cl=sGet('changelog',null);
+  if(cl===null){cl=CHANGELOG_SEED;sSet('changelog',cl);}
+  return cl;
+}
 function saveChangelog(cl){sSet('changelog',cl);}
 
 function getPublishedChangelog(){
