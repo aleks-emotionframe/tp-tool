@@ -2363,9 +2363,6 @@ window.openChangelogPopup=function(){
 function checkChangelog(){
   if(!S.currentUser)return;
   updateChangelogBell();
-  if(hasUnseenChangelog()){
-    setTimeout(function(){showChangelog();},400);
-  }
 }
 
 /* ─── CHANGELOG ADMIN ─── */
