@@ -3889,7 +3889,7 @@ function _renderMyPendItem(p){
   var html='<li class="pend-item'+(p.done?' done':'')+(isFromTP?' pend-from-tp':'')+'" draggable="true" data-id="'+p.id+'" style="flex-wrap:wrap;">';
   html+='<div class="pend-check" onclick="toggleMyPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
   if(isFromTP) html+='<span class="pend-tp-badge" title="Aus Terminplan: '+esc(p.taskProject||'')+'">TP</span>';
-  html+='<span class="pend-text" ondblclick="editMyPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
+  html+='<span class="pend-text"'+(isFromTP?'':' ondblclick="editMyPendenz(\''+p.id+'\')"')+'>'+esc(p.text)+'</span>';
   html+=_pendDueLabel(p.due);
   if(S.pid){
     html+='<div class="pend-move-wrap">';
@@ -4702,7 +4702,7 @@ document.addEventListener('click',function(e){
 window.editMyPendenz=function(id){
   var list=getMyPendenzen();
   var item=list.find(function(p){return p.id===id;});
-  if(!item)return;
+  if(!item||item.source==='terminplan')return;
   var li=document.querySelector('.pend-item[data-id="'+id+'"]');
   if(!li)return;
   var textEl=li.querySelector('.pend-text');
