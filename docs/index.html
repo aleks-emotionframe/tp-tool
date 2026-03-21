@@ -4320,6 +4320,14 @@ window.editProjectPendenz=function(id){
   });
 };
 
+function _pdfBauterm(){
+  return '<div style="margin-top:24px;padding-top:12px;border-top:1px solid #ddd;display:flex;align-items:center;gap:8px;">'
+    +'<svg width="20" height="20" viewBox="0 0 36 36" fill="none"><rect width="36" height="36" rx="8" fill="url(#pg)"/><path d="M10 24V14l8-6 8 6v10H10z" fill="#fff" fill-opacity="0.9"/><rect x="15" y="18" width="6" height="6" rx="1" fill="url(#pg)"/><defs><linearGradient id="pg" x1="0" y1="0" x2="36" y2="36"><stop stop-color="#e8600a"/><stop offset="1" stop-color="#c2410c"/></linearGradient></defs></svg>'
+    +'<span style="font-size:11px;font-weight:700;color:#e8600a;letter-spacing:.5px;">BAUTERM</span>'
+    +'<span style="font-size:9px;color:#999;margin-left:auto;">Erstellt am '+new Date().toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</span>'
+    +'</div>';
+}
+
 /* ─── FERIENKALENDER ─── */
 var _ferienMonth=new Date().getMonth(),_ferienYear=new Date().getFullYear();
 var _ferienColors=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16'];
@@ -4597,6 +4605,7 @@ window.exportFerienFullPDF=function(){
     body+='<span><span class="dot" style="background:'+_ferienUserColor(uname,projectUsers)+';"></span>'+esc(dn)+'</span>';
   });
   body+='</div>';
+  body+=_pdfBauterm();
   var win=window.open('','_blank');
   win.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ferienkalender</title><style>'+css+'</style></head><body>'+body+'</body></html>');
   win.document.close();
@@ -4720,6 +4729,7 @@ window.exportFerienPDF=function(){
     html+='<span><span class="dot" style="background:'+_ferienUserColor(uname,projectUsers)+';"></span>'+esc(dn)+'</span>';
   });
   html+='</div>';
+  html+=_pdfBauterm();
 
   var win=window.open('','_blank');
   win.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ferienkalender \u2013 '+esc(projectName)+'</title><style>'+css+'</style></head><body>'+html+'</body></html>');
