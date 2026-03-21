@@ -658,9 +658,8 @@ body {
 .pend-item .pend-text { flex: 1; font-size: 13px; color: var(--text); }
 .pend-item.done .pend-text { text-decoration: line-through; color: var(--text3); }
 .pend-item .pend-assignee { font-size: 11px; color: var(--text3); background: var(--surface2); padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
-.pend-item .pend-delete { width: 24px; height: 24px; border: none; background: none; color: var(--text3); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; border-radius: 4px; flex-shrink: 0; opacity: 0; transition: var(--transition); }
-.pend-item:hover .pend-delete { opacity: 1; }
-.pend-item .pend-delete:hover { background: var(--red); color: #fff; }
+.pend-item .pend-delete { width: 26px; height: 26px; border: 1px solid var(--border); background: var(--bg); color: var(--text3); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; border-radius: 6px; flex-shrink: 0; transition: var(--transition); }
+.pend-item .pend-delete:hover { background: var(--red); color: #fff; border-color: var(--red); }
 .pend-empty { font-size: 13px; color: var(--text3); padding: 12px; text-align: center; }
 .pend-folders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 @media(max-width:900px){.pend-folders-grid{grid-template-columns:1fr;}}
@@ -721,9 +720,10 @@ body {
 .pend-card:hover .pend-delete { opacity: 1; }
 .pend-card .pend-delete:hover { background: var(--red); color: #fff; }
 .pend-move-wrap { position: relative; }
-.pend-move-btn { width: 28px; height: 24px; border: none; background: none; color: var(--orange); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; border-radius: 4px; flex-shrink: 0; opacity: 0; transition: var(--transition); }
-.pend-item:hover .pend-move-btn { opacity: 1; }
-.pend-move-btn:hover { background: var(--orange); color: #fff; }
+.pend-move-btn { width: 26px; height: 26px; border: 1px solid var(--border); background: var(--bg); color: var(--orange); cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; border-radius: 6px; flex-shrink: 0; transition: var(--transition); }
+.pend-move-btn:hover { background: var(--orange); color: #fff; border-color: var(--orange); }
+.pend-action-btn { width: 26px; height: 26px; border: 1px solid var(--border); background: var(--bg); color: var(--text3); cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 6px; flex-shrink: 0; transition: var(--transition); }
+.pend-action-btn:hover { background: var(--surface2); color: var(--text); border-color: var(--text3); }
 .pend-move-menu { display: none; position: absolute; right: 0; top: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-xs); box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 200; min-width: 200px; padding: 4px 0; }
 .pend-move-menu.show { display: block; }
 .pend-move-option { padding: 8px 14px; font-size: 13px; color: var(--text); cursor: pointer; transition: var(--transition); }
@@ -3844,7 +3844,7 @@ function _renderMyPendItem(p){
     html+='</div></div>';
   }
   if(!p.done&&(!(p.images)||p.images.length<2)){
-    html+='<label class="pend-img-upload" style="opacity:.5;margin-left:0;padding:0 4px;" title="Bild hinzuf\u00fcgen">&#128247;<input type="file" accept="image/*" style="display:none;" onchange="uploadMyPendImage(\''+p.id+'\',this)"></label>';
+    html+='<label class="pend-action-btn" title="Bild hinzuf\u00fcgen"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><input type="file" accept="image/*" style="display:none;" onchange="uploadMyPendImage(\''+p.id+'\',this)"></label>';
   }
   html+='<button class="pend-delete" onclick="deleteMyPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
   if(p.images&&p.images.length){
