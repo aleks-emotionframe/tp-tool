@@ -1948,6 +1948,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       </div>
       <div><label>Firma</label><input type="text" id="ueFirma"></div>
       <div><label>Telefonnummer</label><input type="tel" id="uePhone"></div>
+      <div><label>Kürzel (Avatar)</label><input type="text" id="ueKuerzel" maxlength="3" placeholder="z.B. AB" style="text-transform:uppercase;"></div>
       <div class="full-width"><label>Neues Passwort (leer lassen um nicht zu ändern)</label><input type="password" id="uePassword" placeholder="Neues Passwort..."></div>
     </div>
     <input type="hidden" id="ueOrigUsername">
@@ -2223,6 +2224,7 @@ function getUserDisplayName(u){
   return u.displayName||u.username;
 }
 function getUserInitials(u){
+  if(u.kuerzel)return u.kuerzel.toUpperCase();
   var dn=getUserDisplayName(u);
   return dn.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2);
 }
@@ -5196,6 +5198,7 @@ window.openMyProfile=function(){
   roleSelect.disabled=true;
   $('ueFirma').value=user.firma||'';
   $('uePhone').value=user.phone||'';
+  $('ueKuerzel').value=user.kuerzel||'';
   $('uePassword').value='';
   $('userEditTitle').textContent='Mein Profil';
   _ueAvatarData=user.avatar||null;
@@ -5217,6 +5220,7 @@ window.openUserEdit=function(username){
   roleSelect.disabled=false;
   $('ueFirma').value=user.firma||'';
   $('uePhone').value=user.phone||'';
+  $('ueKuerzel').value=user.kuerzel||'';
   $('uePassword').value='';
   $('userEditTitle').textContent=getUserDisplayName(user)+' bearbeiten';
   _ueAvatarData=user.avatar||null;
@@ -5280,6 +5284,7 @@ window.saveUserEdit=function(){
   var role=$('ueRole').value;
   var firma=$('ueFirma').value.trim();
   var phone=$('uePhone').value.trim();
+  var kuerzel=$('ueKuerzel').value.trim().toUpperCase();
   var pw=$('uePassword').value;
   if(!fn){alert('Bitte Vorname eingeben');return;}
   if(!ln){alert('Bitte Nachname eingeben');return;}
@@ -5295,7 +5300,7 @@ window.saveUserEdit=function(){
   users.forEach(function(u){
     if(u.username.toLowerCase()===origUn.toLowerCase()){
       u.firstName=fn;u.lastName=ln;u.displayName=fn+' '+ln;
-      u.username=un;u.role=role;u.firma=firma;u.phone=phone;u.email=un;
+      u.username=un;u.role=role;u.firma=firma;u.phone=phone;u.email=un;u.kuerzel=kuerzel;
       var _minPw2=getAppSettings().minPasswordLength||4;
       if(pw&&pw.length>=_minPw2)u.password=pw;
       else if(pw&&pw.length>0){alert('Passwort muss mindestens '+_minPw2+' Zeichen haben');return;}
