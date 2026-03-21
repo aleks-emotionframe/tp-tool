@@ -2763,9 +2763,11 @@ function renderAdminChangelog(){
     html+='<div style="margin-top:28px;border-top:1px solid var(--border);padding-top:20px;">';
     html+='<div class="admin-section-title">Bereits ver\u00f6ffentlicht <span class="pend-badge" style="font-size:11px;">'+released.length+'</span></div>';
     released.forEach(function(item){
+      var rd=item.publishedAt?new Date(item.publishedAt).toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit',year:'numeric'}):'';
       html+='<div class="cl-released-item">';
       html+='<span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>';
       html+='<span class="cl-drag-text">'+esc(item.text)+'</span>';
+      if(rd) html+='<span class="cl-drag-date">'+rd+'</span>';
       html+='</div>';
     });
     html+='</div>';
