@@ -3466,7 +3466,7 @@ function renderMyPendenzen(){
         var d=sGet('p_'+S.pid,{});var pu=d.users||[];
         pu.forEach(function(uname){
           var u=findUser(uname);var dn=u?getUserDisplayName(u):uname;
-          html+='<div class="pend-move-option" onclick="moveToJourFixe(\''+p.id+'\',\''+esc(uname)+'\')">'+esc(dn)+'</div>';
+          html+='<div class="pend-move-option" data-pid="'+p.id+'" data-assignee="'+esc(uname)+'" onclick="moveToJourFixe(this.dataset.pid,this.dataset.assignee)">'+esc(dn)+'</div>';
         });
         if(!pu.length) html+='<div class="pend-move-option" style="color:var(--text3);cursor:default;">Keine Benutzer im Projekt</div>';
         html+='</div></div>';
