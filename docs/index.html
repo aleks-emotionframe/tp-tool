@@ -469,9 +469,24 @@ body {
 .changelog-version { margin-bottom: 18px; }
 .changelog-version-header { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
 .changelog-version-date { font-size: 12px; color: var(--text3); font-weight: 400; }
-.changelog-list { margin: 0; padding-left: 20px; }
-.changelog-list li { margin-bottom: 4px; font-size: 13px; line-height: 1.5; }
-.changelog-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; margin-right: 4px; text-transform: uppercase; }
+.changelog-list { margin: 0; padding: 0; list-style: none; }
+.changelog-list li { margin-bottom: 10px; font-size: 14px; line-height: 1.6; padding: 12px 16px; background: var(--surface); border-radius: 8px; border-left: 3px solid transparent; animation: clSlideIn .4s ease both; display: flex; align-items: flex-start; gap: 8px; }
+.changelog-list li:nth-child(1) { animation-delay: 0s; }
+.changelog-list li:nth-child(2) { animation-delay: .08s; }
+.changelog-list li:nth-child(3) { animation-delay: .16s; }
+.changelog-list li:nth-child(4) { animation-delay: .24s; }
+.changelog-list li:nth-child(5) { animation-delay: .32s; }
+.changelog-list li:nth-child(6) { animation-delay: .4s; }
+.changelog-list li:nth-child(7) { animation-delay: .48s; }
+.changelog-list li:nth-child(8) { animation-delay: .56s; }
+.changelog-list li:nth-child(9) { animation-delay: .64s; }
+.changelog-list li:nth-child(10) { animation-delay: .72s; }
+.changelog-list li.tag-neu { border-left-color: #166534; }
+.changelog-list li.tag-update { border-left-color: #1e40af; }
+.changelog-list li.tag-fix { border-left-color: #92400e; }
+@keyframes clSlideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes clBounce { 0% { transform: scale(0) rotate(-15deg); } 60% { transform: scale(1.2) rotate(5deg); } 100% { transform: scale(1) rotate(0); } }
+.changelog-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
 .changelog-bell { position: relative; background: none; border: none; cursor: pointer; font-size: 20px; padding: 4px 8px; color: var(--text3); transition: color .2s; }
 .changelog-bell:hover { color: var(--text); }
 .changelog-bell .bell-dot { display: none; position: absolute; top: 2px; right: 4px; width: 10px; height: 10px; background: var(--primary); border-radius: 50%; border: 2px solid var(--bg); }
@@ -493,7 +508,7 @@ body {
 .cl-draft-header { background: #fef3c7; color: #92400e; }
 .cl-pub-header { background: #dcfce7; color: #166534; }
 .cl-preview-btn { margin-left: auto; padding: 4px 12px; border: 1px solid currentColor; border-radius: 4px; font-size: 11px; cursor: pointer; background: none; color: inherit; font-weight: 600; }
-.cl-kanban-body { padding: 8px; min-height: 100px; transition: background .15s; }
+.cl-kanban-body { padding: 10px; min-height: 120px; transition: background .15s; }
 .cl-drag-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 6px; cursor: grab; transition: box-shadow .15s; }
 .cl-drag-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 .cl-drag-item.cl-published { border-left: 3px solid var(--green); }
@@ -2078,14 +2093,15 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 
 <!-- CHANGELOG MODAL -->
 <div class="modal-bg" id="changelogModal">
-  <div class="modal" style="max-width:560px;max-height:80vh;display:flex;flex-direction:column;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-      <span style="font-size:22px;">&#128640;</span>
-      <h3 style="margin:0;">Was ist neu?</h3>
+  <div class="modal" style="max-width:520px;max-height:80vh;display:flex;flex-direction:column;padding:28px 32px;">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:36px;margin-bottom:8px;animation:clBounce .6s ease;">&#128640;</div>
+      <h3 style="margin:0;font-size:20px;">Was ist neu?</h3>
+      <p style="margin:6px 0 0;font-size:13px;color:var(--text3);">Hier sind die neuesten Verbesserungen</p>
     </div>
-    <div id="changelogContent" style="overflow-y:auto;flex:1;padding-right:8px;"></div>
-    <div class="modal-btns" style="margin-top:16px;">
-      <button class="btn-primary" onclick="closeChangelog()">Verstanden</button>
+    <div id="changelogContent" style="overflow-y:auto;flex:1;padding-right:4px;"></div>
+    <div style="margin-top:20px;text-align:center;">
+      <button class="btn-primary" onclick="closeChangelog()" style="padding:10px 32px;font-size:14px;border-radius:8px;">Verstanden</button>
     </div>
   </div>
 </div>
@@ -2444,7 +2460,7 @@ function showChangelog(){
   if(!pub.length)return;
   var html='<ul class="changelog-list">';
   pub.forEach(function(item){
-    html+='<li><span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>'+esc(item.text)+'</li>';
+    html+='<li class="tag-'+item.tag+'"><span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>'+esc(item.text)+'</li>';
   });
   html+='</ul>';
   $('changelogContent').innerHTML=html;
@@ -2666,7 +2682,7 @@ window.clPreviewAll=function(){
   if(!staged.length){alert('Keine Eintr\u00e4ge zum Vorschauen.');return;}
   var html='<ul class="changelog-list">';
   staged.forEach(function(item){
-    html+='<li><span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>'+esc(item.text)+'</li>';
+    html+='<li class="tag-'+item.tag+'"><span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>'+esc(item.text)+'</li>';
   });
   html+='</ul>';
   $('changelogContent').innerHTML=html;
