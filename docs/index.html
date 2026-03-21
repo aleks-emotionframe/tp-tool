@@ -618,6 +618,19 @@ body {
 .pend-col-actions .col-del:hover { background: var(--red); color: #fff; }
 .pend-add-col { min-width: 120px; border: 2px dashed var(--border); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text3); font-size: 13px; font-weight: 600; transition: var(--transition); padding: 20px; }
 .pend-add-col:hover { border-color: var(--orange); color: var(--orange); }
+.pend-done-section { margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px; }
+.pend-done-header { font-size: 14px; font-weight: 600; color: var(--text2); cursor: pointer; padding: 8px 0; display: flex; align-items: center; gap: 8px; user-select: none; }
+.pend-done-header:hover { color: var(--text); }
+.pend-done-chevron { font-size: 10px; color: var(--text3); }
+.pend-done-body { padding-top: 8px; }
+.pend-done-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--radius-xs); background: var(--surface); margin-bottom: 4px; opacity: .6; }
+.pend-done-item:hover { opacity: .8; }
+.pend-done-text { flex: 1; font-size: 13px; color: var(--text3); text-decoration: line-through; }
+.pend-thumb { width: 32px; height: 32px; border-radius: 4px; object-fit: cover; cursor: pointer; border: 1px solid var(--border); flex-shrink: 0; }
+.pend-thumb:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.pend-img-upload { font-size: 12px; color: var(--text3); cursor: pointer; padding: 2px 8px; display: inline-flex; align-items: center; gap: 2px; margin-left: 24px; opacity: 0; transition: var(--transition); }
+.pend-card:hover .pend-img-upload { opacity: 1; }
+.pend-img-upload:hover { color: var(--orange); }
 
 .icon-btn {
   height: 36px; min-width: 36px; padding: 0 8px;
@@ -3528,10 +3541,12 @@ function renderProjectPendenzenView(){
   var pOpen=plist.filter(function(p){return!p.done;}).length;
   var cols=_getJfCols(S.pid);
 
-  // Group by column id
+  // Separate open and done, group open by column
+  var openItems=plist.filter(function(p){return!p.done;});
+  var doneItems=plist.filter(function(p){return p.done;});
   var groups={};
   cols.forEach(function(col){groups[col.id]=[];});
-  plist.forEach(function(p){
+  openItems.forEach(function(p){
     var a=p.assignee||'_unassigned';
     if(!groups[a])groups['_unassigned'].push(p);
     else groups[a].push(p);
@@ -3556,7 +3571,7 @@ function renderProjectPendenzenView(){
     var items=groups[col.id]||[];
     var u=findUser(col.id);
     var ini=u?getUserInitials(u):col.label.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2)||'?';
-    var openCount=items.filter(function(p){return!p.done;}).length;
+    var openCount=items.length;
     html+='<div class="pend-column" data-col-idx="'+ci+'" data-col-id="'+esc(col.id)+'" draggable="true">';
     html+='<div class="pend-column-header">';
     if(u&&u.avatar){
@@ -3573,24 +3588,108 @@ function renderProjectPendenzenView(){
     html+='</div>';
     html+='<div class="pend-column-body" data-col-id="'+esc(col.id)+'">';
     items.forEach(function(p){
-      html+='<div class="pend-card'+(p.done?' done':'')+'" draggable="true" data-id="'+p.id+'">';
-      html+='<div class="pend-card-top">';
-      html+='<div class="pend-check" onclick="toggleProjectPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
-      html+='<span class="pend-card-text" ondblclick="editProjectPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
-      html+='<button class="pend-delete" onclick="deleteProjectPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
-      html+='</div>';
-      var dueLbl=_pendDueLabel(p.due);
-      if(dueLbl){html+='<div class="pend-card-meta">'+dueLbl+'</div>';}
-      html+='</div>';
+      html+=_renderPendCard(p,false);
     });
     if(!items.length) html+='<div class="pend-empty" style="padding:8px;">Keine Pendenzen</div>';
     html+='</div></div>';
   });
   html+='<div class="pend-add-col" onclick="addJfCol()">+ Spalte</div>';
   html+='</div>';
+
+  // Erledigte Pendenzen
+  if(doneItems.length){
+    var doneOpen=sGet('jf_done_open_'+S.pid,false);
+    html+='<div class="pend-done-section">';
+    html+='<div class="pend-done-header" onclick="toggleJfDone()">';
+    html+='<span class="pend-done-chevron">'+(doneOpen?'&#9660;':'&#9654;')+'</span>';
+    html+='Erledigte Pendenzen <span class="pend-badge">'+doneItems.length+'</span>';
+    html+='</div>';
+    html+='<div class="pend-done-body" style="display:'+(doneOpen?'block':'none')+';">';
+    doneItems.forEach(function(p){
+      var colLabel='';
+      var col=cols.find(function(c){return c.id===(p.assignee||'_unassigned');});
+      if(col)colLabel=col.label;
+      html+='<div class="pend-done-item">';
+      html+='<div class="pend-check" style="background:var(--green);border-color:var(--green);color:#fff;width:16px;height:16px;border-radius:3px;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;cursor:pointer;" onclick="toggleProjectPendenz(\''+p.id+'\')">&#10003;</div>';
+      html+='<span class="pend-done-text">'+esc(p.text)+'</span>';
+      if(colLabel) html+='<span class="pend-assignee">'+esc(colLabel)+'</span>';
+      if(p.images&&p.images.length){
+        p.images.forEach(function(img){
+          html+='<img src="'+esc(img)+'" class="pend-thumb" onclick="window.open(this.src)">';
+        });
+      }
+      html+='<button class="pend-delete" style="opacity:.5;" onclick="deleteProjectPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
+      html+='</div>';
+    });
+    html+='</div></div>';
+  }
+
   c.innerHTML=html;
   _initPendDragDrop();
 }
+
+function _renderPendCard(p,isDone){
+  var html='<div class="pend-card'+(isDone?' done':'')+'" draggable="true" data-id="'+p.id+'">';
+  html+='<div class="pend-card-top">';
+  html+='<div class="pend-check" onclick="toggleProjectPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
+  html+='<span class="pend-card-text" ondblclick="editProjectPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
+  html+='<button class="pend-delete" onclick="deleteProjectPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
+  html+='</div>';
+  var dueLbl=_pendDueLabel(p.due);
+  if(dueLbl||((p.images||[]).length)){
+    html+='<div class="pend-card-meta">';
+    if(dueLbl) html+=dueLbl;
+    if(p.images&&p.images.length){
+      p.images.forEach(function(img){
+        html+='<img src="'+esc(img)+'" class="pend-thumb" onclick="event.stopPropagation();window.open(this.src)">';
+      });
+    }
+    html+='</div>';
+  }
+  // Image upload (only if less than 2 images)
+  if(!p.done&&(!(p.images)||p.images.length<2)){
+    html+='<label class="pend-img-upload" title="Bild hinzuf\u00fcgen">';
+    html+='&#128247; <input type="file" accept="image/*" style="display:none;" onchange="uploadPendImage(\''+p.id+'\',this)">';
+    html+='</label>';
+  }
+  html+='</div>';
+  return html;
+}
+
+window.toggleJfDone=function(){
+  if(!S.pid)return;
+  var open=sGet('jf_done_open_'+S.pid,false);
+  sSet('jf_done_open_'+S.pid,!open);
+  renderProjectPendenzenView();
+};
+
+window.uploadPendImage=function(id,input){
+  if(!S.pid||!input.files||!input.files[0])return;
+  var file=input.files[0];
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var canvas=document.createElement('canvas');
+      var maxW=400,maxH=400;
+      var w=img.width,h=img.height;
+      if(w>maxW||h>maxH){var r=Math.min(maxW/w,maxH/h);w*=r;h*=r;}
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      var dataUrl=canvas.toDataURL('image/jpeg',0.7);
+      var list=getProjectPendenzen(S.pid);
+      var item=list.find(function(p){return p.id===id;});
+      if(!item)return;
+      if(!item.images)item.images=[];
+      if(item.images.length>=2)return;
+      item.images.push(dataUrl);
+      saveProjectPendenzen(S.pid,list);
+      renderProjectPendenzenView();
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
 
 // --- Jour Fixe column management ---
 window.addJfCol=function(){
