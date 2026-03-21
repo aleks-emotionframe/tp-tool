@@ -653,7 +653,7 @@ body {
 .fv-card.active { border-color: var(--orange); border-width: 2px; }
 .fv-card.past { opacity: 0.5; }
 .fv-card-head { display: flex; align-items: center; gap: 12px; padding: 16px 20px; background: var(--surface2); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
-.fv-user-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); padding: 5px 12px 5px 5px; border-radius: 20px; font-weight: 600; color: var(--text); font-size: 13px; border: 1px solid var(--border); }
+.fv-user-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); padding: 6px 14px 6px 8px; border-radius: 12px; font-weight: 600; color: var(--text); font-size: 13px; border: 1px solid var(--border); flex-wrap: wrap; }
 .fv-card-arrow { color: var(--text3); font-size: 16px; font-weight: 700; }
 .fv-date-chip { font-size: 12px; color: var(--text2); background: var(--bg); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); font-weight: 500; }
 .fv-progress { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text3); }
@@ -5309,9 +5309,9 @@ function _renderFVSection(projectUsers,ferien){
 
     // ── Header ──
     html+='<div class="fv-card-head">';
-    html+='<span class="fv-user-chip">'+renderAvatar(uAbw||{username:card.abwesend,displayName:dnAbw},22)+' '+esc(dnAbw)+'</span>';
+    html+='<span class="fv-user-chip"><span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.3px;">Abwesend</span> '+renderAvatar(uAbw||{username:card.abwesend,displayName:dnAbw},22)+' '+esc(dnAbw)+'</span>';
     html+='<span class="fv-card-arrow">&rarr;</span>';
-    html+='<span class="fv-user-chip">'+renderAvatar(uVer||{username:card.vertretung,displayName:dnVer},22)+' '+esc(dnVer)+'</span>';
+    html+='<span class="fv-user-chip"><span style="font-size:10px;font-weight:600;color:var(--orange);text-transform:uppercase;letter-spacing:0.3px;">Vertretung</span> '+renderAvatar(uVer||{username:card.vertretung,displayName:dnVer},22)+' '+esc(dnVer)+'</span>';
     html+='<span class="fv-date-chip">'+vonD[2]+'.'+vonD[1]+'.'+vonD[0]+' \u2013 '+bisD[2]+'.'+bisD[1]+'.'+bisD[0]+'</span>';
     if(totalCount){
       html+='<div class="fv-progress'+(doneCount===totalCount?' complete':'')+'">';
