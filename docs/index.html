@@ -571,6 +571,27 @@ body {
 .pend-edit-date, .pend-edit-assignee { padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-xs); font-family: var(--font); font-size: 12px; background: var(--bg); color: var(--text); margin-left: 6px; }
 .pend-text { display: flex; align-items: center; gap: 4px; }
 .pend-add-row input[type=date] { max-width: 140px; }
+.pend-kanban { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 12px; align-items: flex-start; }
+.pend-column { min-width: 260px; max-width: 320px; flex: 1; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); display: flex; flex-direction: column; }
+.pend-column-header { padding: 12px 14px; font-size: 13px; font-weight: 700; color: var(--text); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.pend-column-header .pend-col-avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg,var(--orange),var(--orange-dim)); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.pend-column-header .pend-col-count { font-size: 11px; font-weight: 600; color: var(--text3); margin-left: auto; }
+.pend-column-body { padding: 8px; min-height: 60px; flex: 1; }
+.pend-column-body.drag-over { background: rgba(232,96,10,0.06); }
+.pend-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-xs); padding: 10px 12px; margin-bottom: 6px; cursor: grab; transition: box-shadow .15s, opacity .15s; }
+.pend-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.pend-card.dragging { opacity: .4; }
+.pend-card.done { opacity: .45; }
+.pend-card-top { display: flex; align-items: flex-start; gap: 8px; }
+.pend-card .pend-check { width: 16px; height: 16px; border-radius: 3px; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px; transition: var(--transition); background: var(--bg); }
+.pend-card.done .pend-check { background: var(--green); border-color: var(--green); color: #fff; }
+.pend-card-text { flex: 1; font-size: 13px; color: var(--text); line-height: 1.4; }
+.pend-card.done .pend-card-text { text-decoration: line-through; color: var(--text3); }
+.pend-card-meta { display: flex; align-items: center; gap: 6px; margin-top: 6px; padding-left: 24px; }
+.pend-card .pend-delete { width: 20px; height: 20px; border: none; background: none; color: var(--text3); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; border-radius: 3px; flex-shrink: 0; opacity: 0; transition: var(--transition); }
+.pend-card:hover .pend-delete { opacity: 1; }
+.pend-card .pend-delete:hover { background: var(--red); color: #fff; }
+.pend-jour-fixe-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
 
 .icon-btn {
   height: 36px; min-width: 36px; padding: 0 8px;
@@ -3426,6 +3447,13 @@ function renderMyPendenzen(){
   c.innerHTML=html;
 }
 
+function _getProjectName(pid){
+  var d=sGet('p_'+pid,{});
+  if(d.name)return d.name;
+  var idx=getIdx(),p=idx.find(function(x){return x.id==pid;});
+  return p?p.name:pid;
+}
+
 function renderProjectPendenzenView(){
   var c=$('projektPendenzenView');
   if(!S.pid){
@@ -3436,12 +3464,23 @@ function renderProjectPendenzenView(){
   var d=sGet('p_'+S.pid,{});
   var plist=d.pendenzen||[];
   var pOpen=plist.filter(function(p){return!p.done;}).length;
-  var projectName=d.name||S.pid;
+  var projectName=_getProjectName(S.pid);
   var projectUsers=d.users||[];
-  var html='<div class="pend-section">';
-  html+='<div class="pend-section-title">'+esc(projectName)+' \u2013 Pendenzen <span class="pend-badge">'+pOpen+' offen</span></div>';
-  html+='<div class="pend-add-row">';
-  html+='<input type="text" id="pendProjInput" placeholder="Neue Projekt-Pendenz..." onkeydown="if(event.key===\'Enter\')addProjectPendenz()">';
+
+  // Group by assignee
+  var groups={};
+  groups['']=[];
+  projectUsers.forEach(function(u){groups[u]=[];});
+  plist.forEach(function(p){
+    var a=p.assignee||'';
+    if(!groups[a])groups[a]=[];
+    groups[a].push(p);
+  });
+
+  var html='<div class="pend-jour-fixe-title">'+esc(projectName)+' \u2013 Jour Fixe <span class="pend-badge" style="font-size:12px;vertical-align:middle;">'+pOpen+' offen</span></div>';
+  // Add row
+  html+='<div class="pend-add-row" style="margin-bottom:20px;">';
+  html+='<input type="text" id="pendProjInput" placeholder="Neue Pendenz..." onkeydown="if(event.key===\'Enter\')addProjectPendenz()">';
   html+='<input type="date" id="pendProjDue" title="F\u00e4lligkeitsdatum">';
   html+='<select id="pendProjAssignee"><option value="">Nicht zugewiesen</option>';
   projectUsers.forEach(function(uname){
@@ -3452,25 +3491,80 @@ function renderProjectPendenzenView(){
   html+='</select>';
   html+='<button onclick="addProjectPendenz()">Hinzuf\u00fcgen</button>';
   html+='</div>';
-  if(plist.length){
-    html+='<ul class="pend-list">';
-    plist.forEach(function(p){
-      var assigneeLabel='';
-      if(p.assignee){var au=findUser(p.assignee);assigneeLabel=au?getUserDisplayName(au):p.assignee;}
-      html+='<li class="pend-item'+(p.done?' done':'')+'" data-id="'+p.id+'">';
+
+  // Kanban columns
+  html+='<div class="pend-kanban">';
+  // Unassigned column first
+  var colOrder=[''].concat(projectUsers);
+  colOrder.forEach(function(uname){
+    var items=groups[uname]||[];
+    var u=uname?findUser(uname):null;
+    var colName=u?getUserDisplayName(u):'Nicht zugewiesen';
+    var ini=u?getUserInitials(u):'?';
+    var openCount=items.filter(function(p){return!p.done;}).length;
+    html+='<div class="pend-column" data-assignee="'+esc(uname)+'">';
+    html+='<div class="pend-column-header">';
+    if(u&&u.avatar){
+      html+='<div class="pend-col-avatar" style="overflow:hidden;"><img src="'+esc(u.avatar)+'" style="width:100%;height:100%;object-fit:cover;"></div>';
+    }else{
+      html+='<div class="pend-col-avatar">'+esc(ini)+'</div>';
+    }
+    html+=esc(colName);
+    html+='<span class="pend-col-count">'+openCount+'</span>';
+    html+='</div>';
+    html+='<div class="pend-column-body" data-assignee="'+esc(uname)+'">';
+    items.forEach(function(p){
+      html+='<div class="pend-card'+(p.done?' done':'')+'" draggable="true" data-id="'+p.id+'">';
+      html+='<div class="pend-card-top">';
       html+='<div class="pend-check" onclick="toggleProjectPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
-      html+='<span class="pend-text" ondblclick="editProjectPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
-      html+=_pendDueLabel(p.due);
-      if(assigneeLabel) html+='<span class="pend-assignee">'+esc(assigneeLabel)+'</span>';
+      html+='<span class="pend-card-text" ondblclick="editProjectPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
       html+='<button class="pend-delete" onclick="deleteProjectPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
-      html+='</li>';
+      html+='</div>';
+      var dueLbl=_pendDueLabel(p.due);
+      if(dueLbl){html+='<div class="pend-card-meta">'+dueLbl+'</div>';}
+      html+='</div>';
     });
-    html+='</ul>';
-  }else{
-    html+='<div class="pend-empty">Keine Projekt-Pendenzen vorhanden</div>';
-  }
+    if(!items.length) html+='<div class="pend-empty" style="padding:8px;">Keine Pendenzen</div>';
+    html+='</div></div>';
+  });
   html+='</div>';
   c.innerHTML=html;
+  _initPendDragDrop();
+}
+
+function _initPendDragDrop(){
+  var dragId=null;
+  document.querySelectorAll('.pend-card[draggable]').forEach(function(card){
+    card.addEventListener('dragstart',function(e){
+      dragId=card.dataset.id;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed='move';
+    });
+    card.addEventListener('dragend',function(){
+      card.classList.remove('dragging');
+      document.querySelectorAll('.pend-column-body').forEach(function(b){b.classList.remove('drag-over');});
+      dragId=null;
+    });
+  });
+  document.querySelectorAll('.pend-column-body').forEach(function(body){
+    body.addEventListener('dragover',function(e){
+      e.preventDefault();e.dataTransfer.dropEffect='move';
+      body.classList.add('drag-over');
+    });
+    body.addEventListener('dragleave',function(e){
+      if(!body.contains(e.relatedTarget))body.classList.remove('drag-over');
+    });
+    body.addEventListener('drop',function(e){
+      e.preventDefault();
+      body.classList.remove('drag-over');
+      if(!dragId||!S.pid)return;
+      var newAssignee=body.dataset.assignee;
+      var list=getProjectPendenzen(S.pid);
+      list.forEach(function(p){if(p.id===dragId)p.assignee=newAssignee;});
+      saveProjectPendenzen(S.pid,list);
+      renderProjectPendenzenView();
+    });
+  });
 }
 
 // --- My Pendenzen CRUD ---
@@ -3552,36 +3646,27 @@ window.editProjectPendenz=function(id){
   var list=getProjectPendenzen(S.pid);
   var item=list.find(function(p){return p.id===id;});
   if(!item)return;
-  var d=sGet('p_'+S.pid,{});
-  var projectUsers=d.users||[];
-  var li=document.querySelector('.pend-item[data-id="'+id+'"]');
-  if(!li)return;
-  var textEl=li.querySelector('.pend-text');
-  var selHtml='<select class="pend-edit-assignee"><option value="">Nicht zugewiesen</option>';
-  projectUsers.forEach(function(uname){
-    var u=findUser(uname);var dn=u?getUserDisplayName(u):uname;
-    selHtml+='<option value="'+esc(uname)+'"'+(item.assignee===uname?' selected':'')+'>'+esc(dn)+'</option>';
-  });
-  selHtml+='</select>';
-  textEl.innerHTML='<input type="text" class="pend-edit-input" value="'+esc(item.text)+'">'
-    +'<input type="date" class="pend-edit-date" value="'+(item.due||'')+'">'
-    +selHtml;
+  var card=document.querySelector('.pend-card[data-id="'+id+'"]');
+  if(!card)return;
+  var textEl=card.querySelector('.pend-card-text');
+  textEl.innerHTML='<input type="text" class="pend-edit-input" value="'+esc(item.text)+'" style="width:100%;">'
+    +'<input type="date" class="pend-edit-date" value="'+(item.due||'')+'">';
   var inp=textEl.querySelector('input[type=text]');
   inp.focus();
+  card.setAttribute('draggable','false');
   var saved=false;
   var save=function(){
     if(saved)return;saved=true;
     var nv=inp.value.trim();if(!nv)nv=item.text;
     item.text=nv;
     item.due=textEl.querySelector('.pend-edit-date').value||'';
-    item.assignee=textEl.querySelector('.pend-edit-assignee').value||'';
     saveProjectPendenzen(S.pid,list);renderProjectPendenzenView();
   };
-  textEl.querySelectorAll('input,select').forEach(function(el){
+  textEl.querySelectorAll('input').forEach(function(el){
     el.addEventListener('keydown',function(e){if(e.key==='Enter')save();if(e.key==='Escape'){saved=true;renderProjectPendenzenView();}});
   });
-  li.addEventListener('focusout',function(e){
-    if(li.contains(e.relatedTarget))return;
+  card.addEventListener('focusout',function(e){
+    if(card.contains(e.relatedTarget))return;
     setTimeout(save,100);
   });
 };
