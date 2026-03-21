@@ -1735,7 +1735,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     <div class="sidebar-projects" id="projectList"></div>
     <div class="sidebar-user" id="currentUserDisplay" style="display:none;"></div>
     <div class="sidebar-bottom">
-      <button class="sidebar-btn primary" onclick="showNewDialog()">+ Neues Projekt</button>
+      <button class="sidebar-btn primary" id="newProjectBtn" onclick="showNewDialog()" style="display:none;">+ Neues Projekt</button>
       <button class="sidebar-btn" id="adminOrProfileBtn" onclick="openAdmin()">Admin Center</button>
       <button class="sidebar-btn" onclick="doLogout()" style="margin-top:8px; font-size:12px; color:var(--text3)">Abmelden</button>
     </div>
@@ -2624,6 +2624,8 @@ function updateUserDisplay(){
       apBtn.textContent=isAdmin?'Admin Center':'Mein Profil';
       apBtn.onclick=isAdmin?openAdmin:openMyProfile;
     }
+    var npBtn=$('newProjectBtn');
+    if(npBtn) npBtn.style.display=userHasPerm('create_project')?'':'none';
   } else {
     el.style.display='none';
   }
