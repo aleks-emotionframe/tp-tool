@@ -664,7 +664,7 @@ body {
 .pend-empty { font-size: 13px; color: var(--text3); padding: 12px; text-align: center; }
 .pend-folders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 @media(max-width:900px){.pend-folders-grid{grid-template-columns:1fr;}}
-.pend-folder { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: grab; transition: box-shadow .15s, opacity .15s; }
+.pend-folder { border: 1px solid var(--border); border-radius: 8px; overflow: visible; cursor: grab; transition: box-shadow .15s, opacity .15s; }
 .pend-folder.folder-dragging { opacity: .4; }
 .pend-folder.folder-drag-over { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(232,96,10,0.2); }
 .pend-folder-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; user-select: none; font-size: 13px; font-weight: 600; background: var(--surface); }
@@ -724,7 +724,7 @@ body {
 .pend-move-btn { width: 28px; height: 24px; border: none; background: none; color: var(--orange); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; border-radius: 4px; flex-shrink: 0; opacity: 0; transition: var(--transition); }
 .pend-item:hover .pend-move-btn { opacity: 1; }
 .pend-move-btn:hover { background: var(--orange); color: #fff; }
-.pend-move-menu { display: none; position: absolute; right: 0; top: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-xs); box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 100; min-width: 180px; padding: 4px 0; }
+.pend-move-menu { display: none; position: absolute; right: 0; top: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-xs); box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 200; min-width: 200px; padding: 4px 0; }
 .pend-move-menu.show { display: block; }
 .pend-move-option { padding: 8px 14px; font-size: 13px; color: var(--text); cursor: pointer; transition: var(--transition); }
 .pend-move-option:hover { background: var(--surface2); color: var(--orange); }
