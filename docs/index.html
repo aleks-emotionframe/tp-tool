@@ -2175,7 +2175,6 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <div id="projektPendenzenView" style="display:none;overflow:auto;padding:20px 24px;"></div>
       <div id="ferienView" style="display:none;overflow:auto;padding:20px 24px;"></div>
       <div id="projektinfoView" style="display:none;overflow:auto;padding:20px 24px;"></div>
-      <div id="kontakteView" style="display:none;overflow:auto;padding:20px 24px;"></div>
       <div id="unternehmerView" style="display:none;overflow:auto;padding:20px 24px;"></div>
     </div>
   </div>
@@ -3584,8 +3583,7 @@ function renderProjectItem(p,container){
     var subPages=[
       {id:'jourFixe',icon:'&#128197;',label:'Jour Fixe'},
       {id:'projektinfo',icon:'&#128196;',label:'Projektinformationen'},
-      {id:'kontakte',icon:'&#128101;',label:'Kontaktliste'},
-      {id:'unternehmer',icon:'&#127970;',label:'Unternehmerliste'}
+      {id:'unternehmer',icon:'&#127970;',label:'Adressliste'}
     ];
     subPages.forEach(function(sp){
       var link=document.createElement('div');
@@ -4200,7 +4198,6 @@ function renderView(){
   $('projektPendenzenView').style.display='none';
   $('ferienView').style.display='none';
   $('projektinfoView').style.display='none';
-  $('kontakteView').style.display='none';
   $('unternehmerView').style.display='none';
   $('filterBar').style.display='none';
   $('contentArea').style.overflow='auto';
@@ -9105,11 +9102,9 @@ window.openSubPage=function(pageId){
   $('projektPendenzenView').style.display='none';
   $('ferienView').style.display='none';
   $('projektinfoView').style.display='none';
-  $('kontakteView').style.display='none';
   $('unternehmerView').style.display='none';
   // Show the relevant view
   if(pageId==='projektinfo'){$('projektinfoView').style.display='block';renderProjektinfo();}
-  if(pageId==='kontakte'){$('kontakteView').style.display='block';renderKontakte();}
   if(pageId==='unternehmer'){$('unternehmerView').style.display='block';renderUnternehmer();}
   _updatePendBtnActive();
   loadProjects();
@@ -9181,82 +9176,7 @@ window.saveProjektinfoField=function(key,val){
   sSet('p_'+S.pid,d);
 };
 
-/* ── Kontaktliste ── */
-function renderKontakte(){
-  var c=$('kontakteView');
-  if(!S.pid){c.innerHTML='';return;}
-  var list=_subPageData('kontakte');
-
-  var html='<div style="max-width:900px;">';
-  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">';
-  html+='<h2 style="margin:0;font-size:20px;font-weight:700;color:var(--text);">Kontaktliste</h2>';
-  html+='<button class="admin-btn primary" onclick="addKontakt()">+ Kontakt hinzuf\u00fcgen</button>';
-  html+='</div>';
-
-  if(!list.length){
-    html+='<div style="padding:40px;text-align:center;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">Noch keine Kontakte erfasst.</div>';
-  } else {
-    html+='<div style="display:flex;flex-direction:column;gap:8px;">';
-    list.forEach(function(k,i){
-      html+='<div class="admin-card" style="padding:14px 16px;">'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;">'
-        +'<div style="flex:1;min-width:0;">'
-        +'<div style="font-weight:600;font-size:14px;color:var(--text);">'+esc(k.name||'Kein Name')+'</div>'
-        +'<div style="font-size:12px;color:var(--text3);margin-top:2px;">'
-        +(k.firma?esc(k.firma)+' &middot; ':'')
-        +(k.funktion?esc(k.funktion):'')
-        +'</div>'
-        +'<div style="font-size:12px;color:var(--text2);margin-top:4px;display:flex;gap:16px;flex-wrap:wrap;">'
-        +(k.email?'<span>&#9993; '+esc(k.email)+'</span>':'')
-        +(k.telefon?'<span>&#9742; '+esc(k.telefon)+'</span>':'')
-        +'</div>'
-        +'</div>'
-        +'<div style="display:flex;gap:4px;">'
-        +'<button class="admin-btn" onclick="editKontakt('+i+')" style="padding:4px 10px;font-size:11px;">Bearbeiten</button>'
-        +'<button class="admin-btn danger" onclick="deleteKontakt('+i+')" style="padding:4px 10px;font-size:11px;">&#10005;</button>'
-        +'</div></div></div>';
-    });
-    html+='</div>';
-  }
-  html+='</div>';
-  c.innerHTML=html;
-}
-window.addKontakt=function(){
-  openPromptModal('Neuer Kontakt','Name',function(name){
-    if(!name)return;
-    var list=_subPageData('kontakte');
-    list.push({name:name,firma:'',funktion:'',email:'',telefon:''});
-    _saveSubPageData('kontakte',list);
-    renderKontakte();
-  });
-};
-window.editKontakt=function(idx){
-  var list=_subPageData('kontakte');
-  var k=list[idx];if(!k)return;
-  var fields=[
-    {key:'name',label:'Name',val:k.name||''},
-    {key:'firma',label:'Firma',val:k.firma||''},
-    {key:'funktion',label:'Funktion / Rolle',val:k.funktion||''},
-    {key:'email',label:'E-Mail',val:k.email||''},
-    {key:'telefon',label:'Telefon',val:k.telefon||''}
-  ];
-  _openMultiFieldModal('Kontakt bearbeiten',fields,function(vals){
-    fields.forEach(function(f){k[f.key]=vals[f.key]||'';});
-    list[idx]=k;
-    _saveSubPageData('kontakte',list);
-    renderKontakte();
-  });
-};
-window.deleteKontakt=function(idx){
-  openConfirmModal('Kontakt wirklich l\u00f6schen?',function(){
-    var list=_subPageData('kontakte');
-    list.splice(idx,1);
-    _saveSubPageData('kontakte',list);
-    renderKontakte();
-  });
-};
-
-/* ── Unternehmerliste ── */
+/* ── Adressliste ── */
 function renderUnternehmer(){
   var c=$('unternehmerView');
   if(!S.pid){c.innerHTML='';return;}
@@ -9264,7 +9184,7 @@ function renderUnternehmer(){
 
   var html='<div style="max-width:100%;overflow-x:auto;">';
   html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">';
-  html+='<h2 style="margin:0;font-size:20px;font-weight:700;color:var(--text);">Unternehmerliste</h2>';
+  html+='<h2 style="margin:0;font-size:20px;font-weight:700;color:var(--text);">Adressliste</h2>';
   html+='<div style="display:flex;gap:8px;">';
   html+='<button class="admin-btn" onclick="document.getElementById(\'xlsxUnternehmerInput\').click()" style="background:var(--surface);border:1px solid var(--border);">&#8679; XLSX importieren</button>';
   html+='<button class="admin-btn" onclick="exportUnternehmerXlsx()" style="background:var(--surface);border:1px solid var(--border);"'+(list.length?'':' disabled style="opacity:.4;pointer-events:none;"')+'>&#8681; XLSX exportieren</button>';
@@ -9273,7 +9193,7 @@ function renderUnternehmer(){
   html+='</div></div>';
 
   if(!list.length){
-    html+='<div style="padding:40px;text-align:center;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">Noch keine Unternehmer erfasst.<br><br>Importiere eine XLSX-Datei oder f\u00fcge manuell Eintr\u00e4ge hinzu.</div>';
+    html+='<div style="padding:40px;text-align:center;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">Noch keine Eintr\u00e4ge erfasst.<br><br>Importiere eine XLSX-Datei oder f\u00fcge manuell Eintr\u00e4ge hinzu.</div>';
   } else {
     var thStyle='padding:10px 12px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:#fff;background:#5a8a8a;border-bottom:2px solid #4a7a7a;white-space:nowrap;';
     var tdStyle='padding:8px 12px;font-size:12px;color:var(--text);border-bottom:1px solid var(--border);vertical-align:top;';
@@ -9323,7 +9243,7 @@ window.addUnternehmer=function(){
     {key:'natel',label:'Natel',val:''},
     {key:'email',label:'Email',val:''}
   ];
-  _openMultiFieldModal('Neuer Unternehmer',fields,function(vals){
+  _openMultiFieldModal('Neuer Eintrag',fields,function(vals){
     if(!vals.firma&&!vals.bereich)return;
     var list=_subPageData('unternehmer');
     list.push(vals);
@@ -9345,7 +9265,7 @@ window.editUnternehmer=function(idx){
     {key:'natel',label:'Natel',val:u.natel||''},
     {key:'email',label:'Email',val:u.email||''}
   ];
-  _openMultiFieldModal('Unternehmer bearbeiten',fields,function(vals){
+  _openMultiFieldModal('Eintrag bearbeiten',fields,function(vals){
     fields.forEach(function(f){u[f.key]=vals[f.key]||'';});
     list[idx]=u;
     _saveSubPageData('unternehmer',list);
@@ -9353,7 +9273,7 @@ window.editUnternehmer=function(idx){
   });
 };
 window.deleteUnternehmer=function(idx){
-  openConfirmModal('Unternehmer wirklich l\u00f6schen?',function(){
+  openConfirmModal('Eintrag wirklich l\u00f6schen?',function(){
     var list=_subPageData('unternehmer');
     list.splice(idx,1);
     _saveSubPageData('unternehmer',list);
@@ -9361,7 +9281,7 @@ window.deleteUnternehmer=function(idx){
   });
 };
 
-/* ── XLSX Import for Unternehmerliste ── */
+/* ── XLSX Import for Adressliste ── */
 window.importUnternehmerXlsx=function(input){
   var file=input.files[0];
   if(!file)return;
@@ -9456,7 +9376,7 @@ window.importUnternehmerXlsx=function(input){
       // Ask whether to replace or append
       var existing=_subPageData('unternehmer');
       if(existing.length){
-        openConfirmModal(imported.length+' Unternehmer importiert. Bestehende Liste ersetzen? (Abbrechen = anh\u00e4ngen)',function(){
+        openConfirmModal(imported.length+' Eintr\u00e4ge importiert. Bestehende Liste ersetzen? (Abbrechen = anh\u00e4ngen)',function(){
           _saveSubPageData('unternehmer',imported);
           renderUnternehmer();
         },function(){
@@ -9474,7 +9394,7 @@ window.importUnternehmerXlsx=function(input){
   reader.readAsArrayBuffer(file);
 };
 
-/* ── XLSX Export for Unternehmerliste ── */
+/* ── XLSX Export for Adressliste ── */
 window.exportUnternehmerXlsx=function(){
   var list=_subPageData('unternehmer');
   if(!list.length)return;
@@ -9496,10 +9416,10 @@ window.exportUnternehmerXlsx=function(){
     if(cell) cell.s={alignment:{wrapText:true}};
   }
   var wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,'Unternehmerliste');
-  wb.Sheets['Unternehmerliste']=ws;
+  XLSX.utils.book_append_sheet(wb,'Adressliste');
+  wb.Sheets['Adressliste']=ws;
   var idx=getIdx(),p=idx.find(function(x){return x.id==S.pid;});
-  var fname='Unternehmerliste'+(p?' - '+p.name:'')+'.xlsx';
+  var fname='Adressliste'+(p?' - '+p.name:'')+'.xlsx';
   XLSX.writeFile(wb,fname);
 };
 
