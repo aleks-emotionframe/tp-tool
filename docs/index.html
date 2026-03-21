@@ -2084,10 +2084,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
   <div class="bug-modal">
     <div class="bug-modal-header">
       <h3>&#128172; Feedback geben</h3>
-      <div style="display:flex;gap:4px;">
-        <button class="bug-minimize-btn" onclick="toggleBugMinimize()" title="Bildschirmfoto aufnehmen">&#128247; Bildschirmfoto</button>
-        <button class="pred-popover-close" onclick="closeBugReport()">&times;</button>
-      </div>
+      <button class="pred-popover-close" onclick="closeBugReport()">&times;</button>
     </div>
     <div class="bug-modal-body" id="bugBody">
       <div class="bug-field">
@@ -2113,7 +2110,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
             <div style="font-size:32px;margin-bottom:8px;">&#128444;</div>
             <div style="font-size:13px;font-weight:600;color:var(--text2);">Bild vom Bildschirm hinzuf&uuml;gen</div>
             <div style="font-size:12px;color:var(--text3);margin-top:6px;">So geht&rsquo;s:</div>
-            <div style="font-size:12px;color:var(--text3);margin-top:2px;">1. Klicken Sie oben auf <strong>&laquo;&#128247; Bildschirmfoto&raquo;</strong></div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px;">1. Klicken Sie unten auf <strong>&laquo;&#128247; Bildschirmfoto aufnehmen&raquo;</strong></div>
             <div style="font-size:12px;color:var(--text3);">2. Das Fenster wird klein &mdash; machen Sie Ihr Foto</div>
             <div style="font-size:12px;color:var(--text3);">3. Dr&uuml;cken Sie <strong>Ctrl+V</strong> zum Einf&uuml;gen</div>
             <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
@@ -2128,8 +2125,11 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       </div>
     </div>
     <div class="bug-modal-footer" id="bugFooter">
-      <button class="bug-cancel-btn" onclick="closeBugReport()">Abbrechen</button>
-      <button class="bug-send-btn" onclick="sendBugReport()">&#9993; Absenden</button>
+      <button class="bug-minimize-btn" onclick="toggleBugMinimize()">&#128247; Bildschirmfoto aufnehmen</button>
+      <div style="margin-left:auto;display:flex;gap:8px;">
+        <button class="bug-cancel-btn" onclick="closeBugReport()">Abbrechen</button>
+        <button class="bug-send-btn" onclick="sendBugReport()">&#9993; Absenden</button>
+      </div>
     </div>
   </div>
 </div>
