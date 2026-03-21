@@ -3864,7 +3864,8 @@ function renderMyPendenzen(){
   var folders=getMyFolders();
   var myOpen=my.filter(function(p){return!p.done;}).length;
   var html='<div class="pend-section">';
-  html+='<div class="pend-section-title">Meine Pendenzen <span class="pend-badge">'+myOpen+' offen</span></div>';
+  html+='<div class="pend-section-title">Meine Pendenzen <span class="pend-badge">'+myOpen+' offen</span>'
+    +'<button class="ferien-fullscreen-btn" style="margin-left:auto;font-size:11px;" onclick="exportMyPendenzenPDF()">&#128438; PDF</button></div>';
   html+='<div class="pend-add-row" style="flex-wrap:wrap;">';
   html+='<input type="text" id="pendMyInput" placeholder="Neue Pendenz..." onkeydown="if(event.key===\'Enter\')addMyPendenz()">';
   html+='<input type="date" id="pendMyDue" title="F\u00e4lligkeitsdatum">';
@@ -4463,6 +4464,75 @@ window.uploadMyPendImage=function(id,input){
     img.src=e.target.result;
   };
   reader.readAsDataURL(file);
+};
+window.exportMyPendenzenPDF=function(){
+  if(!S.currentUser)return;
+  var my=getMyPendenzen();
+  var folders=getMyFolders();
+  var userName=getUserDisplayName(S.currentUser);
+  var unsorted=my.filter(function(p){return!p.folder;});
+
+  var css='@page{size:portrait;margin:14mm;}'
+    +'*{margin:0;padding:0;box-sizing:border-box;}'
+    +'body{font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#222;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;}'
+    +'h1{font-size:16px;margin-bottom:16px;}'
+    +'h2{font-size:13px;margin:18px 0 6px;display:flex;align-items:center;gap:6px;}'
+    +'.dot{display:inline-block;width:10px;height:10px;border-radius:50%;}'
+    +'table{border-collapse:collapse;width:100%;margin-bottom:4px;}'
+    +'th{text-align:left;padding:6px 10px;background:#f5f5f5;border:1px solid #ddd;font-size:11px;font-weight:600;color:#666;}'
+    +'td{padding:7px 10px;border:1px solid #ddd;font-size:12px;vertical-align:top;}'
+    +'td.done{text-decoration:line-through;color:#999;}'
+    +'.status{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;}'
+    +'.open{background:#22c55e;}.closed{background:#d1d5db;}'
+    +'.due{font-size:10px;color:#666;white-space:nowrap;}'
+    +'.img{width:40px;height:40px;border-radius:4px;object-fit:cover;margin:2px;}'
+    +'.summary{margin-top:16px;padding:10px 14px;background:#f8f8f8;border-radius:6px;font-size:11px;color:#666;}';
+
+  function renderTable(items){
+    if(!items.length)return '<p style="color:#999;font-size:11px;padding:4px 0;">Keine Pendenzen</p>';
+    var h='<table><thead><tr><th style="width:20px;"></th><th>Pendenz</th><th style="width:90px;">F\u00e4llig</th><th style="width:90px;">Bilder</th></tr></thead><tbody>';
+    items.forEach(function(p){
+      var dueStr='';
+      if(p.due){var dp=p.due.split('-');dueStr=dp[2]+'.'+dp[1]+'.'+dp[0];}
+      h+='<tr><td><span class="status '+(p.done?'closed':'open')+'"></span></td>';
+      h+='<td'+(p.done?' class="done"':'')+'>'+esc(p.text)+'</td>';
+      h+='<td class="due">'+dueStr+'</td>';
+      h+='<td>';
+      if(p.images&&p.images.length){
+        p.images.forEach(function(img){h+='<img src="'+img+'" class="img">';});
+      }
+      h+='</td></tr>';
+    });
+    h+='</tbody></table>';
+    return h;
+  }
+
+  var body=_pdfBautermHeader();
+  body+='<h1>Meine Pendenzen</h1>';
+
+  // Unsorted
+  if(unsorted.length){
+    body+='<h2>Allgemein</h2>';
+    body+=renderTable(unsorted);
+  }
+
+  // Folders
+  folders.forEach(function(f){
+    var items=my.filter(function(p){return p.folder===f.id;});
+    if(!items.length&&!unsorted.length)return;
+    body+='<h2><span class="dot" style="background:'+(f.color||'#3b82f6')+';"></span> '+esc(f.name)+'</h2>';
+    body+=renderTable(items);
+  });
+
+  // Summary
+  var openCount=my.filter(function(p){return!p.done;}).length;
+  var doneCount=my.filter(function(p){return p.done;}).length;
+  body+='<div class="summary">Gesamt: '+my.length+' Pendenzen | '+openCount+' offen | '+doneCount+' erledigt</div>';
+
+  var win=window.open('','_blank');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Meine Pendenzen \u2013 '+esc(userName)+'</title><style>'+css+'</style></head><body>'+body+'</body></html>');
+  win.document.close();
+  setTimeout(function(){win.print();},300);
 };
 window.toggleMyPendenz=function(id){
   var list=getMyPendenzen();
