@@ -2071,6 +2071,18 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
   </div>
 </div>
 
+<!-- PROMPT MODAL -->
+<div class="modal-bg" id="promptModal">
+  <div class="modal" style="max-width:400px;">
+    <h3 id="promptTitle">Eingabe</h3>
+    <input type="text" id="promptInput" class="login-input" style="margin-top:12px;">
+    <div class="modal-btns" style="margin-top:16px;">
+      <button onclick="closePromptModal()">Abbrechen</button>
+      <button class="btn-primary" onclick="confirmPromptModal()">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- NEW PROJECT MODAL -->
 <div class="modal-bg" id="newModal">
   <div class="modal">
@@ -3692,24 +3704,46 @@ window.uploadPendImage=function(id,input){
 };
 
 // --- Jour Fixe column management ---
+var _promptCb=null;
+function openPromptModal(title,value,cb){
+  $('promptTitle').textContent=title;
+  $('promptInput').value=value||'';
+  _promptCb=cb;
+  $('promptModal').classList.add('show');
+  setTimeout(function(){$('promptInput').focus();$('promptInput').select();},50);
+}
+window.closePromptModal=function(){$('promptModal').classList.remove('show');_promptCb=null;};
+window.confirmPromptModal=function(){
+  var v=$('promptInput').value.trim();
+  if(!v){$('promptInput').focus();return;}
+  var cb=_promptCb;
+  closePromptModal();
+  if(cb)cb(v);
+};
+$('promptInput').addEventListener('keydown',function(e){
+  if(e.key==='Enter')confirmPromptModal();
+  if(e.key==='Escape')closePromptModal();
+});
+
 window.addJfCol=function(){
   if(!S.pid)return;
-  var name=prompt('Name der neuen Spalte:');
-  if(!name||!name.trim())return;
-  var cols=_getJfCols(S.pid);
-  cols.push({id:'col_'+_pendId(),label:name.trim()});
-  _saveJfCols(S.pid,cols);
-  renderProjectPendenzenView();
+  openPromptModal('Neue Spalte erstellen','',function(name){
+    var cols=_getJfCols(S.pid);
+    cols.push({id:'col_'+_pendId(),label:name});
+    _saveJfCols(S.pid,cols);
+    renderProjectPendenzenView();
+  });
 };
 window.renameJfCol=function(idx){
   if(!S.pid)return;
   var cols=_getJfCols(S.pid);
   if(!cols[idx])return;
-  var name=prompt('Spalte umbenennen:',cols[idx].label);
-  if(!name||!name.trim())return;
-  cols[idx].label=name.trim();
-  _saveJfCols(S.pid,cols);
-  renderProjectPendenzenView();
+  openPromptModal('Spalte umbenennen',cols[idx].label,function(name){
+    var cols2=_getJfCols(S.pid);
+    if(cols2[idx])cols2[idx].label=name;
+    _saveJfCols(S.pid,cols2);
+    renderProjectPendenzenView();
+  });
 };
 window.deleteJfCol=function(idx){
   if(!S.pid)return;
