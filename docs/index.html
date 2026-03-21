@@ -1201,7 +1201,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 /* --- BUG REPORT MODAL --- */
 .bug-overlay { position: fixed; inset: 0; z-index: 1100; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; }
 .bug-overlay.show { display: flex; }
-.bug-modal { background: var(--surface); border-radius: 16px; box-shadow: 0 24px 64px rgba(0,0,0,0.25); width: 440px; max-width: 92vw; max-height: 90vh; overflow: hidden; }
+.bug-modal { background: var(--surface); border-radius: 16px; box-shadow: 0 24px 64px rgba(0,0,0,0.25); width: 440px; max-width: 92vw; max-height: 90vh; overflow-y: auto; }
 .bug-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 12px 20px; border-bottom: 1px solid var(--border); }
 .bug-modal-header h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text); }
 .bug-modal-body { padding: 20px; }
