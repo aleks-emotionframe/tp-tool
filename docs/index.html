@@ -598,6 +598,14 @@ body {
 .pend-card .pend-delete { width: 20px; height: 20px; border: none; background: none; color: var(--text3); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; border-radius: 3px; flex-shrink: 0; opacity: 0; transition: var(--transition); }
 .pend-card:hover .pend-delete { opacity: 1; }
 .pend-card .pend-delete:hover { background: var(--red); color: #fff; }
+.pend-move-wrap { position: relative; }
+.pend-move-btn { width: 28px; height: 24px; border: none; background: none; color: var(--orange); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; border-radius: 4px; flex-shrink: 0; opacity: 0; transition: var(--transition); }
+.pend-item:hover .pend-move-btn { opacity: 1; }
+.pend-move-btn:hover { background: var(--orange); color: #fff; }
+.pend-move-menu { display: none; position: absolute; right: 0; top: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-xs); box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 100; min-width: 180px; padding: 4px 0; }
+.pend-move-menu.show { display: block; }
+.pend-move-option { padding: 8px 14px; font-size: 13px; color: var(--text); cursor: pointer; transition: var(--transition); }
+.pend-move-option:hover { background: var(--surface2); color: var(--orange); }
 .pend-jour-fixe-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
 
 .icon-btn {
@@ -3451,6 +3459,18 @@ function renderMyPendenzen(){
       html+='<div class="pend-check" onclick="toggleMyPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
       html+='<span class="pend-text" ondblclick="editMyPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
       html+=_pendDueLabel(p.due);
+      if(S.pid){
+        html+='<div class="pend-move-wrap">';
+        html+='<button class="pend-move-btn" onclick="toggleMoveMenu(\''+p.id+'\')" title="Zum Jour Fixe verschieben">&#10140;</button>';
+        html+='<div class="pend-move-menu" id="moveMenu_'+p.id+'">';
+        var d=sGet('p_'+S.pid,{});var pu=d.users||[];
+        pu.forEach(function(uname){
+          var u=findUser(uname);var dn=u?getUserDisplayName(u):uname;
+          html+='<div class="pend-move-option" onclick="moveToJourFixe(\''+p.id+'\',\''+esc(uname)+'\')">'+esc(dn)+'</div>';
+        });
+        if(!pu.length) html+='<div class="pend-move-option" style="color:var(--text3);cursor:default;">Keine Benutzer im Projekt</div>';
+        html+='</div></div>';
+      }
       html+='<button class="pend-delete" onclick="deleteMyPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
       html+='</li>';
     });
@@ -3603,6 +3623,32 @@ window.deleteMyPendenz=function(id){
   saveMyPendenzen(list);
   renderMyPendenzen();
 };
+window.toggleMoveMenu=function(id){
+  document.querySelectorAll('.pend-move-menu').forEach(function(m){
+    if(m.id!=='moveMenu_'+id) m.classList.remove('show');
+  });
+  var menu=$('moveMenu_'+id);
+  if(menu) menu.classList.toggle('show');
+};
+window.moveToJourFixe=function(id,assignee){
+  if(!S.pid)return;
+  var myList=getMyPendenzen();
+  var item=myList.find(function(p){return p.id===id;});
+  if(!item)return;
+  // Add to project pendenzen
+  var projList=getProjectPendenzen(S.pid);
+  projList.unshift({id:_pendId(),text:item.text,done:item.done,due:item.due||'',assignee:assignee,created:item.created||new Date().toISOString(),createdBy:S.currentUser?S.currentUser.username:''});
+  saveProjectPendenzen(S.pid,projList);
+  // Remove from personal
+  myList=myList.filter(function(p){return p.id!==id;});
+  saveMyPendenzen(myList);
+  renderMyPendenzen();
+};
+document.addEventListener('click',function(e){
+  if(!e.target.closest('.pend-move-wrap')){
+    document.querySelectorAll('.pend-move-menu').forEach(function(m){m.classList.remove('show');});
+  }
+});
 window.editMyPendenz=function(id){
   var list=getMyPendenzen();
   var item=list.find(function(p){return p.id===id;});
