@@ -1699,7 +1699,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     <div class="sidebar-user" id="currentUserDisplay" style="display:none;"></div>
     <div class="sidebar-bottom">
       <button class="sidebar-btn primary" onclick="showNewDialog()">+ Neues Projekt</button>
-      <button class="sidebar-btn" onclick="openAdmin()">Admin Center</button>
+      <button class="sidebar-btn" id="adminOrProfileBtn" onclick="openAdmin()">Admin Center</button>
       <button class="sidebar-btn" onclick="doLogout()" style="margin-top:8px; font-size:12px; color:var(--text3)">Abmelden</button>
     </div>
   </div>
@@ -2309,6 +2309,13 @@ function updateUserDisplay(){
       +'<div class="sidebar-user-info"><div class="sidebar-user-name">'+esc(dn)+'</div>'
       +'<div class="sidebar-user-role">'+esc(getRoleDisplay(S.currentUser.role))+'</div></div>';
     el.style.display='flex';
+    // Show Admin Center only for admins, Mein Profil for others
+    var apBtn=$('adminOrProfileBtn');
+    if(apBtn){
+      var isAdmin=S.currentUser.role==='admin';
+      apBtn.textContent=isAdmin?'Admin Center':'Mein Profil';
+      apBtn.onclick=isAdmin?openAdmin:openMyProfile;
+    }
   } else {
     el.style.display='none';
   }
@@ -4862,6 +4869,27 @@ window.adminSendInviteEmail=function(){
 // --- USER EDIT MODAL ---
 var _ueAvatarData=null;
 
+window.openMyProfile=function(){
+  if(!S.currentUser)return;
+  var user=S.currentUser;
+  $('ueOrigUsername').value=user.username;
+  $('ueFirstName').value=user.firstName||'';
+  $('ueLastName').value=user.lastName||'';
+  $('ueEmail').value=user.email||user.username||'';
+  var roleSelect=$('ueRole');
+  roleSelect.innerHTML='<option value="'+esc(user.role||'user')+'">'+esc(getRoleDisplay(user.role||'user'))+'</option>';
+  roleSelect.value=user.role||'user';
+  roleSelect.disabled=true;
+  $('ueFirma').value=user.firma||'';
+  $('uePhone').value=user.phone||'';
+  $('uePassword').value='';
+  $('userEditTitle').textContent='Mein Profil';
+  _ueAvatarData=user.avatar||null;
+  _updateEditAvatarPreview(user);
+  $('ueRemoveAvatarBtn').style.display=user.avatar?'':'none';
+  $('userEditModal').classList.add('show');
+};
+
 window.openUserEdit=function(username){
   var user=findUser(username);if(!user)return;
   $('ueOrigUsername').value=user.username;
@@ -4872,6 +4900,7 @@ window.openUserEdit=function(username){
   var roleSelect=$('ueRole');
   roleSelect.innerHTML=getRoles().map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.name)+'</option>';}).join('');
   roleSelect.value=user.role||'user';
+  roleSelect.disabled=false;
   $('ueFirma').value=user.firma||'';
   $('uePhone').value=user.phone||'';
   $('uePassword').value='';
@@ -4893,6 +4922,7 @@ function _updateEditAvatarPreview(user){
 
 window.closeUserEdit=function(){
   $('userEditModal').classList.remove('show');
+  $('ueRole').disabled=false;
   _ueAvatarData=null;
 };
 
