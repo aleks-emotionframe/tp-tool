@@ -2029,6 +2029,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
 </style>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -5074,14 +5075,15 @@ window.toggleMyPendenz=function(id){
   saveMyPendenzen(list);
   renderMyPendenzen();
 };
-var _confirmCb=null;
-function openConfirmModal(msg,cb){
+var _confirmCb=null,_confirmCancelCb=null;
+function openConfirmModal(msg,cb,cancelCb){
   $('confirmMsg').innerHTML=msg;
   _confirmCb=cb;
+  _confirmCancelCb=cancelCb||null;
   $('confirmModal').classList.add('show');
 }
-window.closeConfirmModal=function(){$('confirmModal').classList.remove('show');_confirmCb=null;};
-window.doConfirmModal=function(){var cb=_confirmCb;closeConfirmModal();if(cb)cb();};
+window.closeConfirmModal=function(){$('confirmModal').classList.remove('show');var cc=_confirmCancelCb;_confirmCb=null;_confirmCancelCb=null;if(cc)cc();};
+window.doConfirmModal=function(){var cb=_confirmCb;_confirmCancelCb=null;closeConfirmModal();if(cb)cb();};
 
 window.deleteMyPendenz=function(id){
   openConfirmModal('M\u00f6chten Sie diese Pendenz wirklich l\u00f6schen?',function(){
@@ -9260,46 +9262,71 @@ function renderUnternehmer(){
   if(!S.pid){c.innerHTML='';return;}
   var list=_subPageData('unternehmer');
 
-  var html='<div style="max-width:900px;">';
-  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">';
+  var html='<div style="max-width:100%;overflow-x:auto;">';
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">';
   html+='<h2 style="margin:0;font-size:20px;font-weight:700;color:var(--text);">Unternehmerliste</h2>';
-  html+='<button class="admin-btn primary" onclick="addUnternehmer()">+ Unternehmer hinzuf\u00fcgen</button>';
-  html+='</div>';
+  html+='<div style="display:flex;gap:8px;">';
+  html+='<button class="admin-btn" onclick="document.getElementById(\'xlsxUnternehmerInput\').click()" style="background:var(--surface);border:1px solid var(--border);">&#8679; XLSX importieren</button>';
+  html+='<button class="admin-btn" onclick="exportUnternehmerXlsx()" style="background:var(--surface);border:1px solid var(--border);"'+(list.length?'':' disabled style="opacity:.4;pointer-events:none;"')+'>&#8681; XLSX exportieren</button>';
+  html+='<button class="admin-btn primary" onclick="addUnternehmer()">+ Hinzuf\u00fcgen</button>';
+  html+='<input type="file" id="xlsxUnternehmerInput" accept=".xlsx,.xls" style="display:none" onchange="importUnternehmerXlsx(this)">';
+  html+='</div></div>';
 
   if(!list.length){
-    html+='<div style="padding:40px;text-align:center;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">Noch keine Unternehmer erfasst.</div>';
+    html+='<div style="padding:40px;text-align:center;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">Noch keine Unternehmer erfasst.<br><br>Importiere eine XLSX-Datei oder f\u00fcge manuell Eintr\u00e4ge hinzu.</div>';
   } else {
-    html+='<div style="display:flex;flex-direction:column;gap:8px;">';
+    var thStyle='padding:10px 12px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;color:#fff;background:#5a8a8a;border-bottom:2px solid #4a7a7a;white-space:nowrap;';
+    var tdStyle='padding:8px 12px;font-size:12px;color:var(--text);border-bottom:1px solid var(--border);vertical-align:top;';
+    html+='<table style="width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">';
+    html+='<thead><tr>'
+      +'<th style="'+thStyle+'">Bereich / Arbeitsgattung</th>'
+      +'<th style="'+thStyle+'">Adresse</th>'
+      +'<th style="'+thStyle+'">Sachbearbeiter</th>'
+      +'<th style="'+thStyle+'">Funktion</th>'
+      +'<th style="'+thStyle+'">Telefon / Direktwahl</th>'
+      +'<th style="'+thStyle+'">Natel</th>'
+      +'<th style="'+thStyle+'">Email</th>'
+      +'<th style="'+thStyle+'width:60px;text-align:center;">Aktion</th>'
+      +'</tr></thead><tbody>';
     list.forEach(function(u,i){
-      html+='<div class="admin-card" style="padding:14px 16px;">'
-        +'<div style="display:flex;align-items:center;justify-content:space-between;">'
-        +'<div style="flex:1;min-width:0;">'
-        +'<div style="font-weight:600;font-size:14px;color:var(--text);">'+esc(u.firma||'Kein Name')+'</div>'
-        +'<div style="font-size:12px;color:var(--text3);margin-top:2px;">'
-        +(u.gewerk?'Gewerk: '+esc(u.gewerk):'')
-        +(u.kontaktperson?' &middot; '+esc(u.kontaktperson):'')
-        +'</div>'
-        +'<div style="font-size:12px;color:var(--text2);margin-top:4px;display:flex;gap:16px;flex-wrap:wrap;">'
-        +(u.email?'<span>&#9993; '+esc(u.email)+'</span>':'')
-        +(u.telefon?'<span>&#9742; '+esc(u.telefon)+'</span>':'')
-        +(u.adresse?'<span>&#127968; '+esc(u.adresse)+'</span>':'')
-        +'</div>'
-        +'</div>'
-        +'<div style="display:flex;gap:4px;">'
-        +'<button class="admin-btn" onclick="editUnternehmer('+i+')" style="padding:4px 10px;font-size:11px;">Bearbeiten</button>'
-        +'<button class="admin-btn danger" onclick="deleteUnternehmer('+i+')" style="padding:4px 10px;font-size:11px;">&#10005;</button>'
-        +'</div></div></div>';
+      var adresseHtml=esc(u.firma||'');
+      if(u.strasse) adresseHtml+='<br>'+esc(u.strasse);
+      if(u.ort) adresseHtml+='<br>'+esc(u.ort);
+      var trBg=i%2===0?'background:var(--bg);':'';
+      html+='<tr style="'+trBg+'cursor:pointer;" ondblclick="editUnternehmer('+i+')">'
+        +'<td style="'+tdStyle+'font-weight:600;">'+esc(u.bereich||'')+'</td>'
+        +'<td style="'+tdStyle+'">'+(adresseHtml||'–')+'</td>'
+        +'<td style="'+tdStyle+'">'+esc(u.sachbearbeiter||'')+'</td>'
+        +'<td style="'+tdStyle+'">'+esc(u.funktion||'')+'</td>'
+        +'<td style="'+tdStyle+'white-space:nowrap;">'+esc(u.telefon||'')+'</td>'
+        +'<td style="'+tdStyle+'white-space:nowrap;">'+esc(u.natel||'')+'</td>'
+        +'<td style="'+tdStyle+'"><a href="mailto:'+esc(u.email||'')+'" style="color:var(--orange);text-decoration:none;">'+esc(u.email||'')+'</a></td>'
+        +'<td style="'+tdStyle+'text-align:center;white-space:nowrap;">'
+        +'<button class="admin-btn" onclick="editUnternehmer('+i+')" style="padding:2px 6px;font-size:10px;" title="Bearbeiten">&#9998;</button> '
+        +'<button class="admin-btn danger" onclick="deleteUnternehmer('+i+')" style="padding:2px 6px;font-size:10px;" title="L\u00f6schen">&#10005;</button>'
+        +'</td></tr>';
     });
-    html+='</div>';
+    html+='</tbody></table>';
   }
   html+='</div>';
   c.innerHTML=html;
 }
 window.addUnternehmer=function(){
-  openPromptModal('Neuer Unternehmer','Firmenname',function(name){
-    if(!name)return;
+  var fields=[
+    {key:'bereich',label:'Bereich / Arbeitsgattung',val:''},
+    {key:'firma',label:'Firma',val:''},
+    {key:'strasse',label:'Strasse',val:''},
+    {key:'ort',label:'PLZ / Ort',val:''},
+    {key:'sachbearbeiter',label:'Sachbearbeiter',val:''},
+    {key:'funktion',label:'Funktion',val:''},
+    {key:'telefon',label:'Telefon / Direktwahl',val:''},
+    {key:'natel',label:'Natel',val:''},
+    {key:'email',label:'Email',val:''}
+  ];
+  _openMultiFieldModal('Neuer Unternehmer',fields,function(vals){
+    if(!vals.firma&&!vals.bereich)return;
     var list=_subPageData('unternehmer');
-    list.push({firma:name,gewerk:'',kontaktperson:'',email:'',telefon:'',adresse:''});
+    list.push(vals);
     _saveSubPageData('unternehmer',list);
     renderUnternehmer();
   });
@@ -9308,12 +9335,15 @@ window.editUnternehmer=function(idx){
   var list=_subPageData('unternehmer');
   var u=list[idx];if(!u)return;
   var fields=[
+    {key:'bereich',label:'Bereich / Arbeitsgattung',val:u.bereich||''},
     {key:'firma',label:'Firma',val:u.firma||''},
-    {key:'gewerk',label:'Gewerk / Leistung',val:u.gewerk||''},
-    {key:'kontaktperson',label:'Kontaktperson',val:u.kontaktperson||''},
-    {key:'email',label:'E-Mail',val:u.email||''},
-    {key:'telefon',label:'Telefon',val:u.telefon||''},
-    {key:'adresse',label:'Adresse',val:u.adresse||''}
+    {key:'strasse',label:'Strasse',val:u.strasse||''},
+    {key:'ort',label:'PLZ / Ort',val:u.ort||''},
+    {key:'sachbearbeiter',label:'Sachbearbeiter',val:u.sachbearbeiter||''},
+    {key:'funktion',label:'Funktion',val:u.funktion||''},
+    {key:'telefon',label:'Telefon / Direktwahl',val:u.telefon||''},
+    {key:'natel',label:'Natel',val:u.natel||''},
+    {key:'email',label:'Email',val:u.email||''}
   ];
   _openMultiFieldModal('Unternehmer bearbeiten',fields,function(vals){
     fields.forEach(function(f){u[f.key]=vals[f.key]||'';});
@@ -9329,6 +9359,148 @@ window.deleteUnternehmer=function(idx){
     _saveSubPageData('unternehmer',list);
     renderUnternehmer();
   });
+};
+
+/* ── XLSX Import for Unternehmerliste ── */
+window.importUnternehmerXlsx=function(input){
+  var file=input.files[0];
+  if(!file)return;
+  input.value='';
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:'array'});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      if(!rows.length){alert('Leere Datei.');return;}
+
+      // Find header row by looking for "Bereich" or "Arbeitsgattung"
+      var headerIdx=-1;
+      for(var r=0;r<Math.min(rows.length,10);r++){
+        var row=rows[r].map(function(c){return String(c).toLowerCase();});
+        if(row.some(function(c){return c.indexOf('bereich')>=0||c.indexOf('arbeitsgattung')>=0;})){headerIdx=r;break;}
+      }
+
+      // Map column indices
+      var colMap={bereich:-1,adresse:-1,sachbearbeiter:-1,funktion:-1,telefon:-1,natel:-1,email:-1};
+      if(headerIdx>=0){
+        rows[headerIdx].forEach(function(h,ci){
+          var hl=String(h).toLowerCase().trim();
+          if(hl.indexOf('bereich')>=0||hl.indexOf('arbeitsgattung')>=0) colMap.bereich=ci;
+          else if(hl.indexOf('adresse')>=0) colMap.adresse=ci;
+          else if(hl.indexOf('sachbearbeiter')>=0) colMap.sachbearbeiter=ci;
+          else if(hl.indexOf('funktion')>=0) colMap.funktion=ci;
+          else if(hl.indexOf('natel')>=0||hl.indexOf('mobil')>=0||hl.indexOf('handy')>=0) colMap.natel=ci;
+          else if(hl.indexOf('telefon')>=0||hl.indexOf('direktwahl')>=0) colMap.telefon=ci;
+          else if(hl.indexOf('email')>=0||hl.indexOf('e-mail')>=0||hl.indexOf('mail')>=0) colMap.email=ci;
+        });
+      } else {
+        // Fallback: assume columns in screenshot order
+        colMap={bereich:0,adresse:1,sachbearbeiter:2,funktion:3,telefon:4,natel:5,email:6};
+        headerIdx=-1;
+      }
+
+      var dataRows=rows.slice(headerIdx+1);
+      var imported=[];
+      var curEntry=null;
+
+      dataRows.forEach(function(row){
+        var bereich=colMap.bereich>=0?String(row[colMap.bereich]||'').trim():'';
+        var adresse=colMap.adresse>=0?String(row[colMap.adresse]||'').trim():'';
+        var sachbearbeiter=colMap.sachbearbeiter>=0?String(row[colMap.sachbearbeiter]||'').trim():'';
+        var funktion=colMap.funktion>=0?String(row[colMap.funktion]||'').trim():'';
+        var telefon=colMap.telefon>=0?String(row[colMap.telefon]||'').trim():'';
+        var natel=colMap.natel>=0?String(row[colMap.natel]||'').trim():'';
+        var email=colMap.email>=0?String(row[colMap.email]||'').trim():'';
+
+        // Skip completely empty rows
+        if(!bereich&&!adresse&&!sachbearbeiter&&!funktion&&!telefon&&!natel&&!email) return;
+
+        // New entry starts when bereich has a value (BKP row)
+        if(bereich){
+          // Parse adresse: first line = firma, second = strasse, third = ort
+          var adresseLines=adresse.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
+          curEntry={
+            bereich:bereich,
+            firma:adresseLines[0]||'',
+            strasse:adresseLines[1]||'',
+            ort:adresseLines[2]||'',
+            sachbearbeiter:sachbearbeiter,
+            funktion:funktion,
+            telefon:telefon,
+            natel:natel,
+            email:email
+          };
+          imported.push(curEntry);
+        } else if(curEntry){
+          // Sub-row: contact person details for current entry
+          if(sachbearbeiter&&!curEntry.sachbearbeiter) curEntry.sachbearbeiter=sachbearbeiter;
+          else if(sachbearbeiter) curEntry.sachbearbeiter=sachbearbeiter;
+          if(funktion&&!curEntry.funktion) curEntry.funktion=funktion;
+          else if(funktion) curEntry.funktion=funktion;
+          if(telefon&&!curEntry.telefon) curEntry.telefon=telefon;
+          if(natel&&!curEntry.natel) curEntry.natel=natel;
+          if(email&&!curEntry.email) curEntry.email=email;
+          // If adresse sub-row has data, parse it
+          if(adresse){
+            var subLines=adresse.split(/\r?\n/).map(function(l){return l.trim();}).filter(Boolean);
+            if(!curEntry.firma&&subLines[0]) curEntry.firma=subLines[0];
+            if(!curEntry.strasse&&subLines[1]) curEntry.strasse=subLines[1];
+            if(!curEntry.ort&&subLines[2]) curEntry.ort=subLines[2];
+          }
+        }
+      });
+
+      if(!imported.length){alert('Keine Eintr\u00e4ge gefunden.');return;}
+
+      // Ask whether to replace or append
+      var existing=_subPageData('unternehmer');
+      if(existing.length){
+        openConfirmModal(imported.length+' Unternehmer importiert. Bestehende Liste ersetzen? (Abbrechen = anh\u00e4ngen)',function(){
+          _saveSubPageData('unternehmer',imported);
+          renderUnternehmer();
+        },function(){
+          _saveSubPageData('unternehmer',existing.concat(imported));
+          renderUnternehmer();
+        });
+      } else {
+        _saveSubPageData('unternehmer',imported);
+        renderUnternehmer();
+      }
+    }catch(ex){
+      alert('Fehler beim Lesen der XLSX-Datei: '+ex.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+};
+
+/* ── XLSX Export for Unternehmerliste ── */
+window.exportUnternehmerXlsx=function(){
+  var list=_subPageData('unternehmer');
+  if(!list.length)return;
+  var headers=['Bereich / Arbeitsgattung','Adresse','Sachbearbeiter','Funktion','Telefon / Direktwahl','Natel','Email'];
+  var data=[headers];
+  list.forEach(function(u){
+    var adresse=(u.firma||'');
+    if(u.strasse) adresse+='\n'+u.strasse;
+    if(u.ort) adresse+='\n'+u.ort;
+    data.push([u.bereich||'',adresse,u.sachbearbeiter||'',u.funktion||'',u.telefon||'',u.natel||'',u.email||'']);
+  });
+  var ws=XLSX.utils.aoa_to_sheet(data);
+  // Set column widths
+  ws['!cols']=[{wch:28},{wch:30},{wch:22},{wch:18},{wch:20},{wch:18},{wch:28}];
+  // Enable wrap text on adresse column
+  var range=XLSX.utils.decode_range(ws['!ref']);
+  for(var r=1;r<=range.e.r;r++){
+    var cell=ws[XLSX.utils.encode_cell({r:r,c:1})];
+    if(cell) cell.s={alignment:{wrapText:true}};
+  }
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'Unternehmerliste');
+  wb.Sheets['Unternehmerliste']=ws;
+  var idx=getIdx(),p=idx.find(function(x){return x.id==S.pid;});
+  var fname='Unternehmerliste'+(p?' - '+p.name:'')+'.xlsx';
+  XLSX.writeFile(wb,fname);
 };
 
 /* ── Multi-field edit modal helper ── */
