@@ -5078,20 +5078,20 @@ function _getFVForProject(pid){
 
 window.addFVCard=function(){
   if(!S.pid||!S.currentUser)return;
-  var sel=$('fvUserSelect');
+  var me=S.currentUser.username;
   var vertr=$('fvVertrSelect');
-  if(!sel||!vertr||!sel.value||!vertr.value)return;
-  if(sel.value===vertr.value){alert('Abwesende Person und Vertretung d\u00fcrfen nicht identisch sein.');return;}
+  if(!vertr||!vertr.value)return;
+  if(vertr.value===me){alert('Du kannst dich nicht selbst als Vertretung w\u00e4hlen.');return;}
   var ferien=_getFerien(S.pid);
-  var userFerien=ferien.filter(function(f){return f.user===sel.value;});
-  if(!userFerien.length){alert('Diese Person hat keine Ferien eingetragen.');return;}
+  var myFerien=ferien.filter(function(f){return f.user===me;});
+  if(!myFerien.length){alert('Du hast keine Ferien eingetragen.');return;}
   var today=new Date().toISOString().substring(0,10);
-  var upcoming=userFerien.filter(function(f){return f.bis>=today;}).sort(function(a,b){return a.von<b.von?-1:1;})[0];
+  var upcoming=myFerien.filter(function(f){return f.bis>=today;}).sort(function(a,b){return a.von<b.von?-1:1;})[0];
   if(!upcoming){alert('Keine aktuellen oder zuk\u00fcnftigen Ferien gefunden.');return;}
   var list=_getFV();
-  var exists=list.some(function(v){return v.abwesend===sel.value&&v.vertretung===vertr.value&&v.von===upcoming.von&&v.bis===upcoming.bis;});
+  var exists=list.some(function(v){return v.abwesend===me&&v.vertretung===vertr.value&&v.von===upcoming.von&&v.bis===upcoming.bis;});
   if(exists){alert('Vertretungskarte existiert bereits.');return;}
-  list.push({id:'fv_'+Date.now(),abwesend:sel.value,vertretung:vertr.value,von:upcoming.von,bis:upcoming.bis,notes:'',tasks:[]});
+  list.push({id:'fv_'+Date.now(),abwesend:me,vertretung:vertr.value,von:upcoming.von,bis:upcoming.bis,notes:'',tasks:[]});
   _saveFV(list);
   renderFerien();
 };
@@ -5239,6 +5239,7 @@ function _fmtDateShort(iso){
 }
 
 function _renderFVSection(projectUsers,ferien){
+  var me=S.currentUser?S.currentUser.username:'';
   var fvList=_getFVForProject(S.pid);
   var today=new Date().toISOString().substring(0,10);
 
@@ -5276,7 +5277,7 @@ function _renderFVSection(projectUsers,ferien){
       html+='<span>'+doneCount+'/'+totalCount+'</span>';
       html+='</div>';
     }
-    html+='<button class="fv-card-del" onclick="deleteFVCard(\''+card.id+'\')" title="L\u00f6schen">&times;</button>';
+    if(card.abwesend===me)html+='<button class="fv-card-del" onclick="deleteFVCard(\''+card.id+'\')" title="L\u00f6schen">&times;</button>';
     html+='</div>';
 
     // ── Body ──
@@ -5341,26 +5342,29 @@ function _renderFVSection(projectUsers,ferien){
 
         html+='</div>'; // .fv-task-main
 
-        // Actions
-        html+='<div class="fv-task-actions">';
-        if(!task.photos||task.photos.length<2){
-          if(!isPast){
-            html+='<label class="fv-task-btn" title="Foto hinzuf\u00fcgen" style="cursor:pointer;">';
-            html+='&#128247;';
-            html+='<input type="file" accept="image/*" style="display:none;" onchange="fvAddPhoto(\''+card.id+'\',\''+task.id+'\',this)">';
-            html+='</label>';
+        // Actions (only for card owner)
+        if(card.abwesend===me){
+          html+='<div class="fv-task-actions">';
+          if(!task.photos||task.photos.length<2){
+            if(!isPast){
+              html+='<label class="fv-task-btn" title="Foto hinzuf\u00fcgen" style="cursor:pointer;">';
+              html+='&#128247;';
+              html+='<input type="file" accept="image/*" style="display:none;" onchange="fvAddPhoto(\''+card.id+'\',\''+task.id+'\',this)">';
+              html+='</label>';
+            }
           }
+          html+='<button class="fv-task-btn del" onclick="deleteFVTask(\''+card.id+'\',\''+task.id+'\')" title="L\u00f6schen">&times;</button>';
+          html+='</div>';
         }
-        html+='<button class="fv-task-btn del" onclick="deleteFVTask(\''+card.id+'\',\''+task.id+'\')" title="L\u00f6schen">&times;</button>';
-        html+='</div>';
 
         html+='</li>';
       });
       html+='</ul>';
     }
 
-    // Add task form
-    if(!isPast){
+    // Add task form (only for the person who is absent = card owner)
+    var isOwner=card.abwesend===me;
+    if(!isPast&&isOwner){
       html+='<button class="fv-add-toggle" id="fvShowForm_'+card.id+'" onclick="showFVAddForm(\''+card.id+'\')">+ Neue Aufgabe erfassen (Klicken zum \u00d6ffnen)</button>';
       html+='<div class="fv-add-form" id="fvFormWrap_'+card.id+'" style="display:none;">';
 
@@ -5393,7 +5397,11 @@ function _renderFVSection(projectUsers,ferien){
 
     // Notes (at the end)
     html+='<div class="fv-card-notes">';
-    html+='<textarea placeholder="Notizen zur Vertretung (z.B. wichtige Infos, Termine, Hinweise)..." onblur="saveFVNotes(\''+card.id+'\',this)">'+esc(card.notes||'')+'</textarea>';
+    if(card.abwesend===me){
+      html+='<textarea placeholder="Notizen zur Vertretung (z.B. wichtige Infos, Termine, Hinweise)..." onblur="saveFVNotes(\''+card.id+'\',this)">'+esc(card.notes||'')+'</textarea>';
+    } else if(card.notes){
+      html+='<div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--text);line-height:1.5;white-space:pre-wrap;">'+esc(card.notes)+'</div>';
+    }
     html+='</div>';
 
     html+='</div>'; // .fv-card-body
@@ -5401,28 +5409,28 @@ function _renderFVSection(projectUsers,ferien){
   });
 
   // New card creator
-  html+=_renderFVNewCard(projectUsers);
+  html+=_renderFVNewCard(projectUsers,ferien);
 
   html+='</div>'; // .fv-list
   html+='</div>'; // .fv-section
   return html;
 }
 
-function _renderFVNewCard(projectUsers){
+function _renderFVNewCard(projectUsers,ferien){
+  var me=S.currentUser?S.currentUser.username:'';
   if(projectUsers.length<2)return '';
+  // Only show if current user has upcoming/active vacation
+  var today=new Date().toISOString().substring(0,10);
+  var myFerien=(ferien||[]).filter(function(f){return f.user===me&&f.bis>=today;});
+  if(!myFerien.length)return '';
+  var others=projectUsers.filter(function(u){return u!==me;});
+  if(!others.length)return '';
   var html='<div class="fv-new-card">';
-  html+='<label>Neue Vertretung erstellen</label>';
+  html+='<label>Meine Vertretung erstellen</label>';
   html+='<div class="fv-new-card-row">';
-  html+='<select id="fvUserSelect"><option value="">Wer ist abwesend?</option>';
-  projectUsers.forEach(function(uname){
-    var u=findUser(uname);
-    var dn=u?getUserDisplayName(u):uname;
-    html+='<option value="'+esc(uname)+'">'+esc(dn)+'</option>';
-  });
-  html+='</select>';
-  html+='<span class="fv-new-sep">vertreten durch</span>';
-  html+='<select id="fvVertrSelect"><option value="">Wer vertritt?</option>';
-  projectUsers.forEach(function(uname){
+  html+='<span class="fv-new-sep" style="font-size:13px;color:var(--text2);">Wer vertritt mich?</span>';
+  html+='<select id="fvVertrSelect"><option value="">Person w\u00e4hlen...</option>';
+  others.forEach(function(uname){
     var u=findUser(uname);
     var dn=u?getUserDisplayName(u):uname;
     html+='<option value="'+esc(uname)+'">'+esc(dn)+'</option>';
