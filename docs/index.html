@@ -2558,7 +2558,7 @@ function showApp(){
   updateUserDisplay();
   // Restore last view
   var _defView=getAppSettings().defaultView||'dashboard';
-  var savedView=sGet('lastView',_defView);
+  var savedView=sGet('lastView_'+S.currentUser.username,_defView);
   if(savedView&&savedView!==S.view){
     S.view=savedView;
     document.querySelectorAll('.sidebar-tab').forEach(function(b){
@@ -2568,7 +2568,7 @@ function showApp(){
   loadProjects();
   checkChangelog();
   // Restore last project
-  var lastPid=sGet('lastPid',null);
+  var lastPid=sGet('lastPid_'+S.currentUser.username,null);
   if(lastPid){
     var d=sGet('p_'+lastPid,null);
     if(d){loadProject(lastPid);return;}
@@ -3050,7 +3050,7 @@ function loadProjects(){
 function loadProject(id){
   var d=sGet('p_'+id,null);if(!d)return;
   S.pid=id;S.tasks=d.tasks||[];
-  sSet('lastPid',id);
+  sSet('lastPid_'+(S.currentUser?S.currentUser.username:''),id);
   var idx=getIdx(),p=idx.find(function(x){return x.id==id;});
   $('topTitle').textContent=p?p.name:'Projekt';
   showEmpty(false);
@@ -3287,7 +3287,7 @@ document.querySelectorAll('.sidebar-tab').forEach(function(b){
     document.querySelectorAll('.sidebar-tab').forEach(function(x){x.classList.remove('active');});
     this.classList.add('active');
     S.view=this.dataset.view;
-    sSet('lastView',S.view);
+    sSet('lastView_'+(S.currentUser?S.currentUser.username:''),S.view);
     if(S.view==='pendenzen'){$('emptyState').style.display='none';renderView();}
     else if(S.pid)showEmpty(false);
   });
