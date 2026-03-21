@@ -475,6 +475,26 @@ body {
 .changelog-tag.neu { background: #dcfce7; color: #166534; }
 .changelog-tag.fix { background: #fef3c7; color: #92400e; }
 .changelog-tag.update { background: #dbeafe; color: #1e40af; }
+.cl-editor-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+.cl-editor-card.draft { border-left: 4px solid var(--orange); }
+.cl-editor-card.published { border-left: 4px solid var(--green); }
+.cl-editor-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+.cl-editor-header input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: var(--bg); color: var(--text); }
+.cl-editor-header input.cl-version { width: 90px; font-weight: 700; }
+.cl-editor-header input.cl-date { width: 130px; }
+.cl-badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+.cl-badge.draft { background: #fef3c7; color: #92400e; }
+.cl-badge.published { background: #dcfce7; color: #166534; }
+.cl-item-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.cl-item-row select { padding: 5px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; background: var(--bg); color: var(--text); }
+.cl-item-row input { flex: 1; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: var(--bg); color: var(--text); }
+.cl-item-row button { background: none; border: none; cursor: pointer; color: var(--red); font-size: 16px; padding: 4px; }
+.cl-add-item { font-size: 12px; color: var(--primary); cursor: pointer; background: none; border: none; padding: 4px 0; }
+.cl-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.cl-actions button { padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+.cl-actions button.publish { background: var(--green); color: #fff; border: none; font-weight: 600; }
+.cl-actions button.unpublish { background: var(--orange); color: #fff; border: none; }
+.cl-actions button.delete { color: var(--red); }
 .search-result-dot {
   width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
 }
@@ -1853,6 +1873,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <button class="admin-tab" onclick="switchAdminTab('backup',this)">Backup</button>
       <button class="admin-tab" onclick="switchAdminTab('settings',this)">Einstellungen</button>
       <button class="admin-tab" onclick="switchAdminTab('logs',this)">Aktivit&auml;tslog</button>
+      <button class="admin-tab" onclick="switchAdminTab('changelog',this)">Changelog</button>
     </div>
 
     <!-- TAB: Projekte -->
@@ -1875,6 +1896,9 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 
     <!-- TAB: Aktivitätslog -->
     <div class="admin-tab-content" id="adminTabLogs" style="display:none"></div>
+
+    <!-- TAB: Changelog -->
+    <div class="admin-tab-content" id="adminTabChangelog" style="display:none"></div>
   </div>
 </div>
 
@@ -2244,24 +2268,29 @@ function showLogin(){
   }
 }
 /* ─── CHANGELOG ─── */
-var CHANGELOG=[
-  {version:'1.5.0',date:'21.03.2026',items:[
-    {tag:'neu',text:'Projekt\u00fcbergreifende Suche \u2013 Vorg\u00e4nge in allen Projekten finden'},
-    {tag:'neu',text:'Berechtigung \u00abProjekt erstellen\u00bb \u2013 pro Rolle konfigurierbar'},
-    {tag:'neu',text:'\u00abMein Profil\u00bb f\u00fcr Nicht-Admins statt Admin Center'},
-    {tag:'neu',text:'\u00c4nderungsprotokoll (dieses Popup) bei jedem Login'}
-  ]}
-];
-var CHANGELOG_VERSION=CHANGELOG[0].version;
+function getChangelog(){return sGet('changelog',[]);}
+function saveChangelog(cl){sSet('changelog',cl);}
+
+function getPublishedChangelog(){
+  return getChangelog().filter(function(v){return v.published;});
+}
+
+function getChangelogVersion(){
+  var pub=getPublishedChangelog();
+  if(!pub.length)return '';
+  return pub[0].version+'_'+pub[0].publishedAt;
+}
 
 function showChangelog(){
+  var pub=getPublishedChangelog();
+  if(!pub.length)return;
   var html='';
-  CHANGELOG.forEach(function(v){
+  pub.forEach(function(v){
     html+='<div class="changelog-version">'
       +'<div class="changelog-version-header">Version '+esc(v.version)
       +'<span class="changelog-version-date">'+esc(v.date)+'</span></div>'
       +'<ul class="changelog-list">';
-    v.items.forEach(function(item){
+    (v.items||[]).forEach(function(item){
       html+='<li><span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>'+esc(item.text)+'</li>';
     });
     html+='</ul></div>';
@@ -2273,17 +2302,153 @@ function showChangelog(){
 window.closeChangelog=function(){
   $('changelogModal').classList.remove('show');
   if(S.currentUser){
-    sSet('changelog_seen_'+S.currentUser.username,CHANGELOG_VERSION);
+    sSet('changelog_seen_'+S.currentUser.username,getChangelogVersion());
   }
 };
 
 function checkChangelog(){
   if(!S.currentUser)return;
+  var cv=getChangelogVersion();
+  if(!cv)return;
   var seen=sGet('changelog_seen_'+S.currentUser.username,'');
-  if(seen!==CHANGELOG_VERSION){
+  if(seen!==cv){
     setTimeout(function(){showChangelog();},400);
   }
 }
+
+/* ─── CHANGELOG ADMIN ─── */
+function renderAdminChangelog(){
+  var cl=getChangelog();
+  var c=$('adminTabChangelog');
+  var html='<div class="admin-section"><div class="admin-section-title">Changelog verwalten</div>'
+    +'<p style="font-size:13px;color:var(--text3);margin-bottom:16px;">Erstelle Versionseintr\u00e4ge und gib sie frei. Nur ver\u00f6ffentlichte Eintr\u00e4ge werden den Benutzern nach dem Login angezeigt.</p>'
+    +'<button class="admin-btn" style="margin-bottom:16px;background:var(--primary);color:#fff;" onclick="clAddVersion()">+ Neue Version</button>';
+  if(!cl.length){
+    html+='<div class="admin-empty-msg">Keine Changelog-Eintr\u00e4ge vorhanden.</div>';
+  }
+  cl.forEach(function(v,vi){
+    var status=v.published?'published':'draft';
+    html+='<div class="cl-editor-card '+status+'">'
+      +'<div class="cl-editor-header">'
+      +'<input class="cl-version" value="'+esc(v.version)+'" placeholder="z.B. 1.5.0" onchange="clUpdateField('+vi+',\'version\',this.value)">'
+      +'<input class="cl-date" type="date" value="'+esc(v.date||'')+'" onchange="clUpdateField('+vi+',\'date\',this.value)">'
+      +'<span class="cl-badge '+status+'">'+(v.published?'Ver\u00f6ffentlicht':'Entwurf')+'</span>'
+      +'</div>';
+    html+='<div class="cl-items" id="clItems'+vi+'">';
+    (v.items||[]).forEach(function(item,ii){
+      html+='<div class="cl-item-row">'
+        +'<select onchange="clUpdateItem('+vi+','+ii+',\'tag\',this.value)">'
+        +'<option value="neu"'+(item.tag==='neu'?' selected':'')+'>Neu</option>'
+        +'<option value="update"'+(item.tag==='update'?' selected':'')+'>Update</option>'
+        +'<option value="fix"'+(item.tag==='fix'?' selected':'')+'>Fix</option>'
+        +'</select>'
+        +'<input value="'+esc(item.text)+'" placeholder="Beschreibung..." onchange="clUpdateItem('+vi+','+ii+',\'text\',this.value)">'
+        +'<button onclick="clRemoveItem('+vi+','+ii+')" title="Entfernen">&times;</button>'
+        +'</div>';
+    });
+    html+='</div>';
+    html+='<button class="cl-add-item" onclick="clAddItem('+vi+')">+ Eintrag hinzuf\u00fcgen</button>';
+    html+='<div class="cl-actions">';
+    if(!v.published){
+      html+='<button class="publish" onclick="clPublish('+vi+')">Ver\u00f6ffentlichen</button>';
+    } else {
+      html+='<button class="unpublish" onclick="clUnpublish('+vi+')">Zur\u00fcckziehen</button>';
+    }
+    html+='<button onclick="clPreview('+vi+')">Vorschau</button>';
+    html+='<button class="delete" onclick="clDelete('+vi+')">L\u00f6schen</button>';
+    html+='</div></div>';
+  });
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+window.clAddVersion=function(){
+  var cl=getChangelog();
+  var today=new Date().toISOString().substring(0,10);
+  cl.unshift({version:'',date:today,items:[],published:false});
+  saveChangelog(cl);
+  renderAdminChangelog();
+};
+
+window.clUpdateField=function(vi,field,val){
+  var cl=getChangelog();
+  if(cl[vi])cl[vi][field]=val;
+  saveChangelog(cl);
+};
+
+window.clAddItem=function(vi){
+  var cl=getChangelog();
+  if(!cl[vi])return;
+  if(!cl[vi].items)cl[vi].items=[];
+  cl[vi].items.push({tag:'neu',text:''});
+  saveChangelog(cl);
+  renderAdminChangelog();
+};
+
+window.clUpdateItem=function(vi,ii,field,val){
+  var cl=getChangelog();
+  if(cl[vi]&&cl[vi].items&&cl[vi].items[ii]){
+    cl[vi].items[ii][field]=val;
+  }
+  saveChangelog(cl);
+};
+
+window.clRemoveItem=function(vi,ii){
+  var cl=getChangelog();
+  if(cl[vi]&&cl[vi].items){
+    cl[vi].items.splice(ii,1);
+  }
+  saveChangelog(cl);
+  renderAdminChangelog();
+};
+
+window.clPublish=function(vi){
+  var cl=getChangelog();
+  if(!cl[vi])return;
+  if(!cl[vi].version){alert('Bitte Versionsnummer eingeben.');return;}
+  if(!cl[vi].items||!cl[vi].items.length){alert('Bitte mindestens einen Eintrag hinzuf\u00fcgen.');return;}
+  var empty=cl[vi].items.some(function(it){return !it.text.trim();});
+  if(empty){alert('Bitte alle Eintr\u00e4ge ausf\u00fcllen.');return;}
+  cl[vi].published=true;
+  cl[vi].publishedAt=Date.now();
+  saveChangelog(cl);
+  addLog('changelog','Changelog ver\u00f6ffentlicht','Version '+cl[vi].version);
+  renderAdminChangelog();
+};
+
+window.clUnpublish=function(vi){
+  var cl=getChangelog();
+  if(!cl[vi])return;
+  cl[vi].published=false;
+  delete cl[vi].publishedAt;
+  saveChangelog(cl);
+  addLog('changelog','Changelog zur\u00fcckgezogen','Version '+cl[vi].version);
+  renderAdminChangelog();
+};
+
+window.clPreview=function(vi){
+  var cl=getChangelog();
+  if(!cl[vi])return;
+  var v=cl[vi];
+  var html='<div class="changelog-version">'
+    +'<div class="changelog-version-header">Version '+esc(v.version||'?')
+    +'<span class="changelog-version-date">'+esc(v.date||'')+'</span></div>'
+    +'<ul class="changelog-list">';
+  (v.items||[]).forEach(function(item){
+    html+='<li><span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>'+esc(item.text||'...')+'</li>';
+  });
+  html+='</ul></div>';
+  $('changelogContent').innerHTML=html;
+  $('changelogModal').classList.add('show');
+};
+
+window.clDelete=function(vi){
+  if(!confirm('Changelog-Eintrag wirklich l\u00f6schen?'))return;
+  var cl=getChangelog();
+  cl.splice(vi,1);
+  saveChangelog(cl);
+  renderAdminChangelog();
+};
 
 function showApp(){
   $('loginScreen').classList.add('hidden');
@@ -4410,12 +4575,12 @@ window.switchAdminTab=function(tab,btn){
   tabs.forEach(function(t){t.classList.remove('active');});
   if(btn)btn.classList.add('active');
   // Show/hide content
-  var allTabs=['Projects','Users','Roles','Permissions','Backup','Settings','Logs'];
+  var allTabs=['Projects','Users','Roles','Permissions','Backup','Settings','Logs','Changelog'];
   allTabs.forEach(function(t){
     var el=$('adminTab'+t);
     if(el)el.style.display='none';
   });
-  var tabMap={projects:'Projects',users:'Users',roles:'Roles',permissions:'Permissions',backup:'Backup',settings:'Settings',logs:'Logs'};
+  var tabMap={projects:'Projects',users:'Users',roles:'Roles',permissions:'Permissions',backup:'Backup',settings:'Settings',logs:'Logs',changelog:'Changelog'};
   var el=$('adminTab'+(tabMap[tab]||'Projects'));
   if(el)el.style.display='block';
   // Render
@@ -4426,6 +4591,7 @@ window.switchAdminTab=function(tab,btn){
   if(tab==='backup')renderAdminBackup();
   if(tab==='settings')renderAdminSettings();
   if(tab==='logs')renderAdminLogs();
+  if(tab==='changelog')renderAdminChangelog();
 };
 
 function renderAdminProjects(){
