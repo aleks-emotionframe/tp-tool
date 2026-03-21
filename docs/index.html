@@ -3503,14 +3503,21 @@ window.editMyPendenz=function(id){
     +'<input type="date" class="pend-edit-date" value="'+(item.due||'')+'">';
   var inp=textEl.querySelector('input[type=text]');
   inp.focus();
+  var saved=false;
   var save=function(){
+    if(saved)return;saved=true;
     var nv=inp.value.trim();if(!nv)nv=item.text;
     item.text=nv;
     item.due=textEl.querySelector('.pend-edit-date').value||'';
     saveMyPendenzen(list);renderMyPendenzen();
   };
-  inp.addEventListener('keydown',function(e){if(e.key==='Enter')save();if(e.key==='Escape')renderMyPendenzen();});
-  inp.addEventListener('blur',function(){setTimeout(save,150);});
+  textEl.querySelectorAll('input').forEach(function(el){
+    el.addEventListener('keydown',function(e){if(e.key==='Enter')save();if(e.key==='Escape'){saved=true;renderMyPendenzen();}});
+  });
+  li.addEventListener('focusout',function(e){
+    if(li.contains(e.relatedTarget))return;
+    setTimeout(save,100);
+  });
 };
 
 // --- Project Pendenzen CRUD ---
@@ -3559,15 +3566,22 @@ window.editProjectPendenz=function(id){
     +selHtml;
   var inp=textEl.querySelector('input[type=text]');
   inp.focus();
+  var saved=false;
   var save=function(){
+    if(saved)return;saved=true;
     var nv=inp.value.trim();if(!nv)nv=item.text;
     item.text=nv;
     item.due=textEl.querySelector('.pend-edit-date').value||'';
     item.assignee=textEl.querySelector('.pend-edit-assignee').value||'';
     saveProjectPendenzen(S.pid,list);renderProjectPendenzenView();
   };
-  inp.addEventListener('keydown',function(e){if(e.key==='Enter')save();if(e.key==='Escape')renderProjectPendenzenView();});
-  inp.addEventListener('blur',function(){setTimeout(save,150);});
+  textEl.querySelectorAll('input,select').forEach(function(el){
+    el.addEventListener('keydown',function(e){if(e.key==='Enter')save();if(e.key==='Escape'){saved=true;renderProjectPendenzenView();}});
+  });
+  li.addEventListener('focusout',function(e){
+    if(li.contains(e.relatedTarget))return;
+    setTimeout(save,100);
+  });
 };
 
 /* ─── DASHBOARD PANELS ─── */
