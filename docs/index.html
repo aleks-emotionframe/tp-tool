@@ -1205,8 +1205,8 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 .bug-modal-body input, .bug-modal-body textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-xs); background: var(--surface2); color: var(--text); font-family: var(--font); font-size: 14px; transition: var(--transition); resize: vertical; }
 .bug-modal-body input:focus, .bug-modal-body textarea:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(232,96,10,0.12); }
 .bug-modal-body textarea { min-height: 120px; }
-.bug-minimize-btn { background: none; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 16px; padding: 2px 8px; color: var(--text3); transition: var(--transition); }
-.bug-minimize-btn:hover { background: var(--surface2); color: var(--text); }
+.bug-minimize-btn { background: none; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 12px; padding: 4px 10px; color: var(--text2); transition: var(--transition); font-family: var(--font); font-weight: 600; }
+.bug-minimize-btn:hover { background: var(--orange); color: #fff; border-color: var(--orange); }
 .bug-overlay.minimized { background: none; pointer-events: none; }
 .bug-overlay.minimized .bug-modal { display: none; }
 .bug-floating-pill { position: fixed; bottom: 24px; right: 24px; z-index: 1200; background: var(--orange); color: #fff; border: none; border-radius: 28px; padding: 12px 20px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 20px rgba(232,96,10,0.4); display: none; align-items: center; gap: 8px; font-family: var(--font); animation: clBounce .4s ease; pointer-events: auto; }
@@ -2083,53 +2083,57 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 <div class="bug-overlay" id="bugOverlay" onclick="if(event.target===this)closeBugReport()">
   <div class="bug-modal">
     <div class="bug-modal-header">
-      <h3>&#128172; Feedback</h3>
+      <h3>&#128172; Feedback geben</h3>
       <div style="display:flex;gap:4px;">
-        <button class="bug-minimize-btn" onclick="toggleBugMinimize()" title="Minimieren f&uuml;r Screenshot">&#128247;</button>
+        <button class="bug-minimize-btn" onclick="toggleBugMinimize()" title="Bildschirmfoto aufnehmen">&#128247; Bildschirmfoto</button>
         <button class="pred-popover-close" onclick="closeBugReport()">&times;</button>
       </div>
     </div>
     <div class="bug-modal-body" id="bugBody">
       <div class="bug-field">
-        <label>Art</label>
-        <select id="bugType" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);color:var(--text);font-family:inherit;">
-          <option value="bug">&#128027; Fehlermeldung (Bug)</option>
-          <option value="idea">&#128161; Verbesserungsvorschlag</option>
-          <option value="other">&#128172; Sonstiges</option>
+        <label>Was m&ouml;chten Sie melden?</label>
+        <select id="bugType" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg);color:var(--text);font-family:inherit;">
+          <option value="bug">&#128027; Es funktioniert etwas nicht (Fehler)</option>
+          <option value="idea">&#128161; Ich habe eine Idee / einen Wunsch</option>
+          <option value="other">&#128172; Sonstige R&uuml;ckmeldung</option>
         </select>
       </div>
       <div class="bug-field">
         <label>Betreff</label>
-        <input type="text" id="bugSubject" placeholder="Kurze Beschreibung...">
+        <input type="text" id="bugSubject" placeholder="Worum geht es? (z.B. &laquo;Kalender l&auml;dt nicht&raquo;)">
       </div>
       <div class="bug-field">
         <label>Beschreibung</label>
-        <textarea id="bugDesc" placeholder="Beschreibe dein Anliegen m&ouml;glichst genau..."></textarea>
+        <textarea id="bugDesc" placeholder="Beschreiben Sie m&ouml;glichst genau, was passiert ist oder was Sie sich w&uuml;nschen..."></textarea>
       </div>
       <div class="bug-field">
-        <label>Screenshot (optional)</label>
+        <label>Bildschirmfoto (optional)</label>
         <div class="bug-screenshot-area" id="bugScreenshotArea">
           <div class="bug-screenshot-empty" id="bugScreenshotEmpty">
-            <div style="font-size:24px;margin-bottom:6px;">&#128247;</div>
-            <div style="font-size:12px;">Bild hier einf&uuml;gen (Ctrl+V)</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:4px;">oder</div>
-            <label class="bug-screenshot-upload">Datei ausw&auml;hlen<input type="file" accept="image/*" style="display:none;" onchange="bugUploadScreenshot(this)"></label>
-            <div style="font-size:11px;color:var(--text3);margin-top:6px;">Tipp: Klicke &#128247; oben um das Formular zu minimieren und einen Screenshot zu machen</div>
+            <div style="font-size:32px;margin-bottom:8px;">&#128444;</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text2);">Bild vom Bildschirm hinzuf&uuml;gen</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:6px;">So geht&rsquo;s:</div>
+            <div style="font-size:12px;color:var(--text3);margin-top:2px;">1. Klicken Sie oben auf <strong>&laquo;&#128247; Bildschirmfoto&raquo;</strong></div>
+            <div style="font-size:12px;color:var(--text3);">2. Das Fenster wird klein &mdash; machen Sie Ihr Foto</div>
+            <div style="font-size:12px;color:var(--text3);">3. Dr&uuml;cken Sie <strong>Ctrl+V</strong> zum Einf&uuml;gen</div>
+            <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
+              <label class="bug-screenshot-upload">&#128193; Datei vom Computer<input type="file" accept="image/*" style="display:none;" onchange="bugUploadScreenshot(this)"></label>
+            </div>
           </div>
           <div id="bugScreenshotPreview" style="display:none;position:relative;">
             <img id="bugScreenshotImg" style="max-width:100%;border-radius:6px;border:1px solid var(--border);">
-            <button onclick="removeBugScreenshot()" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:12px;">&times;</button>
+            <button onclick="removeBugScreenshot()" style="position:absolute;top:6px;right:6px;padding:4px 10px;border-radius:6px;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:12px;">Entfernen</button>
           </div>
         </div>
       </div>
     </div>
     <div class="bug-modal-footer" id="bugFooter">
       <button class="bug-cancel-btn" onclick="closeBugReport()">Abbrechen</button>
-      <button class="bug-send-btn" onclick="sendBugReport()">Absenden</button>
+      <button class="bug-send-btn" onclick="sendBugReport()">&#9993; Absenden</button>
     </div>
   </div>
 </div>
-<button class="bug-floating-pill" id="bugFloatingPill" onclick="toggleBugMinimize()">&#128247; Screenshot machen &mdash; dann hier klicken</button>
+<button class="bug-floating-pill" id="bugFloatingPill" onclick="toggleBugMinimize()">&#128247; Foto gemacht? Hier klicken und Ctrl+V dr&uuml;cken</button>
 
 <!-- ADMIN CENTER -->
 <div class="admin-overlay" id="adminOverlay">
