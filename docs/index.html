@@ -2280,7 +2280,7 @@ var CHANGELOG_SEED=[
 ];
 function getChangelog(){
   var cl=sGet('changelog',null);
-  if(cl===null){cl=CHANGELOG_SEED;sSet('changelog',cl);}
+  if(!cl||!cl.length){cl=CHANGELOG_SEED.map(function(v){return JSON.parse(JSON.stringify(v));});sSet('changelog',cl);}
   return cl;
 }
 function saveChangelog(cl){sSet('changelog',cl);}
