@@ -643,39 +643,74 @@ body {
 .ferien-my-item button { border: none; background: none; color: var(--red); cursor: pointer; font-size: 16px; }
 
 /* ─── FERIENVERTRETUNG ─── */
-.fv-section { margin-top: 32px; }
-.fv-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.fv-title-row h4 { font-size: 15px; font-weight: 700; color: var(--text); margin: 0; }
-.fv-title-row .fv-badge { font-size: 11px; font-weight: 600; background: var(--surface2); color: var(--text3); border-radius: 10px; padding: 2px 8px; }
-.fv-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
-.fv-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; position: relative; transition: var(--transition); }
-.fv-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-.fv-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 12px; color: var(--text3); }
-.fv-card-head .fv-user-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--surface2); padding: 3px 8px 3px 4px; border-radius: 12px; font-weight: 600; color: var(--text); font-size: 11px; }
-.fv-card-head .fv-date-range { font-size: 11px; color: var(--text3); }
-.fv-card-arrow { color: var(--text3); font-size: 13px; }
+.fv-section { margin-top: 36px; border-top: 2px solid var(--border); padding-top: 28px; }
+.fv-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.fv-title-row h4 { font-size: 17px; font-weight: 700; color: var(--text); margin: 0; }
+.fv-title-row .fv-badge { font-size: 11px; font-weight: 600; background: var(--orange); color: #fff; border-radius: 10px; padding: 2px 9px; }
+.fv-list { display: flex; flex-direction: column; gap: 16px; }
+.fv-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: var(--transition); }
+.fv-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+.fv-card.active { border-color: var(--orange); border-width: 2px; }
+.fv-card.past { opacity: 0.5; }
+.fv-card-head { display: flex; align-items: center; gap: 12px; padding: 16px 20px; background: var(--surface2); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.fv-user-chip { display: inline-flex; align-items: center; gap: 6px; background: var(--bg); padding: 5px 12px 5px 5px; border-radius: 20px; font-weight: 600; color: var(--text); font-size: 13px; border: 1px solid var(--border); }
+.fv-card-arrow { color: var(--text3); font-size: 16px; font-weight: 700; }
+.fv-date-chip { font-size: 12px; color: var(--text2); background: var(--bg); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); font-weight: 500; }
+.fv-progress { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text3); }
+.fv-progress-bar { width: 60px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.fv-progress-fill { height: 100%; background: var(--orange); border-radius: 3px; transition: width .3s; }
+.fv-progress.complete .fv-progress-fill { background: var(--green); }
+.fv-card-del { border: none; background: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 4px; line-height: 1; border-radius: 4px; }
+.fv-card-del:hover { color: var(--red); background: #fef2f2; }
+.fv-card-body { padding: 16px 20px; }
+.fv-card-notes { margin-bottom: 14px; }
+.fv-card-notes textarea { width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--bg); color: var(--text); font-family: var(--font); resize: vertical; line-height: 1.5; }
+.fv-card-notes textarea::placeholder { color: var(--text3); }
+.fv-card-notes textarea:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 2px rgba(232,96,10,0.12); }
 .fv-task-list { list-style: none; padding: 0; margin: 0; }
-.fv-task-item { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; font-size: 13px; color: var(--text); border-bottom: 1px solid var(--border); }
-.fv-task-item:last-child { border-bottom: none; }
-.fv-task-check { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border); background: var(--bg); cursor: pointer; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+.fv-task-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; margin-bottom: 2px; border-radius: 8px; background: var(--bg); border: 1px solid transparent; transition: var(--transition); }
+.fv-task-item:hover { border-color: var(--border); background: var(--surface2); }
+.fv-task-check { width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--border); background: var(--bg); cursor: pointer; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: var(--transition); font-size: 11px; }
 .fv-task-check:hover { border-color: var(--orange); }
 .fv-task-check.done { background: var(--orange); border-color: var(--orange); color: #fff; }
-.fv-task-text { flex: 1; line-height: 1.4; }
-.fv-task-text.done { text-decoration: line-through; color: var(--text3); }
-.fv-task-del { border: none; background: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 0 2px; opacity: 0; transition: opacity .15s; }
-.fv-task-item:hover .fv-task-del { opacity: 1; }
-.fv-task-del:hover { color: var(--red); }
-.fv-add-row { display: flex; gap: 6px; margin-top: 8px; }
-.fv-add-row input { flex: 1; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; background: var(--bg); color: var(--text); font-family: var(--font); }
-.fv-add-row input::placeholder { color: var(--text3); }
-.fv-add-row button { padding: 6px 10px; border: none; border-radius: 6px; background: var(--orange); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font); white-space: nowrap; }
-.fv-add-row button:hover { filter: brightness(.92); }
-.fv-empty { text-align: center; padding: 24px; color: var(--text3); font-size: 13px; }
-.fv-new-card { border: 2px dashed var(--border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
-.fv-new-card label { font-size: 12px; font-weight: 600; color: var(--text2); }
-.fv-new-card select, .fv-new-card input { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; background: var(--bg); color: var(--text); font-family: var(--font); }
-.fv-new-card .fv-new-btn { padding: 8px 16px; border: none; border-radius: 6px; background: var(--orange); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); align-self: flex-start; }
+.fv-task-main { flex: 1; min-width: 0; }
+.fv-task-text { font-size: 13px; font-weight: 500; color: var(--text); line-height: 1.4; display: block; }
+.fv-task-text.done { text-decoration: line-through; color: var(--text3); font-weight: 400; }
+.fv-task-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.fv-task-date { font-size: 11px; color: var(--text3); background: var(--surface2); padding: 2px 7px; border-radius: 4px; }
+.fv-task-contact { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text2); background: var(--surface2); padding: 3px 8px; border-radius: 4px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fv-task-contact a { color: var(--orange); text-decoration: none; font-weight: 500; }
+.fv-task-contact a:hover { text-decoration: underline; }
+.fv-task-photos { display: flex; gap: 6px; margin-top: 6px; }
+.fv-task-photos img { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; transition: var(--transition); }
+.fv-task-photos img:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+.fv-task-actions { display: flex; gap: 2px; flex-shrink: 0; align-self: flex-start; }
+.fv-task-btn { border: none; background: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 3px; border-radius: 4px; opacity: 0; transition: all .15s; }
+.fv-task-item:hover .fv-task-btn { opacity: 1; }
+.fv-task-btn:hover { color: var(--orange); background: var(--surface2); }
+.fv-task-btn.del:hover { color: var(--red); background: #fef2f2; }
+.fv-add-form { margin-top: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.fv-add-form-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; flex-wrap: wrap; }
+.fv-add-form-row:last-child { margin-bottom: 0; }
+.fv-add-form-row label { font-size: 11px; font-weight: 600; color: var(--text3); min-width: 60px; text-transform: uppercase; letter-spacing: 0.3px; }
+.fv-add-form input[type="text"], .fv-add-form input[type="date"], .fv-add-form input[type="tel"], .fv-add-form input[type="email"] { flex: 1; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; background: var(--bg); color: var(--text); font-family: var(--font); min-width: 100px; }
+.fv-add-form input::placeholder { color: var(--text3); }
+.fv-add-form input:focus { outline: none; border-color: var(--orange); }
+.fv-add-form .fv-submit { padding: 8px 18px; border: none; border-radius: 6px; background: var(--orange); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); white-space: nowrap; }
+.fv-add-form .fv-submit:hover { filter: brightness(.92); }
+.fv-add-toggle { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 8px 14px; border: 1px dashed var(--border); border-radius: 8px; background: none; color: var(--text2); font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font); transition: var(--transition); }
+.fv-add-toggle:hover { border-color: var(--orange); color: var(--orange); background: rgba(232,96,10,0.04); }
+.fv-new-card { border: 2px dashed var(--border); border-radius: 12px; padding: 20px 24px; background: var(--bg); }
+.fv-new-card label { font-size: 14px; font-weight: 600; color: var(--text); display: block; margin-bottom: 12px; }
+.fv-new-card-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.fv-new-card select { padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--bg); color: var(--text); font-family: var(--font); min-width: 180px; }
+.fv-new-card select:focus { outline: none; border-color: var(--orange); }
+.fv-new-card .fv-new-sep { color: var(--text3); font-size: 13px; }
+.fv-new-card .fv-new-btn { padding: 9px 22px; border: none; border-radius: 8px; background: var(--orange); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); }
 .fv-new-card .fv-new-btn:hover { filter: brightness(.92); }
+.fv-photo-upload { display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border: 1px dashed var(--border); border-radius: 5px; font-size: 11px; color: var(--text3); cursor: pointer; transition: var(--transition); }
+.fv-photo-upload:hover { border-color: var(--orange); color: var(--orange); }
+.fv-photo-upload input[type="file"] { display: none; }
 
 .pend-section { margin-bottom: 28px; }
 .pend-section-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
@@ -5046,34 +5081,55 @@ window.addFVCard=function(){
   var sel=$('fvUserSelect');
   var vertr=$('fvVertrSelect');
   if(!sel||!vertr||!sel.value||!vertr.value)return;
-  if(sel.value===vertr.value){alert('Abwesende Person und Vertretung dürfen nicht identisch sein.');return;}
+  if(sel.value===vertr.value){alert('Abwesende Person und Vertretung d\u00fcrfen nicht identisch sein.');return;}
   var ferien=_getFerien(S.pid);
   var userFerien=ferien.filter(function(f){return f.user===sel.value;});
   if(!userFerien.length){alert('Diese Person hat keine Ferien eingetragen.');return;}
-  // Find nearest upcoming vacation
   var today=new Date().toISOString().substring(0,10);
   var upcoming=userFerien.filter(function(f){return f.bis>=today;}).sort(function(a,b){return a.von<b.von?-1:1;})[0];
-  if(!upcoming){alert('Keine aktuellen oder zukünftigen Ferien gefunden.');return;}
+  if(!upcoming){alert('Keine aktuellen oder zuk\u00fcnftigen Ferien gefunden.');return;}
   var list=_getFV();
-  // Check if card already exists for this combination & period
   var exists=list.some(function(v){return v.abwesend===sel.value&&v.vertretung===vertr.value&&v.von===upcoming.von&&v.bis===upcoming.bis;});
   if(exists){alert('Vertretungskarte existiert bereits.');return;}
-  list.push({id:'fv_'+Date.now(),abwesend:sel.value,vertretung:vertr.value,von:upcoming.von,bis:upcoming.bis,tasks:[]});
+  list.push({id:'fv_'+Date.now(),abwesend:sel.value,vertretung:vertr.value,von:upcoming.von,bis:upcoming.bis,notes:'',tasks:[]});
   _saveFV(list);
   renderFerien();
 };
 
 window.addFVTask=function(cardId){
-  var inp=$('fvTaskInput_'+cardId);
-  if(!inp||!inp.value.trim())return;
+  var txtInp=$('fvTaskText_'+cardId);
+  if(!txtInp||!txtInp.value.trim())return;
+  var startInp=$('fvTaskStart_'+cardId);
+  var endInp=$('fvTaskEnd_'+cardId);
+  var nameInp=$('fvTaskCName_'+cardId);
+  var phoneInp=$('fvTaskCPhone_'+cardId);
+  var emailInp=$('fvTaskCEmail_'+cardId);
   var list=_getFV();
   var card=list.find(function(v){return v.id===cardId;});
   if(!card)return;
-  card.tasks.push({id:'fvt_'+Date.now(),text:inp.value.trim(),done:false});
+  card.tasks.push({
+    id:'fvt_'+Date.now(),
+    text:txtInp.value.trim(),
+    done:false,
+    start:startInp?startInp.value:'',
+    end:endInp?endInp.value:'',
+    contact:{
+      name:nameInp?nameInp.value.trim():'',
+      phone:phoneInp?phoneInp.value.trim():'',
+      email:emailInp?emailInp.value.trim():''
+    },
+    photos:[]
+  });
   _saveFV(list);
   renderFerien();
-  // Re-focus input after render
-  setTimeout(function(){var ni=$('fvTaskInput_'+cardId);if(ni)ni.focus();},50);
+  setTimeout(function(){
+    var tog=$('fvShowForm_'+cardId);
+    if(tog)tog.style.display='none';
+    var frm=$('fvFormWrap_'+cardId);
+    if(frm)frm.style.display='block';
+    var ni=$('fvTaskText_'+cardId);
+    if(ni)ni.focus();
+  },50);
 };
 
 window.toggleFVTask=function(cardId,taskId){
@@ -5096,18 +5152,93 @@ window.deleteFVTask=function(cardId,taskId){
 };
 
 window.deleteFVCard=function(cardId){
-  if(!confirm('Vertretungskarte löschen?'))return;
+  if(!confirm('Vertretungskarte l\u00f6schen?'))return;
   var list=_getFV().filter(function(v){return v.id!==cardId;});
   _saveFV(list);
   renderFerien();
 };
 
-window.fvTaskKeydown=function(e,cardId){
-  if(e.key==='Enter'){e.preventDefault();addFVTask(cardId);}
+window.saveFVNotes=function(cardId,el){
+  var list=_getFV();
+  var card=list.find(function(v){return v.id===cardId;});
+  if(!card)return;
+  card.notes=el.value;
+  _saveFV(list);
 };
 
+window.showFVAddForm=function(cardId){
+  var tog=$('fvShowForm_'+cardId);
+  var frm=$('fvFormWrap_'+cardId);
+  if(tog)tog.style.display='none';
+  if(frm){frm.style.display='block';var ti=$('fvTaskText_'+cardId);if(ti)ti.focus();}
+};
+
+window.hideFVAddForm=function(cardId){
+  var tog=$('fvShowForm_'+cardId);
+  var frm=$('fvFormWrap_'+cardId);
+  if(frm)frm.style.display='none';
+  if(tog)tog.style.display='inline-flex';
+};
+
+window.fvTaskKeydown=function(e,cardId){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();addFVTask(cardId);}
+};
+
+window.fvAddPhoto=function(cardId,taskId,inputEl){
+  if(!inputEl.files||!inputEl.files.length)return;
+  var file=inputEl.files[0];
+  if(!file.type.startsWith('image/')){alert('Nur Bilddateien erlaubt.');return;}
+  if(file.size>2*1024*1024){alert('Bild darf max. 2 MB gross sein.');return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var list=_getFV();
+    var card=list.find(function(v){return v.id===cardId;});
+    if(!card)return;
+    var task=card.tasks.find(function(t){return t.id===taskId;});
+    if(!task)return;
+    if(!task.photos)task.photos=[];
+    if(task.photos.length>=2){alert('Max. 2 Fotos pro Aufgabe.');return;}
+    task.photos.push(e.target.result);
+    _saveFV(list);
+    renderFerien();
+  };
+  reader.readAsDataURL(file);
+};
+
+window.fvRemovePhoto=function(cardId,taskId,photoIdx){
+  var list=_getFV();
+  var card=list.find(function(v){return v.id===cardId;});
+  if(!card)return;
+  var task=card.tasks.find(function(t){return t.id===taskId;});
+  if(!task||!task.photos)return;
+  task.photos.splice(photoIdx,1);
+  _saveFV(list);
+  renderFerien();
+};
+
+window.fvViewPhotoAt=function(cardId,taskId,photoIdx){
+  var list=_getFV();
+  var card=list.find(function(v){return v.id===cardId;});
+  if(!card)return;
+  var task=card.tasks.find(function(t){return t.id===taskId;});
+  if(!task||!task.photos||!task.photos[photoIdx])return;
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+  overlay.onclick=function(){document.body.removeChild(overlay);};
+  var img=document.createElement('img');
+  img.src=task.photos[photoIdx];
+  img.style.cssText='max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,0.4);';
+  overlay.appendChild(img);
+  document.body.appendChild(overlay);
+};
+
+function _fmtDateShort(iso){
+  if(!iso)return '';
+  var p=iso.split('-');
+  return p[2]+'.'+p[1]+'.';
+}
+
 function _renderFVSection(projectUsers,ferien){
-  var me=S.currentUser?S.currentUser.username:'';
   var fvList=_getFVForProject(S.pid);
   var today=new Date().toISOString().substring(0,10);
 
@@ -5116,64 +5247,164 @@ function _renderFVSection(projectUsers,ferien){
   if(fvList.length)html+='<span class="fv-badge">'+fvList.length+'</span>';
   html+='</div>';
 
-  // Existing cards
-  if(fvList.length){
-    html+='<div class="fv-cards">';
-    fvList.forEach(function(card){
-      var uAbw=findUser(card.abwesend);
-      var uVer=findUser(card.vertretung);
-      var dnAbw=uAbw?getUserDisplayName(uAbw):card.abwesend;
-      var dnVer=uVer?getUserDisplayName(uVer):card.vertretung;
-      var vonD=card.von.split('-');var bisD=card.bis.split('-');
-      var isActive=today>=card.von&&today<=card.bis;
-      var isPast=today>card.bis;
-      var doneCount=card.tasks.filter(function(t){return t.done;}).length;
-      var totalCount=card.tasks.length;
+  html+='<div class="fv-list">';
 
-      html+='<div class="fv-card" style="'+(isActive?'border-color:var(--orange);border-width:2px;':'')+(isPast?'opacity:0.55;':'')+'">';
-      // Header
-      html+='<div class="fv-card-head">';
-      html+='<span class="fv-user-chip">'+renderAvatar(uAbw||{username:card.abwesend,displayName:dnAbw},16)+' '+esc(dnAbw)+'</span>';
-      html+='<span class="fv-card-arrow">&rarr;</span>';
-      html+='<span class="fv-user-chip">'+renderAvatar(uVer||{username:card.vertretung,displayName:dnVer},16)+' '+esc(dnVer)+'</span>';
-      html+='<span class="fv-date-range">'+vonD[2]+'.'+vonD[1]+'. – '+bisD[2]+'.'+bisD[1]+'.'+bisD[0]+'</span>';
-      if(totalCount)html+='<span style="margin-left:auto;font-size:11px;color:'+(doneCount===totalCount?'var(--green)':'var(--text3)')+';">'+doneCount+'/'+totalCount+'</span>';
-      html+='<button onclick="deleteFVCard(\''+card.id+'\')" style="border:none;background:none;color:var(--text3);cursor:pointer;font-size:14px;margin-left:'+(totalCount?'4px':'auto')+';" title="Karte löschen">&times;</button>';
+  // Existing cards - full width, stacked
+  fvList.forEach(function(card){
+    var uAbw=findUser(card.abwesend);
+    var uVer=findUser(card.vertretung);
+    var dnAbw=uAbw?getUserDisplayName(uAbw):card.abwesend;
+    var dnVer=uVer?getUserDisplayName(uVer):card.vertretung;
+    var vonD=card.von.split('-');var bisD=card.bis.split('-');
+    var isActive=today>=card.von&&today<=card.bis;
+    var isPast=today>card.bis;
+    var doneCount=card.tasks.filter(function(t){return t.done;}).length;
+    var totalCount=card.tasks.length;
+    var pct=totalCount?Math.round(doneCount/totalCount*100):0;
+
+    html+='<div class="fv-card'+(isActive?' active':'')+(isPast?' past':'')+'">';
+
+    // ── Header ──
+    html+='<div class="fv-card-head">';
+    html+='<span class="fv-user-chip">'+renderAvatar(uAbw||{username:card.abwesend,displayName:dnAbw},22)+' '+esc(dnAbw)+'</span>';
+    html+='<span class="fv-card-arrow">&rarr;</span>';
+    html+='<span class="fv-user-chip">'+renderAvatar(uVer||{username:card.vertretung,displayName:dnVer},22)+' '+esc(dnVer)+'</span>';
+    html+='<span class="fv-date-chip">'+vonD[2]+'.'+vonD[1]+'.'+vonD[0]+' \u2013 '+bisD[2]+'.'+bisD[1]+'.'+bisD[0]+'</span>';
+    if(totalCount){
+      html+='<div class="fv-progress'+(doneCount===totalCount?' complete':'')+'">';
+      html+='<div class="fv-progress-bar"><div class="fv-progress-fill" style="width:'+pct+'%;"></div></div>';
+      html+='<span>'+doneCount+'/'+totalCount+'</span>';
       html+='</div>';
+    }
+    html+='<button class="fv-card-del" onclick="deleteFVCard(\''+card.id+'\')" title="L\u00f6schen">&times;</button>';
+    html+='</div>';
 
-      // Tasks
+    // ── Body ──
+    html+='<div class="fv-card-body">';
+
+    // Notes
+    html+='<div class="fv-card-notes">';
+    html+='<textarea placeholder="Notizen zur Vertretung (z.B. wichtige Infos, Termine, Hinweise)..." onblur="saveFVNotes(\''+card.id+'\',this)">'+esc(card.notes||'')+'</textarea>';
+    html+='</div>';
+
+    // Tasks
+    if(totalCount){
       html+='<ul class="fv-task-list">';
       card.tasks.forEach(function(task){
         html+='<li class="fv-task-item">';
         html+='<div class="fv-task-check'+(task.done?' done':'')+'" onclick="toggleFVTask(\''+card.id+'\',\''+task.id+'\')">'+(task.done?'&#10003;':'')+'</div>';
+
+        html+='<div class="fv-task-main">';
         html+='<span class="fv-task-text'+(task.done?' done':'')+'">'+esc(task.text)+'</span>';
-        html+='<button class="fv-task-del" onclick="deleteFVTask(\''+card.id+'\',\''+task.id+'\')" title="Löschen">&times;</button>';
+
+        // Meta row (dates + contact)
+        var hasMeta=(task.start||task.end||task.contact&&(task.contact.name||task.contact.phone||task.contact.email));
+        if(hasMeta){
+          html+='<div class="fv-task-meta">';
+          if(task.start||task.end){
+            html+='<span class="fv-task-date">';
+            if(task.start&&task.end)html+=_fmtDateShort(task.start)+' \u2013 '+_fmtDateShort(task.end);
+            else if(task.start)html+='ab '+_fmtDateShort(task.start);
+            else html+='bis '+_fmtDateShort(task.end);
+            html+='</span>';
+          }
+          if(task.contact&&task.contact.name){
+            html+='<span class="fv-task-contact" title="'+esc(task.contact.name)+'">';
+            html+='&#128100; '+esc(task.contact.name);
+            html+='</span>';
+          }
+          if(task.contact&&task.contact.phone){
+            html+='<span class="fv-task-contact">';
+            html+='&#128222; <a href="tel:'+esc(task.contact.phone)+'">'+esc(task.contact.phone)+'</a>';
+            html+='</span>';
+          }
+          if(task.contact&&task.contact.email){
+            html+='<span class="fv-task-contact">';
+            html+='&#9993; <a href="mailto:'+esc(task.contact.email)+'">'+esc(task.contact.email)+'</a>';
+            html+='</span>';
+          }
+          html+='</div>';
+        }
+
+        // Photos
+        if(task.photos&&task.photos.length){
+          html+='<div class="fv-task-photos">';
+          task.photos.forEach(function(ph,pi){
+            html+='<div style="position:relative;display:inline-block;">';
+            html+='<img src="'+ph+'" onclick="fvViewPhotoAt(\''+card.id+'\',\''+task.id+'\','+pi+')" alt="Foto">';
+            html+='<button onclick="fvRemovePhoto(\''+card.id+'\',\''+task.id+'\','+pi+')" style="position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:10px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;" title="Foto entfernen">&times;</button>';
+            html+='</div>';
+          });
+          if(task.photos.length<2&&!isPast){
+            html+='<label class="fv-photo-upload" title="Foto hinzuf\u00fcgen">';
+            html+='&#128247;';
+            html+='<input type="file" accept="image/*" onchange="fvAddPhoto(\''+card.id+'\',\''+task.id+'\',this)">';
+            html+='</label>';
+          }
+          html+='</div>';
+        }
+
+        html+='</div>'; // .fv-task-main
+
+        // Actions
+        html+='<div class="fv-task-actions">';
+        if(!task.photos||task.photos.length<2){
+          if(!isPast){
+            html+='<label class="fv-task-btn" title="Foto hinzuf\u00fcgen" style="cursor:pointer;">';
+            html+='&#128247;';
+            html+='<input type="file" accept="image/*" style="display:none;" onchange="fvAddPhoto(\''+card.id+'\',\''+task.id+'\',this)">';
+            html+='</label>';
+          }
+        }
+        html+='<button class="fv-task-btn del" onclick="deleteFVTask(\''+card.id+'\',\''+task.id+'\')" title="L\u00f6schen">&times;</button>';
+        html+='</div>';
+
         html+='</li>';
       });
       html+='</ul>';
+    }
 
-      // Add task input
-      if(!isPast){
-        html+='<div class="fv-add-row">';
-        html+='<input id="fvTaskInput_'+card.id+'" type="text" placeholder="Aufgabe hinzufügen..." onkeydown="fvTaskKeydown(event,\''+card.id+'\')">';
-        html+='<button onclick="addFVTask(\''+card.id+'\')">+</button>';
-        html+='</div>';
-      }
+    // Add task form
+    if(!isPast){
+      html+='<button class="fv-add-toggle" id="fvShowForm_'+card.id+'" onclick="showFVAddForm(\''+card.id+'\')">+ Aufgabe hinzuf\u00fcgen</button>';
+      html+='<div class="fv-add-form" id="fvFormWrap_'+card.id+'" style="display:none;">';
+
+      html+='<div class="fv-add-form-row">';
+      html+='<label>Aufgabe</label>';
+      html+='<input type="text" id="fvTaskText_'+card.id+'" placeholder="Was muss erledigt werden?" onkeydown="fvTaskKeydown(event,\''+card.id+'\')">';
+      html+='</div>';
+
+      html+='<div class="fv-add-form-row">';
+      html+='<label>Zeitraum</label>';
+      html+='<input type="date" id="fvTaskStart_'+card.id+'" title="Von">';
+      html+='<span style="color:var(--text3);font-size:12px;">bis</span>';
+      html+='<input type="date" id="fvTaskEnd_'+card.id+'" title="Bis">';
+      html+='</div>';
+
+      html+='<div class="fv-add-form-row">';
+      html+='<label>Kontakt</label>';
+      html+='<input type="text" id="fvTaskCName_'+card.id+'" placeholder="Name / Firma">';
+      html+='<input type="tel" id="fvTaskCPhone_'+card.id+'" placeholder="Telefon">';
+      html+='<input type="email" id="fvTaskCEmail_'+card.id+'" placeholder="E-Mail">';
+      html+='</div>';
+
+      html+='<div class="fv-add-form-row" style="justify-content:flex-end;gap:8px;">';
+      html+='<button type="button" style="padding:7px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--font);" onclick="hideFVAddForm(\''+card.id+'\')">Abbrechen</button>';
+      html+='<button class="fv-submit" onclick="addFVTask(\''+card.id+'\')">Hinzuf\u00fcgen</button>';
+      html+='</div>';
 
       html+='</div>';
-    });
+    }
 
-    // New card creator within the cards grid
-    html+=_renderFVNewCard(projectUsers);
-    html+='</div>';
-  } else {
-    // Empty state with inline new card
-    html+='<div class="fv-cards">';
-    html+=_renderFVNewCard(projectUsers);
-    html+='</div>';
-  }
+    html+='</div>'; // .fv-card-body
+    html+='</div>'; // .fv-card
+  });
 
-  html+='</div>';
+  // New card creator
+  html+=_renderFVNewCard(projectUsers);
+
+  html+='</div>'; // .fv-list
+  html+='</div>'; // .fv-section
   return html;
 }
 
@@ -5181,7 +5412,7 @@ function _renderFVNewCard(projectUsers){
   if(projectUsers.length<2)return '';
   var html='<div class="fv-new-card">';
   html+='<label>Neue Vertretung erstellen</label>';
-  html+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">';
+  html+='<div class="fv-new-card-row">';
   html+='<select id="fvUserSelect"><option value="">Wer ist abwesend?</option>';
   projectUsers.forEach(function(uname){
     var u=findUser(uname);
@@ -5189,7 +5420,7 @@ function _renderFVNewCard(projectUsers){
     html+='<option value="'+esc(uname)+'">'+esc(dn)+'</option>';
   });
   html+='</select>';
-  html+='<span style="color:var(--text3);font-size:12px;">vertreten durch</span>';
+  html+='<span class="fv-new-sep">vertreten durch</span>';
   html+='<select id="fvVertrSelect"><option value="">Wer vertritt?</option>';
   projectUsers.forEach(function(uname){
     var u=findUser(uname);
