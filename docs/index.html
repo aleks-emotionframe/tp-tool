@@ -307,6 +307,13 @@ body {
 .project-item.drag-over { border-color: var(--orange); background: var(--orange-light); }
 .project-item.dragging { opacity: 0.4; }
 
+/* Project sub-links */
+.project-sublinks { padding-left: 20px; margin-bottom: 4px; border-left: 2px solid var(--orange-glow); margin-left: 18px; }
+.project-sublink { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: var(--radius-xs); cursor: pointer; font-size: 12px; font-weight: 500; color: var(--text3); transition: var(--transition); }
+.project-sublink:hover { background: var(--surface2); color: var(--text); }
+.project-sublink.active { color: var(--orange); font-weight: 600; background: var(--orange-light); }
+.project-sublink-icon { font-size: 13px; width: 18px; text-align: center; flex-shrink: 0; }
+
 /* Folder styles */
 .folder-group { margin-bottom: 4px; position: relative; }
 .folder-group.dragging { opacity: 0.4; }
@@ -2070,7 +2077,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     <div class="sidebar-projects" id="projectList"></div>
     <div class="sidebar-pend-btns" id="sidebarPendBtns" style="display:none;">
       <button class="sidebar-pend-btn pend-btn-my" id="myPendBtn" onclick="showPendenzenView('my')">Meine Pendenzen</button>
-      <button class="sidebar-pend-btn pend-btn-project" id="projektPendBtn" onclick="showPendenzenView('project')" style="display:none;">Jour Fixe</button>
+      <!-- Jour Fixe moved to project sub-links -->
       <button class="sidebar-pend-btn pend-btn-ferien" id="ferienBtn" onclick="showFerienView()" style="display:none;">Ferienkalender</button>
     </div>
     <div class="sidebar-user" id="currentUserDisplay" style="display:none;"></div>
@@ -2166,6 +2173,9 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <div id="pendenzenView" style="display:none;overflow:auto;padding:20px 24px;"></div>
       <div id="projektPendenzenView" style="display:none;overflow:auto;padding:20px 24px;"></div>
       <div id="ferienView" style="display:none;overflow:auto;padding:20px 24px;"></div>
+      <div id="projektinfoView" style="display:none;overflow:auto;padding:20px 24px;"></div>
+      <div id="kontakteView" style="display:none;overflow:auto;padding:20px 24px;"></div>
+      <div id="unternehmerView" style="display:none;overflow:auto;padding:20px 24px;"></div>
     </div>
   </div>
 </div>
@@ -3566,6 +3576,25 @@ function renderProjectItem(p,container){
   d.onclick=function(){loadProject(p.id);};
   makeProjectDraggable(d,p.id);
   container.appendChild(d);
+  // Sub-links for active project
+  if(S.pid==p.id){
+    var sub=document.createElement('div');
+    sub.className='project-sublinks';
+    var subPages=[
+      {id:'jourFixe',icon:'&#128197;',label:'Jour Fixe'},
+      {id:'projektinfo',icon:'&#128196;',label:'Projektinformationen'},
+      {id:'kontakte',icon:'&#128101;',label:'Kontaktliste'},
+      {id:'unternehmer',icon:'&#127970;',label:'Unternehmerliste'}
+    ];
+    subPages.forEach(function(sp){
+      var link=document.createElement('div');
+      link.className='project-sublink'+(S.subPage===sp.id?' active':'');
+      link.innerHTML='<span class="project-sublink-icon">'+sp.icon+'</span>'+esc(sp.label);
+      link.onclick=function(e){e.stopPropagation();openSubPage(sp.id);};
+      sub.appendChild(link);
+    });
+    container.appendChild(sub);
+  }
 }
 
 function loadProjects(){
@@ -4151,14 +4180,17 @@ document.querySelectorAll('.sidebar-tab').forEach(function(b){
     document.querySelectorAll('.sidebar-tab').forEach(function(x){x.classList.remove('active');});
     this.classList.add('active');
     S.view=this.dataset.view;
+    S.subPage=null;
     sSet('lastView_'+(S.currentUser?S.currentUser.username:''),S.view);
     trackUsage('view','view:'+S.view);
     _updatePendBtnActive();
     if(S.pid)showEmpty(false);
+    loadProjects();
   });
 });
 
 function renderView(){
+  S.subPage=null;
   $('dashboardView').style.display='none';
   $('kompaktView').style.display='none';
   $('listView').style.display='none';
@@ -4166,6 +4198,9 @@ function renderView(){
   $('pendenzenView').style.display='none';
   $('projektPendenzenView').style.display='none';
   $('ferienView').style.display='none';
+  $('projektinfoView').style.display='none';
+  $('kontakteView').style.display='none';
+  $('unternehmerView').style.display='none';
   $('filterBar').style.display='none';
   $('contentArea').style.overflow='auto';
   if(S.view==='pendenzen_my'){
@@ -4174,6 +4209,7 @@ function renderView(){
     $('pendenzenView').style.display='block';
     renderMyPendenzen();
   }else if(S.view==='pendenzen_project'){
+    S.subPage='jourFixe';
     $('kpiStrip').style.display='none';
     $('kiAnalyseStrip').style.display='none';
     $('projektPendenzenView').style.display='block';
@@ -4250,6 +4286,7 @@ function _pendDueLabel(due){
 window.showPendenzenView=function(type){
   document.querySelectorAll('.sidebar-tab').forEach(function(x){x.classList.remove('active');});
   S.view=type==='project'?'pendenzen_project':'pendenzen_my';
+  S.subPage=type==='project'?'jourFixe':null;
   trackUsage('view','view:'+S.view);
   sSet('lastView_'+(S.currentUser?S.currentUser.username:''),S.view);
   $('emptyState').style.display='none';
@@ -5224,6 +5261,7 @@ function _ferienUserBg(color,own){return own?color+'55':color+'28';}
 window.showFerienView=function(){
   document.querySelectorAll('.sidebar-tab').forEach(function(x){x.classList.remove('active');});
   S.view='ferien';
+  S.subPage=null;
   trackUsage('view','view:ferien');
   sSet('lastView_'+(S.currentUser?S.currentUser.username:''),S.view);
   $('emptyState').style.display='none';
@@ -9039,6 +9077,286 @@ window.adminExportLogs=function(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
+
+/* ─── PROJECT SUB-PAGES ─── */
+window.openSubPage=function(pageId){
+  if(!S.pid)return;
+  S.subPage=pageId;
+  // If Jour Fixe, reuse existing pendenzen_project view
+  if(pageId==='jourFixe'){
+    showPendenzenView('project');
+    loadProjects();
+    return;
+  }
+  // Hide all main views
+  document.querySelectorAll('.sidebar-tab').forEach(function(x){x.classList.remove('active');});
+  S.view='subpage_'+pageId;
+  $('kpiStrip').style.display='none';
+  $('kiAnalyseStrip').style.display='none';
+  $('filterBar').style.display='none';
+  $('emptyState').style.display='none';
+  $('dashboardView').style.display='none';
+  $('kompaktView').style.display='none';
+  $('listView').style.display='none';
+  $('ganttView').style.display='none';
+  $('pendenzenView').style.display='none';
+  $('projektPendenzenView').style.display='none';
+  $('ferienView').style.display='none';
+  $('projektinfoView').style.display='none';
+  $('kontakteView').style.display='none';
+  $('unternehmerView').style.display='none';
+  // Show the relevant view
+  if(pageId==='projektinfo'){$('projektinfoView').style.display='block';renderProjektinfo();}
+  if(pageId==='kontakte'){$('kontakteView').style.display='block';renderKontakte();}
+  if(pageId==='unternehmer'){$('unternehmerView').style.display='block';renderUnternehmer();}
+  _updatePendBtnActive();
+  loadProjects();
+};
+
+function _subPageData(key){
+  if(!S.pid)return[];
+  var d=sGet('p_'+S.pid,{});
+  return d[key]||[];
+}
+function _saveSubPageData(key,list){
+  if(!S.pid)return;
+  var d=sGet('p_'+S.pid,{});
+  d[key]=list;
+  sSet('p_'+S.pid,d);
+}
+
+/* ── Projektinformationen ── */
+function renderProjektinfo(){
+  var c=$('projektinfoView');
+  if(!S.pid){c.innerHTML='';return;}
+  var d=sGet('p_'+S.pid,{});
+  var info=d.projektinfo||{};
+  var idx=getIdx(),p=idx.find(function(x){return x.id==S.pid;});
+  var pName=p?p.name:'Projekt';
+
+  var html='<div style="max-width:800px;">';
+  html+='<h2 style="margin:0 0 20px;font-size:20px;font-weight:700;color:var(--text);">Projektinformationen</h2>';
+
+  var fields=[
+    {key:'bauherr',label:'Bauherr / Auftraggeber'},
+    {key:'projektleiter',label:'Projektleiter'},
+    {key:'bauleiter',label:'Bauleiter'},
+    {key:'adresse',label:'Projektadresse'},
+    {key:'baunummer',label:'Baunummer / Projektnummer'},
+    {key:'baustart',label:'Baustart',type:'date'},
+    {key:'bauende',label:'Geplantes Bauende',type:'date'},
+    {key:'status',label:'Projektstatus',type:'select',options:['In Planung','In Ausf\u00fchrung','Bauabnahme','Abgeschlossen','Sistiert']},
+    {key:'notizen',label:'Notizen / Bemerkungen',type:'textarea'}
+  ];
+
+  fields.forEach(function(f){
+    var val=info[f.key]||'';
+    html+='<div style="margin-bottom:14px;">';
+    html+='<label style="display:block;font-size:12px;font-weight:600;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;">'+f.label+'</label>';
+    if(f.type==='textarea'){
+      html+='<textarea style="width:100%;min-height:80px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:13px;background:var(--surface);color:var(--text);resize:vertical;font-family:inherit;" onchange="saveProjektinfoField(\''+f.key+'\',this.value)">'+esc(val)+'</textarea>';
+    } else if(f.type==='select'){
+      html+='<select style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:13px;background:var(--surface);color:var(--text);" onchange="saveProjektinfoField(\''+f.key+'\',this.value)">';
+      html+='<option value="">– Bitte w\u00e4hlen –</option>';
+      f.options.forEach(function(o){html+='<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(o)+'</option>';});
+      html+='</select>';
+    } else if(f.type==='date'){
+      html+='<input type="date" value="'+esc(val)+'" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:13px;background:var(--surface);color:var(--text);" onchange="saveProjektinfoField(\''+f.key+'\',this.value)">';
+    } else {
+      html+='<input type="text" value="'+esc(val)+'" placeholder="'+f.label+'" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:13px;background:var(--surface);color:var(--text);" onchange="saveProjektinfoField(\''+f.key+'\',this.value)">';
+    }
+    html+='</div>';
+  });
+
+  html+='</div>';
+  c.innerHTML=html;
+}
+window.saveProjektinfoField=function(key,val){
+  if(!S.pid)return;
+  var d=sGet('p_'+S.pid,{});
+  if(!d.projektinfo)d.projektinfo={};
+  d.projektinfo[key]=val;
+  sSet('p_'+S.pid,d);
+};
+
+/* ── Kontaktliste ── */
+function renderKontakte(){
+  var c=$('kontakteView');
+  if(!S.pid){c.innerHTML='';return;}
+  var list=_subPageData('kontakte');
+
+  var html='<div style="max-width:900px;">';
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">';
+  html+='<h2 style="margin:0;font-size:20px;font-weight:700;color:var(--text);">Kontaktliste</h2>';
+  html+='<button class="admin-btn primary" onclick="addKontakt()">+ Kontakt hinzuf\u00fcgen</button>';
+  html+='</div>';
+
+  if(!list.length){
+    html+='<div style="padding:40px;text-align:center;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">Noch keine Kontakte erfasst.</div>';
+  } else {
+    html+='<div style="display:flex;flex-direction:column;gap:8px;">';
+    list.forEach(function(k,i){
+      html+='<div class="admin-card" style="padding:14px 16px;">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;">'
+        +'<div style="flex:1;min-width:0;">'
+        +'<div style="font-weight:600;font-size:14px;color:var(--text);">'+esc(k.name||'Kein Name')+'</div>'
+        +'<div style="font-size:12px;color:var(--text3);margin-top:2px;">'
+        +(k.firma?esc(k.firma)+' &middot; ':'')
+        +(k.funktion?esc(k.funktion):'')
+        +'</div>'
+        +'<div style="font-size:12px;color:var(--text2);margin-top:4px;display:flex;gap:16px;flex-wrap:wrap;">'
+        +(k.email?'<span>&#9993; '+esc(k.email)+'</span>':'')
+        +(k.telefon?'<span>&#9742; '+esc(k.telefon)+'</span>':'')
+        +'</div>'
+        +'</div>'
+        +'<div style="display:flex;gap:4px;">'
+        +'<button class="admin-btn" onclick="editKontakt('+i+')" style="padding:4px 10px;font-size:11px;">Bearbeiten</button>'
+        +'<button class="admin-btn danger" onclick="deleteKontakt('+i+')" style="padding:4px 10px;font-size:11px;">&#10005;</button>'
+        +'</div></div></div>';
+    });
+    html+='</div>';
+  }
+  html+='</div>';
+  c.innerHTML=html;
+}
+window.addKontakt=function(){
+  openPromptModal('Neuer Kontakt','Name',function(name){
+    if(!name)return;
+    var list=_subPageData('kontakte');
+    list.push({name:name,firma:'',funktion:'',email:'',telefon:''});
+    _saveSubPageData('kontakte',list);
+    renderKontakte();
+  });
+};
+window.editKontakt=function(idx){
+  var list=_subPageData('kontakte');
+  var k=list[idx];if(!k)return;
+  var fields=[
+    {key:'name',label:'Name',val:k.name||''},
+    {key:'firma',label:'Firma',val:k.firma||''},
+    {key:'funktion',label:'Funktion / Rolle',val:k.funktion||''},
+    {key:'email',label:'E-Mail',val:k.email||''},
+    {key:'telefon',label:'Telefon',val:k.telefon||''}
+  ];
+  _openMultiFieldModal('Kontakt bearbeiten',fields,function(vals){
+    fields.forEach(function(f){k[f.key]=vals[f.key]||'';});
+    list[idx]=k;
+    _saveSubPageData('kontakte',list);
+    renderKontakte();
+  });
+};
+window.deleteKontakt=function(idx){
+  openConfirmModal('Kontakt wirklich l\u00f6schen?',function(){
+    var list=_subPageData('kontakte');
+    list.splice(idx,1);
+    _saveSubPageData('kontakte',list);
+    renderKontakte();
+  });
+};
+
+/* ── Unternehmerliste ── */
+function renderUnternehmer(){
+  var c=$('unternehmerView');
+  if(!S.pid){c.innerHTML='';return;}
+  var list=_subPageData('unternehmer');
+
+  var html='<div style="max-width:900px;">';
+  html+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">';
+  html+='<h2 style="margin:0;font-size:20px;font-weight:700;color:var(--text);">Unternehmerliste</h2>';
+  html+='<button class="admin-btn primary" onclick="addUnternehmer()">+ Unternehmer hinzuf\u00fcgen</button>';
+  html+='</div>';
+
+  if(!list.length){
+    html+='<div style="padding:40px;text-align:center;color:var(--text3);font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);">Noch keine Unternehmer erfasst.</div>';
+  } else {
+    html+='<div style="display:flex;flex-direction:column;gap:8px;">';
+    list.forEach(function(u,i){
+      html+='<div class="admin-card" style="padding:14px 16px;">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;">'
+        +'<div style="flex:1;min-width:0;">'
+        +'<div style="font-weight:600;font-size:14px;color:var(--text);">'+esc(u.firma||'Kein Name')+'</div>'
+        +'<div style="font-size:12px;color:var(--text3);margin-top:2px;">'
+        +(u.gewerk?'Gewerk: '+esc(u.gewerk):'')
+        +(u.kontaktperson?' &middot; '+esc(u.kontaktperson):'')
+        +'</div>'
+        +'<div style="font-size:12px;color:var(--text2);margin-top:4px;display:flex;gap:16px;flex-wrap:wrap;">'
+        +(u.email?'<span>&#9993; '+esc(u.email)+'</span>':'')
+        +(u.telefon?'<span>&#9742; '+esc(u.telefon)+'</span>':'')
+        +(u.adresse?'<span>&#127968; '+esc(u.adresse)+'</span>':'')
+        +'</div>'
+        +'</div>'
+        +'<div style="display:flex;gap:4px;">'
+        +'<button class="admin-btn" onclick="editUnternehmer('+i+')" style="padding:4px 10px;font-size:11px;">Bearbeiten</button>'
+        +'<button class="admin-btn danger" onclick="deleteUnternehmer('+i+')" style="padding:4px 10px;font-size:11px;">&#10005;</button>'
+        +'</div></div></div>';
+    });
+    html+='</div>';
+  }
+  html+='</div>';
+  c.innerHTML=html;
+}
+window.addUnternehmer=function(){
+  openPromptModal('Neuer Unternehmer','Firmenname',function(name){
+    if(!name)return;
+    var list=_subPageData('unternehmer');
+    list.push({firma:name,gewerk:'',kontaktperson:'',email:'',telefon:'',adresse:''});
+    _saveSubPageData('unternehmer',list);
+    renderUnternehmer();
+  });
+};
+window.editUnternehmer=function(idx){
+  var list=_subPageData('unternehmer');
+  var u=list[idx];if(!u)return;
+  var fields=[
+    {key:'firma',label:'Firma',val:u.firma||''},
+    {key:'gewerk',label:'Gewerk / Leistung',val:u.gewerk||''},
+    {key:'kontaktperson',label:'Kontaktperson',val:u.kontaktperson||''},
+    {key:'email',label:'E-Mail',val:u.email||''},
+    {key:'telefon',label:'Telefon',val:u.telefon||''},
+    {key:'adresse',label:'Adresse',val:u.adresse||''}
+  ];
+  _openMultiFieldModal('Unternehmer bearbeiten',fields,function(vals){
+    fields.forEach(function(f){u[f.key]=vals[f.key]||'';});
+    list[idx]=u;
+    _saveSubPageData('unternehmer',list);
+    renderUnternehmer();
+  });
+};
+window.deleteUnternehmer=function(idx){
+  openConfirmModal('Unternehmer wirklich l\u00f6schen?',function(){
+    var list=_subPageData('unternehmer');
+    list.splice(idx,1);
+    _saveSubPageData('unternehmer',list);
+    renderUnternehmer();
+  });
+};
+
+/* ── Multi-field edit modal helper ── */
+function _openMultiFieldModal(title,fields,callback){
+  var bg=document.createElement('div');
+  bg.className='modal-bg show';
+  bg.style.zIndex='10001';
+  var box='<div class="confirm-box" style="max-width:440px;"><h3 style="margin:0 0 16px;">'+esc(title)+'</h3>';
+  fields.forEach(function(f){
+    box+='<div style="margin-bottom:10px;">'
+      +'<label style="display:block;font-size:11px;font-weight:600;color:var(--text3);margin-bottom:3px;text-transform:uppercase;">'+esc(f.label)+'</label>'
+      +'<input type="text" id="_mf_'+f.key+'" value="'+esc(f.val)+'" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:13px;background:var(--surface);color:var(--text);box-sizing:border-box;">'
+      +'</div>';
+  });
+  box+='<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">'
+    +'<button class="admin-btn" onclick="this.closest(\'.modal-bg\').remove()">Abbrechen</button>'
+    +'<button class="admin-btn primary" id="_mfSave">Speichern</button>'
+    +'</div></div>';
+  bg.innerHTML=box;
+  document.body.appendChild(bg);
+  bg.onclick=function(e){if(e.target===bg)bg.remove();};
+  document.getElementById('_mfSave').onclick=function(){
+    var vals={};
+    fields.forEach(function(f){vals[f.key]=(document.getElementById('_mf_'+f.key)||{}).value||'';});
+    bg.remove();
+    callback(vals);
+  };
+}
 
 /* ─── XML UPLOAD (topbar + drag & drop) ─── */
 var pendingXMLFile=null;
