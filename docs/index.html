@@ -508,6 +508,10 @@ body {
 .cl-drag-edit:hover { background: var(--surface2); opacity: 1 !important; }
 .cl-drag-del { color: var(--red); }
 .cl-drag-del:hover { background: var(--red); color: #fff; opacity: 1 !important; }
+.cl-release-btn { width: 100%; padding: 12px; border: none; border-radius: 6px; background: var(--green); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: var(--transition); font-family: var(--font); }
+.cl-release-btn:hover { opacity: .85; box-shadow: 0 2px 8px rgba(34,197,94,0.3); }
+.cl-released-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--surface); border-radius: 6px; margin-bottom: 4px; opacity: .6; }
+.cl-released-item .cl-drag-text { font-size: 13px; }
 .search-result-dot {
   width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
 }
@@ -2490,14 +2494,15 @@ function checkChangelog(){
 }
 
 /* ─── CHANGELOG ADMIN ─── */
-function _clItemHtml(item,isDraft){
-  var html='<div class="cl-drag-item'+(isDraft?'':' cl-published')+'" draggable="true" data-id="'+esc(item.id)+'">';
+function _clItemHtml(item,state){
+  var cls=state==='draft'?'':'cl-published';
+  var html='<div class="cl-drag-item '+cls+'" draggable="true" data-id="'+esc(item.id)+'">';
   html+='<span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>';
   html+='<span class="cl-drag-text">'+esc(item.text)+'</span>';
-  if(isDraft){
-    html+='<button class="cl-drag-pub" onclick="clPublishItem(\''+item.id+'\')" title="Ver\u00f6ffentlichen">&#10140;</button>';
+  if(state==='draft'){
+    html+='<button class="cl-drag-pub" onclick="clPublishItem(\''+item.id+'\')" title="Nach rechts schieben">&#10140;</button>';
   }else{
-    html+='<button class="cl-drag-unpub" onclick="clUnpublishItem(\''+item.id+'\')" title="Zur\u00fcckziehen">&#10140;</button>';
+    html+='<button class="cl-drag-unpub" onclick="clUnpublishItem(\''+item.id+'\')" title="Zur\u00fcck zu Entw\u00fcrfen">&#10140;</button>';
   }
   html+='<button class="cl-drag-edit" onclick="clEditItem(\''+item.id+'\')" title="Bearbeiten">&#9998;</button>';
   html+='<button class="cl-drag-del" onclick="clDeleteItem(\''+item.id+'\')" title="L\u00f6schen">&times;</button>';
@@ -2509,7 +2514,8 @@ function renderAdminChangelog(){
   var cl=getChangelog();
   var c=$('adminTabChangelog');
   var drafts=cl.filter(function(v){return!v.published;});
-  var published=cl.filter(function(v){return v.published;});
+  var staged=cl.filter(function(v){return v.published&&!v.locked;});
+  var released=cl.filter(function(v){return v.published&&v.locked;});
 
   var html='<div class="admin-section"><div class="admin-section-title">Changelog verwalten</div>'
     +'<p style="font-size:13px;color:var(--text3);margin-bottom:16px;">Ziehe Eintr\u00e4ge zwischen den Bereichen oder nutze die Pfeile. Nur ver\u00f6ffentlichte Eintr\u00e4ge sehen die Benutzer.</p>';
@@ -2529,26 +2535,44 @@ function renderAdminChangelog(){
   html+='<div class="cl-kanban-header cl-draft-header">Entw\u00fcrfe <span class="pend-badge">'+drafts.length+'</span></div>';
   html+='<div class="cl-kanban-body cl-drop-zone" data-target="draft">';
   if(drafts.length){
-    drafts.forEach(function(item){html+=_clItemHtml(item,true);});
+    drafts.forEach(function(item){html+=_clItemHtml(item,'draft');});
   }else{
     html+='<div class="admin-empty-msg" style="padding:20px;">Keine Entw\u00fcrfe</div>';
   }
   html+='</div></div>';
 
-  // Published column
+  // Staged column (ready to publish)
   html+='<div class="cl-kanban-col">';
-  html+='<div class="cl-kanban-header cl-pub-header">Ver\u00f6ffentlicht <span class="pend-badge">'+published.length+'</span>';
+  html+='<div class="cl-kanban-header cl-pub-header">Bereit zur Ver\u00f6ffentlichung <span class="pend-badge">'+staged.length+'</span>';
   html+='<button class="cl-preview-btn" onclick="clPreviewAll()" title="Vorschau">Vorschau</button>';
   html+='</div>';
   html+='<div class="cl-kanban-body cl-drop-zone" data-target="published">';
-  if(published.length){
-    published.forEach(function(item){html+=_clItemHtml(item,false);});
+  if(staged.length){
+    staged.forEach(function(item){html+=_clItemHtml(item,'staged');});
   }else{
-    html+='<div class="admin-empty-msg" style="padding:20px;">Keine ver\u00f6ffentlichten Updates</div>';
+    html+='<div class="admin-empty-msg" style="padding:20px;">Eintr\u00e4ge hierher ziehen</div>';
+  }
+  if(staged.length){
+    html+='<button class="cl-release-btn" onclick="clReleaseAll()">Jetzt ver\u00f6ffentlichen</button>';
   }
   html+='</div></div>';
 
-  html+='</div></div>';
+  html+='</div>';
+
+  // Released history
+  if(released.length){
+    html+='<div style="margin-top:28px;border-top:1px solid var(--border);padding-top:20px;">';
+    html+='<div class="admin-section-title">Bereits ver\u00f6ffentlicht <span class="pend-badge" style="font-size:11px;">'+released.length+'</span></div>';
+    released.forEach(function(item){
+      html+='<div class="cl-released-item">';
+      html+='<span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>';
+      html+='<span class="cl-drag-text">'+esc(item.text)+'</span>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }
+
+  html+='</div>';
   c.innerHTML=html;
   _initClDragDrop();
 }
@@ -2632,9 +2656,31 @@ window.clDeleteItem=function(id){
 };
 
 window.clPreviewAll=function(){
-  var pub=getPublishedChangelog();
-  if(!pub.length){alert('Keine ver\u00f6ffentlichten Eintr\u00e4ge.');return;}
-  showChangelog();
+  var cl=getChangelog();
+  var staged=cl.filter(function(v){return v.published&&!v.locked;});
+  if(!staged.length){alert('Keine Eintr\u00e4ge zum Vorschauen.');return;}
+  var html='<ul class="changelog-list">';
+  staged.forEach(function(item){
+    html+='<li><span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>'+esc(item.text)+'</li>';
+  });
+  html+='</ul>';
+  $('changelogContent').innerHTML=html;
+  $('changelogModal').classList.add('show');
+};
+
+window.clReleaseAll=function(){
+  var cl=getChangelog();
+  var now=Date.now();
+  cl.forEach(function(item){
+    if(item.published&&!item.locked){
+      item.locked=true;
+      item.publishedAt=now;
+    }
+  });
+  saveChangelog(cl);
+  updateChangelogBell();
+  addLog('changelog','Updates ver\u00f6ffentlicht',cl.filter(function(i){return i.publishedAt===now;}).length+' Eintr\u00e4ge');
+  renderAdminChangelog();
 };
 
 function showApp(){
