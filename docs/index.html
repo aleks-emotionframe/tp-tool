@@ -486,6 +486,8 @@ body {
 .changelog-list li.tag-fix { border-left-color: #92400e; }
 @keyframes clSlideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes clBounce { 0% { transform: scale(0) rotate(-15deg); } 60% { transform: scale(1.2) rotate(5deg); } 100% { transform: scale(1) rotate(0); } }
+@keyframes clFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes clDragAnim { 0%,100% { transform: translateX(0); } 50% { transform: translateX(30px); } }
 @keyframes clIconPop { 0% { transform: scale(0); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
 @keyframes clTextUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 .cl-modal { max-width: 480px; padding: 0 !important; overflow: hidden; position: relative; border-radius: 16px !important; }
@@ -2491,6 +2493,68 @@ function _clIcon(text){
   return '&#10024;';
 }
 
+function _clVisualScene(text,tag){
+  var t=text.toLowerCase();
+  // Each feature gets a unique mini-scene with multiple emojis
+  if(t.indexOf('suche')>-1)
+    return '<span style="font-size:28px;position:absolute;left:15%;top:20%;opacity:.6;animation:clFloat 3s ease infinite;">&#128196;</span>'
+      +'<span style="font-size:42px;position:absolute;left:40%;top:25%;animation:clFloat 2.5s ease .3s infinite;">&#128269;</span>'
+      +'<span style="font-size:24px;position:absolute;right:20%;top:35%;opacity:.5;animation:clFloat 3.5s ease .6s infinite;">&#128196;</span>'
+      +'<span style="font-size:20px;position:absolute;left:25%;bottom:20%;opacity:.4;">&#128196;</span>'
+      +'<span style="font-size:16px;position:absolute;right:30%;bottom:25%;opacity:.3;">&#128196;</span>';
+  if(t.indexOf('pendenz')>-1&&t.indexOf('bild')>-1)
+    return '<span style="font-size:36px;position:absolute;left:20%;top:22%;animation:clFloat 3s ease infinite;">&#128247;</span>'
+      +'<span style="font-size:28px;position:absolute;left:45%;top:30%;opacity:.7;animation:clFloat 2.8s ease .2s infinite;">&#127748;</span>'
+      +'<span style="font-size:22px;position:absolute;right:22%;top:25%;opacity:.5;animation:clFloat 3.2s ease .4s infinite;">&#127749;</span>'
+      +'<span style="font-size:32px;position:absolute;left:35%;bottom:15%;opacity:.6;">&#128203;</span>';
+  if(t.indexOf('jour fixe')>-1||t.indexOf('kanban')>-1)
+    return '<span style="font-size:26px;position:absolute;left:10%;top:18%;opacity:.7;animation:clFloat 3s ease infinite;">&#128101;</span>'
+      +'<span style="font-size:34px;position:absolute;left:38%;top:22%;animation:clFloat 2.6s ease .2s infinite;">&#128203;</span>'
+      +'<span style="font-size:22px;position:absolute;right:15%;top:30%;opacity:.6;animation:clFloat 3.4s ease .5s infinite;">&#9745;</span>'
+      +'<span style="font-size:20px;position:absolute;left:55%;bottom:18%;opacity:.5;">&#128172;</span>'
+      +'<span style="font-size:18px;position:absolute;left:18%;bottom:22%;opacity:.4;">&#9745;</span>';
+  if(t.indexOf('spalte')>-1||t.indexOf('drag')>-1)
+    return '<span style="font-size:24px;position:absolute;left:12%;top:20%;opacity:.6;border:2px dashed rgba(0,0,0,.15);border-radius:6px;padding:4px;">&#128203;</span>'
+      +'<span style="font-size:32px;position:absolute;left:42%;top:25%;animation:clDragAnim 2s ease infinite;">&#128075;</span>'
+      +'<span style="font-size:24px;position:absolute;right:12%;top:20%;opacity:.6;border:2px dashed rgba(0,0,0,.15);border-radius:6px;padding:4px;">&#128203;</span>'
+      +'<span style="font-size:18px;position:absolute;left:35%;bottom:18%;opacity:.3;">&#8596;</span>';
+  if(t.indexOf('profil')>-1||t.indexOf('k\u00fcrzel')>-1||t.indexOf('avatar')>-1)
+    return '<span style="font-size:44px;position:absolute;left:30%;top:15%;animation:clFloat 3s ease infinite;">&#128100;</span>'
+      +'<span style="font-size:22px;position:absolute;right:25%;top:28%;opacity:.7;animation:clFloat 2.5s ease .3s infinite;">&#9998;</span>'
+      +'<span style="font-size:30px;position:absolute;left:50%;bottom:12%;opacity:.5;">&#127912;</span>';
+  if(t.indexOf('berechtigung')>-1||t.indexOf('rolle')>-1)
+    return '<span style="font-size:36px;position:absolute;left:22%;top:20%;animation:clFloat 3s ease infinite;">&#128274;</span>'
+      +'<span style="font-size:28px;position:absolute;right:22%;top:25%;opacity:.7;animation:clFloat 2.8s ease .3s infinite;">&#128272;</span>'
+      +'<span style="font-size:22px;position:absolute;left:45%;bottom:15%;opacity:.5;">&#128101;</span>';
+  if(t.indexOf('projekt')>-1&&t.indexOf('button')>-1)
+    return '<span style="font-size:22px;position:absolute;left:18%;top:25%;opacity:.5;">&#128193;</span>'
+      +'<span style="font-size:34px;position:absolute;left:38%;top:20%;animation:clFloat 2.5s ease infinite;">&#10133;</span>'
+      +'<span style="font-size:22px;position:absolute;right:18%;top:25%;opacity:.5;">&#128193;</span>'
+      +'<span style="font-size:26px;position:absolute;left:40%;bottom:15%;opacity:.4;">&#128194;</span>';
+  if(t.indexOf('ansicht')>-1||t.indexOf('speicher')>-1)
+    return '<span style="font-size:28px;position:absolute;left:15%;top:22%;opacity:.6;animation:clFloat 3s ease infinite;">&#128187;</span>'
+      +'<span style="font-size:34px;position:absolute;left:42%;top:18%;animation:clFloat 2.6s ease .2s infinite;">&#128190;</span>'
+      +'<span style="font-size:24px;position:absolute;right:18%;top:28%;opacity:.5;animation:clFloat 3.2s ease .4s infinite;">&#128100;</span>';
+  if(t.indexOf('changelog')>-1||t.indexOf('glocke')>-1)
+    return '<span style="font-size:38px;position:absolute;left:35%;top:15%;animation:bellRing 2s ease infinite;transform-origin:top center;">&#128276;</span>'
+      +'<span style="font-size:20px;position:absolute;right:22%;top:22%;opacity:.6;">&#10024;</span>'
+      +'<span style="font-size:16px;position:absolute;left:22%;top:30%;opacity:.4;">&#10024;</span>'
+      +'<span style="font-size:24px;position:absolute;left:45%;bottom:15%;opacity:.5;">&#128172;</span>';
+  if(t.indexOf('admin')>-1)
+    return '<span style="font-size:32px;position:absolute;left:25%;top:18%;animation:clFloat 3s ease infinite;">&#9881;</span>'
+      +'<span style="font-size:26px;position:absolute;right:25%;top:25%;opacity:.7;animation:clFloat 2.8s ease .3s infinite;">&#128295;</span>'
+      +'<span style="font-size:22px;position:absolute;left:42%;bottom:15%;opacity:.5;">&#128187;</span>';
+  if(t.indexOf('pendenz')>-1)
+    return '<span style="font-size:28px;position:absolute;left:15%;top:20%;opacity:.6;">&#9744;</span>'
+      +'<span style="font-size:34px;position:absolute;left:38%;top:18%;animation:clFloat 2.5s ease infinite;">&#9745;</span>'
+      +'<span style="font-size:28px;position:absolute;right:15%;top:20%;opacity:.6;">&#9744;</span>'
+      +'<span style="font-size:22px;position:absolute;left:30%;bottom:18%;opacity:.4;">&#128221;</span>';
+  // Default
+  return '<span style="font-size:30px;position:absolute;left:20%;top:22%;opacity:.5;animation:clFloat 3s ease infinite;">&#10024;</span>'
+    +'<span style="font-size:38px;position:absolute;left:42%;top:18%;animation:clFloat 2.5s ease .2s infinite;">&#9889;</span>'
+    +'<span style="font-size:24px;position:absolute;right:20%;top:28%;opacity:.4;animation:clFloat 3.5s ease .4s infinite;">&#10024;</span>';
+}
+
 function _clVisualColor(tag){
   if(tag==='neu')return 'linear-gradient(135deg,#dcfce7,#bbf7d0)';
   if(tag==='fix')return 'linear-gradient(135deg,#fef3c7,#fde68a)';
@@ -2520,7 +2584,7 @@ function _renderClSlide(){
   html+='<div class="cl-slide-title">'+esc(parts.title)+'</div>';
   if(parts.desc)html+='<div class="cl-slide-desc">'+esc(parts.desc)+'</div>';
   html+='<div class="cl-slide-visual" style="background:'+_clVisualColor(item.tag)+'">';
-  html+='<span style="font-size:80px;opacity:.15;">'+icon+'</span>';
+  html+=_clVisualScene(item.text,item.tag);
   html+='</div>';
   html+='</div>';
 
