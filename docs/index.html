@@ -466,6 +466,15 @@ body {
 .search-result-name mark { background: var(--orange-light); color: var(--orange); font-weight: 600; border-radius: 2px; padding: 0 1px; }
 .search-result-meta { font-size: 11px; color: var(--text3); white-space: nowrap; }
 .search-result-project { font-size: 10px; color: var(--primary); background: var(--bg2); border-radius: 3px; padding: 1px 5px; white-space: nowrap; margin-left: auto; }
+.changelog-version { margin-bottom: 18px; }
+.changelog-version-header { font-size: 15px; font-weight: 700; color: var(--primary); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.changelog-version-date { font-size: 12px; color: var(--text3); font-weight: 400; }
+.changelog-list { margin: 0; padding-left: 20px; }
+.changelog-list li { margin-bottom: 4px; font-size: 13px; line-height: 1.5; }
+.changelog-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; margin-right: 4px; text-transform: uppercase; }
+.changelog-tag.neu { background: #dcfce7; color: #166534; }
+.changelog-tag.fix { background: #fef3c7; color: #92400e; }
+.changelog-tag.update { background: #dbeafe; color: #1e40af; }
 .search-result-dot {
   width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
 }
@@ -1916,6 +1925,20 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
   </div>
 </div>
 
+<!-- CHANGELOG MODAL -->
+<div class="modal-bg" id="changelogModal">
+  <div class="modal" style="max-width:560px;max-height:80vh;display:flex;flex-direction:column;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <span style="font-size:22px;">&#128640;</span>
+      <h3 style="margin:0;">Was ist neu?</h3>
+    </div>
+    <div id="changelogContent" style="overflow-y:auto;flex:1;padding-right:8px;"></div>
+    <div class="modal-btns" style="margin-top:16px;">
+      <button class="btn-primary" onclick="closeChangelog()">Verstanden</button>
+    </div>
+  </div>
+</div>
+
 <!-- NEW PROJECT MODAL -->
 <div class="modal-bg" id="newModal">
   <div class="modal">
@@ -2220,6 +2243,48 @@ function showLogin(){
     _mmEl.style.display='none';
   }
 }
+/* ─── CHANGELOG ─── */
+var CHANGELOG=[
+  {version:'1.5.0',date:'21.03.2026',items:[
+    {tag:'neu',text:'Projekt\u00fcbergreifende Suche \u2013 Vorg\u00e4nge in allen Projekten finden'},
+    {tag:'neu',text:'Berechtigung \u00abProjekt erstellen\u00bb \u2013 pro Rolle konfigurierbar'},
+    {tag:'neu',text:'\u00abMein Profil\u00bb f\u00fcr Nicht-Admins statt Admin Center'},
+    {tag:'neu',text:'\u00c4nderungsprotokoll (dieses Popup) bei jedem Login'}
+  ]}
+];
+var CHANGELOG_VERSION=CHANGELOG[0].version;
+
+function showChangelog(){
+  var html='';
+  CHANGELOG.forEach(function(v){
+    html+='<div class="changelog-version">'
+      +'<div class="changelog-version-header">Version '+esc(v.version)
+      +'<span class="changelog-version-date">'+esc(v.date)+'</span></div>'
+      +'<ul class="changelog-list">';
+    v.items.forEach(function(item){
+      html+='<li><span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>'+esc(item.text)+'</li>';
+    });
+    html+='</ul></div>';
+  });
+  $('changelogContent').innerHTML=html;
+  $('changelogModal').classList.add('show');
+}
+
+window.closeChangelog=function(){
+  $('changelogModal').classList.remove('show');
+  if(S.currentUser){
+    sSet('changelog_seen_'+S.currentUser.username,CHANGELOG_VERSION);
+  }
+};
+
+function checkChangelog(){
+  if(!S.currentUser)return;
+  var seen=sGet('changelog_seen_'+S.currentUser.username,'');
+  if(seen!==CHANGELOG_VERSION){
+    setTimeout(function(){showChangelog();},400);
+  }
+}
+
 function showApp(){
   $('loginScreen').classList.add('hidden');
   $('appScreen').classList.remove('hidden');
@@ -2234,6 +2299,7 @@ function showApp(){
     });
   }
   loadProjects();
+  checkChangelog();
   // Restore last project
   var lastPid=sGet('lastPid',null);
   if(lastPid){
