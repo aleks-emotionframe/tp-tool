@@ -570,10 +570,11 @@ body {
 .pend-item:hover .pend-delete { opacity: 1; }
 .pend-item .pend-delete:hover { background: var(--red); color: #fff; }
 .pend-empty { font-size: 13px; color: var(--text3); padding: 12px; text-align: center; }
-.pend-due { font-size: 11px; padding: 2px 8px; border-radius: 10px; white-space: nowrap; background: var(--surface2); color: var(--text3); }
-.pend-overdue { background: var(--red); color: #fff; }
-.pend-today { background: var(--orange); color: #fff; }
-.pend-soon { background: #fef3cd; color: #856404; }
+.pend-due { font-size: 11px; white-space: nowrap; color: var(--text); display: inline-flex; align-items: center; gap: 5px; }
+.pend-due-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.pend-due-green .pend-due-dot { background: var(--green); }
+.pend-due-orange .pend-due-dot { background: var(--orange); }
+.pend-due-red .pend-due-dot { background: var(--red); }
 .pend-edit-input { flex: 1; padding: 4px 8px; border: 1px solid var(--orange); border-radius: var(--radius-xs); font-family: var(--font); font-size: 13px; background: var(--bg); color: var(--text); outline: none; }
 .pend-edit-date, .pend-edit-assignee { padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-xs); font-family: var(--font); font-size: 12px; background: var(--bg); color: var(--text); margin-left: 6px; }
 .pend-text { display: flex; align-items: center; gap: 4px; }
@@ -3419,12 +3420,11 @@ function _pendDueLabel(due){
   var d=new Date(due+'T00:00:00');
   var today=new Date();today.setHours(0,0,0,0);
   var diff=Math.round((d-today)/(1000*60*60*24));
-  var cls='pend-due';
-  if(diff<0)cls+=' pend-overdue';
-  else if(diff===0)cls+=' pend-today';
-  else if(diff<=3)cls+=' pend-soon';
+  var color='green';
+  if(diff<0)color='red';
+  else if(diff<=3)color='orange';
   var label=d.toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit',year:'numeric'});
-  return '<span class="'+cls+'">'+label+'</span>';
+  return '<span class="pend-due pend-due-'+color+'"><span class="pend-due-dot"></span>'+label+'</span>';
 }
 
 window.showPendenzenView=function(type){
