@@ -605,6 +605,41 @@ body {
 .pend-btn-project { background: var(--surface2); color: var(--text2); border-color: var(--border); }
 .pend-btn-project:hover { background: #fff3e0; color: var(--orange); border-color: var(--orange); }
 .pend-btn-project.active { background: #fff3e0; color: var(--orange); border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }
+.pend-btn-ferien { background: var(--surface2); color: var(--text2); border-color: var(--border); }
+.pend-btn-ferien:hover { background: #fce7f3; color: #be185d; border-color: #be185d; }
+.pend-btn-ferien.active { background: #fce7f3; color: #be185d; border-color: #be185d; box-shadow: 0 0 0 1px #be185d; }
+
+/* ─── FERIENKALENDER ─── */
+.ferien-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.ferien-title { font-size: 18px; font-weight: 700; color: var(--text); }
+.ferien-nav { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.ferien-nav button { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.ferien-nav button:hover { background: var(--surface2); }
+.ferien-month { font-size: 15px; font-weight: 600; min-width: 160px; text-align: center; }
+.ferien-grid { display: grid; grid-template-columns: 140px repeat(var(--days),1fr); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; font-size: 12px; }
+.ferien-corner { background: var(--surface2); padding: 8px; font-weight: 600; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
+.ferien-day-header { background: var(--surface2); padding: 6px 2px; text-align: center; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); font-weight: 600; color: var(--text3); }
+.ferien-day-header.weekend { background: #fef2f2; color: #b91c1c; }
+.ferien-day-header.today { background: var(--orange); color: #fff; }
+.ferien-user-label { padding: 8px 10px; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); display: flex; align-items: center; gap: 8px; background: var(--bg); font-weight: 600; font-size: 12px; white-space: nowrap; }
+.ferien-cell { border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); position: relative; min-height: 32px; cursor: default; }
+.ferien-cell.weekend { background: #fef2f2; }
+.ferien-cell.today { background: rgba(232,96,10,0.06); }
+.ferien-cell.vacation { background: #dbeafe; }
+.ferien-cell.vacation-own { background: #bfdbfe; cursor: pointer; }
+.ferien-cell.vacation-own:hover { background: #93c5fd; }
+.ferien-cell.selectable { cursor: pointer; }
+.ferien-cell.selectable:hover { background: rgba(59,130,246,0.1); }
+.ferien-legend { display: flex; gap: 16px; margin-top: 16px; font-size: 12px; color: var(--text3); align-items: center; }
+.ferien-legend-dot { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-right: 4px; }
+.ferien-add-row { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+.ferien-add-row label { font-size: 13px; font-weight: 600; color: var(--text2); }
+.ferien-add-row input { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: var(--bg); color: var(--text); font-family: var(--font); }
+.ferien-add-row button { padding: 7px 16px; border: none; border-radius: 6px; background: var(--orange); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); }
+.ferien-my-list { margin-top: 20px; }
+.ferien-my-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--surface); border-radius: 6px; margin-bottom: 4px; }
+.ferien-my-item span { flex: 1; font-size: 13px; }
+.ferien-my-item button { border: none; background: none; color: var(--red); cursor: pointer; font-size: 16px; }
 .pend-section { margin-bottom: 28px; }
 .pend-section-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 .pend-section-title .pend-badge { font-size: 11px; font-weight: 600; background: var(--surface2); color: var(--text3); border-radius: 10px; padding: 2px 8px; }
@@ -1893,6 +1928,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     <div class="sidebar-pend-btns" id="sidebarPendBtns" style="display:none;">
       <button class="sidebar-pend-btn pend-btn-my" id="myPendBtn" onclick="showPendenzenView('my')">Meine Pendenzen</button>
       <button class="sidebar-pend-btn pend-btn-project" id="projektPendBtn" onclick="showPendenzenView('project')" style="display:none;">Jour Fixe</button>
+      <button class="sidebar-pend-btn pend-btn-ferien" id="ferienBtn" onclick="showFerienView()" style="display:none;">Ferienkalender</button>
     </div>
     <div class="sidebar-user" id="currentUserDisplay" style="display:none;"></div>
     <div class="sidebar-bottom">
@@ -1973,6 +2009,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <div id="ganttView" style="display:none;height:100%;overflow:hidden;"></div>
       <div id="pendenzenView" style="display:none;overflow:auto;padding:20px 24px;"></div>
       <div id="projektPendenzenView" style="display:none;overflow:auto;padding:20px 24px;"></div>
+      <div id="ferienView" style="display:none;overflow:auto;padding:20px 24px;"></div>
     </div>
   </div>
 </div>
@@ -2902,9 +2939,9 @@ function showApp(){
   var lastPid=sGet('lastPid_'+S.currentUser.username,null);
   if(lastPid){
     var d=sGet('p_'+lastPid,null);
-    if(d){loadProject(lastPid);if(S.view.indexOf('pendenzen')===0){$('emptyState').style.display='none';renderView();}return;}
+    if(d){loadProject(lastPid);if(S.view.indexOf('pendenzen')===0||S.view==='ferien'){$('emptyState').style.display='none';renderView();}return;}
   }
-  if(S.view.indexOf('pendenzen')===0){$('emptyState').style.display='none';renderView();return;}
+  if(S.view.indexOf('pendenzen')===0||S.view==='ferien'){$('emptyState').style.display='none';renderView();return;}
   // No saved project — check if daily project picker should show
   var today=new Date().toISOString().substring(0,10);
   var lastPickerDate=sGet('lastPickerDate','');
@@ -2995,6 +3032,8 @@ function updateUserDisplay(){
 function updateProjektPendBtn(){
   var btn=$('projektPendBtn');
   if(btn) btn.style.display=S.pid?'':'none';
+  var fb=$('ferienBtn');
+  if(fb) fb.style.display=S.pid?'':'none';
 }
 
 $('loginForm').addEventListener('submit',function(e){
@@ -3642,6 +3681,7 @@ function renderView(){
   $('ganttView').style.display='none';
   $('pendenzenView').style.display='none';
   $('projektPendenzenView').style.display='none';
+  $('ferienView').style.display='none';
   $('filterBar').style.display='none';
   $('contentArea').style.overflow='auto';
   if(S.view==='pendenzen_my'){
@@ -3652,6 +3692,10 @@ function renderView(){
     $('kpiStrip').style.display='none';
     $('projektPendenzenView').style.display='block';
     renderProjectPendenzenView();
+  }else if(S.view==='ferien'){
+    $('kpiStrip').style.display='none';
+    $('ferienView').style.display='block';
+    renderFerien();
   }else{
     if(S.pid)$('kpiStrip').style.display='grid';
     if(S.view==='dashboard'){
@@ -3716,9 +3760,10 @@ window.showPendenzenView=function(type){
   renderView();
 };
 function _updatePendBtnActive(){
-  var mb=$('myPendBtn'),pb=$('projektPendBtn');
+  var mb=$('myPendBtn'),pb=$('projektPendBtn'),fb=$('ferienBtn');
   if(mb) mb.classList.toggle('active',S.view==='pendenzen_my');
   if(pb) pb.classList.toggle('active',S.view==='pendenzen_project');
+  if(fb) fb.classList.toggle('active',S.view==='ferien');
 }
 
 function renderMyPendenzen(){
@@ -4245,6 +4290,185 @@ window.editProjectPendenz=function(id){
     if(card.contains(e.relatedTarget))return;
     setTimeout(save,100);
   });
+};
+
+/* ─── FERIENKALENDER ─── */
+var _ferienMonth=new Date().getMonth(),_ferienYear=new Date().getFullYear();
+
+window.showFerienView=function(){
+  document.querySelectorAll('.sidebar-tab').forEach(function(x){x.classList.remove('active');});
+  S.view='ferien';
+  sSet('lastView_'+(S.currentUser?S.currentUser.username:''),S.view);
+  $('emptyState').style.display='none';
+  _updatePendBtnActive();
+  renderView();
+};
+
+function _getFerien(pid){
+  if(!pid)return[];
+  var d=sGet('p_'+pid,{});
+  return d.ferien||[];
+}
+function _saveFerien(pid,list){
+  if(!pid)return;
+  var d=sGet('p_'+pid,{});
+  d.ferien=list;
+  sSet('p_'+pid,d);
+}
+
+function renderFerien(){
+  var c=$('ferienView');
+  if(!S.pid){
+    c.innerHTML='<div class="ferien-title">Ferienkalender</div><div class="pend-empty">W\u00e4hle ein Projekt, um den Ferienkalender zu sehen</div>';
+    return;
+  }
+  var d=sGet('p_'+S.pid,{});
+  var projectUsers=d.users||[];
+  var ferien=_getFerien(S.pid);
+  var me=S.currentUser?S.currentUser.username:'';
+  var year=_ferienYear,month=_ferienMonth;
+  var daysInMonth=new Date(year,month+1,0).getDate();
+  var monthNames=['Januar','Februar','M\u00e4rz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  var dayNames=['Mo','Di','Mi','Do','Fr','Sa','So'];
+  var today=new Date();today.setHours(0,0,0,0);
+
+  var html='<div class="ferien-header">';
+  html+='<div class="ferien-title">Ferienkalender</div>';
+  html+='<div class="ferien-nav">';
+  html+='<button onclick="ferienPrev()">&#8249;</button>';
+  html+='<div class="ferien-month">'+monthNames[month]+' '+year+'</div>';
+  html+='<button onclick="ferienNext()">&#8250;</button>';
+  html+='</div></div>';
+
+  // My vacation add row
+  html+='<div class="ferien-add-row">';
+  html+='<label>Meine Ferien:</label>';
+  html+='<input type="date" id="ferienVon" title="Von">';
+  html+='<span style="color:var(--text3);">bis</span>';
+  html+='<input type="date" id="ferienBis" title="Bis">';
+  html+='<button onclick="addFerien()">Eintragen</button>';
+  html+='</div>';
+
+  // Calendar grid
+  html+='<div class="ferien-grid" style="--days:'+daysInMonth+';">';
+  // Header row
+  html+='<div class="ferien-corner"></div>';
+  for(var day=1;day<=daysInMonth;day++){
+    var dt=new Date(year,month,day);
+    var dow=dt.getDay();
+    var isWeekend=dow===0||dow===6;
+    var isToday=dt.getTime()===today.getTime();
+    var cls='ferien-day-header';
+    if(isWeekend)cls+=' weekend';
+    if(isToday)cls+=' today';
+    html+='<div class="'+cls+'">'+day+'<br><span style="font-size:10px;">'+dayNames[(dow+6)%7]+'</span></div>';
+  }
+
+  // User rows
+  projectUsers.forEach(function(uname){
+    var u=findUser(uname);
+    var dn=u?getUserDisplayName(u):uname;
+    var ini=u?getUserInitials(u):'?';
+    html+='<div class="ferien-user-label">'+renderAvatar(u||{username:uname,displayName:uname},20)+' '+esc(dn)+'</div>';
+    for(var day=1;day<=daysInMonth;day++){
+      var dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+      var dt=new Date(year,month,day);
+      var dow=dt.getDay();
+      var isWeekend=dow===0||dow===6;
+      var isToday=dt.getTime()===today.getTime();
+      // Check if this date is within any vacation for this user
+      var isVacation=ferien.some(function(f){return f.user===uname&&dateStr>=f.von&&dateStr<=f.bis;});
+      var isOwn=uname===me&&isVacation;
+      var cls='ferien-cell';
+      if(isWeekend)cls+=' weekend';
+      if(isToday)cls+=' today';
+      if(isVacation)cls+=' vacation';
+      if(isOwn)cls+=' vacation-own';
+      if(uname===me&&!isVacation)cls+=' selectable';
+      var onclick=isOwn?'onclick="removeFerienDay(\''+dateStr+'\')"':'';
+      html+='<div class="'+cls+'" '+onclick+' title="'+(isVacation?esc(dn)+' \u2013 Ferien':dateStr)+'"></div>';
+    }
+  });
+
+  html+='</div>';
+
+  // Legend
+  html+='<div class="ferien-legend">';
+  html+='<span><span class="ferien-legend-dot" style="background:#bfdbfe;"></span>Meine Ferien</span>';
+  html+='<span><span class="ferien-legend-dot" style="background:#dbeafe;"></span>Team-Ferien</span>';
+  html+='<span><span class="ferien-legend-dot" style="background:#fef2f2;"></span>Wochenende</span>';
+  html+='</div>';
+
+  // My vacations list
+  var myFerien=ferien.filter(function(f){return f.user===me;});
+  if(myFerien.length){
+    html+='<div class="ferien-my-list">';
+    html+='<div style="font-size:13px;font-weight:600;margin-bottom:8px;">Meine eingetragenen Ferien:</div>';
+    myFerien.forEach(function(f,fi){
+      var vonD=f.von.split('-');var bisD=f.bis.split('-');
+      html+='<div class="ferien-my-item">';
+      html+='<span>'+vonD[2]+'.'+vonD[1]+'.'+vonD[0]+' \u2013 '+bisD[2]+'.'+bisD[1]+'.'+bisD[0]+'</span>';
+      html+='<button onclick="deleteFerien(\''+f.id+'\')" title="L\u00f6schen">&times;</button>';
+      html+='</div>';
+    });
+    html+='</div>';
+  }
+
+  c.innerHTML=html;
+}
+
+window.ferienPrev=function(){_ferienMonth--;if(_ferienMonth<0){_ferienMonth=11;_ferienYear--;}renderFerien();};
+window.ferienNext=function(){_ferienMonth++;if(_ferienMonth>11){_ferienMonth=0;_ferienYear++;}renderFerien();};
+
+window.addFerien=function(){
+  if(!S.pid||!S.currentUser)return;
+  var von=$('ferienVon').value;
+  var bis=$('ferienBis').value;
+  if(!von||!bis){alert('Bitte Von- und Bis-Datum eingeben.');return;}
+  if(bis<von){alert('Bis-Datum muss nach Von-Datum liegen.');return;}
+  var list=_getFerien(S.pid);
+  list.push({id:'fer_'+Date.now(),user:S.currentUser.username,von:von,bis:bis});
+  _saveFerien(S.pid,list);
+  renderFerien();
+};
+
+window.deleteFerien=function(id){
+  if(!S.pid||!S.currentUser)return;
+  var list=_getFerien(S.pid).filter(function(f){
+    return!(f.id===id&&f.user===S.currentUser.username);
+  });
+  _saveFerien(S.pid,list);
+  renderFerien();
+};
+
+window.removeFerienDay=function(dateStr){
+  if(!S.pid||!S.currentUser)return;
+  var me=S.currentUser.username;
+  var list=_getFerien(S.pid);
+  // Find the vacation entry that covers this date
+  var entry=list.find(function(f){return f.user===me&&dateStr>=f.von&&dateStr<=f.bis;});
+  if(!entry)return;
+  // If single day, just delete
+  if(entry.von===entry.bis){
+    list=list.filter(function(f){return f.id!==entry.id;});
+  }else if(dateStr===entry.von){
+    // Shrink from start
+    var next=new Date(dateStr+'T00:00:00');next.setDate(next.getDate()+1);
+    entry.von=next.toISOString().substring(0,10);
+  }else if(dateStr===entry.bis){
+    // Shrink from end
+    var prev=new Date(dateStr+'T00:00:00');prev.setDate(prev.getDate()-1);
+    entry.bis=prev.toISOString().substring(0,10);
+  }else{
+    // Split into two
+    var newEnd=new Date(dateStr+'T00:00:00');newEnd.setDate(newEnd.getDate()-1);
+    var newStart=new Date(dateStr+'T00:00:00');newStart.setDate(newStart.getDate()+1);
+    var oldBis=entry.bis;
+    entry.bis=newEnd.toISOString().substring(0,10);
+    list.push({id:'fer_'+Date.now(),user:me,von:newStart.toISOString().substring(0,10),bis:oldBis});
+  }
+  _saveFerien(S.pid,list);
+  renderFerien();
 };
 
 /* ─── DASHBOARD PANELS ─── */
