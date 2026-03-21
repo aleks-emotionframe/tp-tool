@@ -486,6 +486,30 @@ body {
 .changelog-list li.tag-fix { border-left-color: #92400e; }
 @keyframes clSlideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes clBounce { 0% { transform: scale(0) rotate(-15deg); } 60% { transform: scale(1.2) rotate(5deg); } 100% { transform: scale(1) rotate(0); } }
+@keyframes clIconPop { 0% { transform: scale(0); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
+@keyframes clTextUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+.cl-modal { max-width: 480px; padding: 0 !important; overflow: hidden; position: relative; border-radius: 16px !important; }
+.cl-modal-close { position: absolute; top: 12px; right: 14px; background: none; border: none; font-size: 22px; color: var(--text3); cursor: pointer; z-index: 2; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.cl-modal-close:hover { background: var(--surface2); color: var(--text); }
+.cl-slide { text-align: center; padding: 40px 36px 28px; }
+.cl-slide-icon { font-size: 56px; margin-bottom: 16px; animation: clIconPop .5s ease both; }
+.cl-slide-tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 12px; border-radius: 12px; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 14px; animation: clTextUp .4s ease .15s both; }
+.cl-slide-tag.neu { background: #dcfce7; color: #166534; }
+.cl-slide-tag.update { background: #dbeafe; color: #1e40af; }
+.cl-slide-tag.fix { background: #fef3c7; color: #92400e; }
+.cl-slide-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 10px; line-height: 1.3; animation: clTextUp .4s ease .25s both; }
+.cl-slide-desc { font-size: 14px; color: var(--text3); line-height: 1.6; animation: clTextUp .4s ease .35s both; }
+.cl-slide-visual { width: 100%; height: 140px; margin: 20px 0 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; animation: clTextUp .4s ease .4s both; position: relative; overflow: hidden; }
+.cl-nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px 20px; border-top: 1px solid var(--border); }
+.cl-nav-dots { display: flex; gap: 6px; }
+.cl-nav-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); cursor: pointer; transition: var(--transition); border: none; padding: 0; }
+.cl-nav-dot.active { background: var(--orange); width: 20px; border-radius: 4px; }
+.cl-nav-btn { padding: 8px 20px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: var(--transition); }
+.cl-nav-prev { background: var(--surface2); color: var(--text2); }
+.cl-nav-prev:hover { background: var(--surface); }
+.cl-nav-next { background: var(--orange); color: #fff; }
+.cl-nav-next:hover { opacity: .85; }
+.cl-counter { font-size: 12px; color: var(--text3); }
 .changelog-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
 .changelog-bell { position: relative; background: none; border: none; cursor: pointer; font-size: 20px; padding: 4px 8px; color: var(--text3); transition: color .2s; }
 .changelog-bell:hover { color: var(--text); }
@@ -2093,15 +2117,9 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 
 <!-- CHANGELOG MODAL -->
 <div class="modal-bg" id="changelogModal">
-  <div class="modal" style="max-width:520px;max-height:80vh;display:flex;flex-direction:column;padding:28px 32px;">
-    <div style="text-align:center;margin-bottom:20px;">
-      <div style="font-size:36px;margin-bottom:8px;animation:clBounce .6s ease;">&#128640;</div>
-      <h3 style="margin:0;font-size:20px;">Was ist neu?</h3>
-      <p style="margin:6px 0 0;font-size:13px;color:var(--text3);">Hier sind die neuesten Verbesserungen</p>
-    </div>
-    <div id="changelogContent" style="overflow-y:auto;flex:1;padding-right:4px;"></div>
-    <div style="margin-top:20px;text-align:center;">
-      <button class="btn-primary" onclick="closeChangelog()" style="padding:10px 32px;font-size:14px;border-radius:8px;">Verstanden</button>
+  <div class="modal cl-modal">
+    <button class="cl-modal-close" onclick="closeChangelog()">&times;</button>
+    <div id="changelogContent"></div>
     </div>
   </div>
 </div>
@@ -2455,17 +2473,91 @@ function getChangelogVersion(){
   return pub.length+'_'+Math.max.apply(null,pub.map(function(p){return p.publishedAt||0;}));
 }
 
+var _clSlideIdx=0,_clSlides=[];
+
+function _clIcon(text){
+  var t=text.toLowerCase();
+  if(t.indexOf('suche')>-1)return '&#128269;';
+  if(t.indexOf('pendenz')>-1||t.indexOf('jour fixe')>-1||t.indexOf('kanban')>-1)return '&#128203;';
+  if(t.indexOf('spalte')>-1||t.indexOf('drag')>-1)return '&#128296;';
+  if(t.indexOf('bild')>-1||t.indexOf('foto')>-1)return '&#128247;';
+  if(t.indexOf('profil')>-1||t.indexOf('k\u00fcrzel')>-1||t.indexOf('avatar')>-1)return '&#128100;';
+  if(t.indexOf('berechtigung')>-1||t.indexOf('rolle')>-1)return '&#128274;';
+  if(t.indexOf('projekt')>-1)return '&#128193;';
+  if(t.indexOf('ansicht')>-1||t.indexOf('speicher')>-1)return '&#128190;';
+  if(t.indexOf('changelog')>-1||t.indexOf('glocke')>-1||t.indexOf('admin')>-1)return '&#128276;';
+  if(t.indexOf('fix')>-1||t.indexOf('fehler')>-1)return '&#128295;';
+  if(t.indexOf('update')>-1)return '&#9889;';
+  return '&#10024;';
+}
+
+function _clVisualColor(tag){
+  if(tag==='neu')return 'linear-gradient(135deg,#dcfce7,#bbf7d0)';
+  if(tag==='fix')return 'linear-gradient(135deg,#fef3c7,#fde68a)';
+  return 'linear-gradient(135deg,#dbeafe,#bfdbfe)';
+}
+
+function _clSplitText(text){
+  var dash=text.indexOf(' \u2013 ');
+  if(dash>-1)return{title:text.substring(0,dash),desc:text.substring(dash+3)};
+  var colon=text.indexOf(' \u2014 ');
+  if(colon>-1)return{title:text.substring(0,colon),desc:text.substring(colon+3)};
+  return{title:text,desc:''};
+}
+
+function _renderClSlide(){
+  if(!_clSlides.length)return;
+  var item=_clSlides[_clSlideIdx];
+  var parts=_clSplitText(item.text);
+  var icon=_clIcon(item.text);
+  var total=_clSlides.length;
+  var isLast=_clSlideIdx===total-1;
+  var isFirst=_clSlideIdx===0;
+
+  var html='<div class="cl-slide" key="'+_clSlideIdx+'">';
+  html+='<div class="cl-slide-icon">'+icon+'</div>';
+  html+='<div class="cl-slide-tag '+item.tag+'">'+esc(item.tag)+'</div>';
+  html+='<div class="cl-slide-title">'+esc(parts.title)+'</div>';
+  if(parts.desc)html+='<div class="cl-slide-desc">'+esc(parts.desc)+'</div>';
+  html+='<div class="cl-slide-visual" style="background:'+_clVisualColor(item.tag)+'">';
+  html+='<span style="font-size:80px;opacity:.15;">'+icon+'</span>';
+  html+='</div>';
+  html+='</div>';
+
+  // Navigation
+  html+='<div class="cl-nav">';
+  if(!isFirst){
+    html+='<button class="cl-nav-btn cl-nav-prev" onclick="clNavPrev()">&#8592; Zur\u00fcck</button>';
+  }else{
+    html+='<span></span>';
+  }
+  html+='<div class="cl-nav-dots">';
+  for(var i=0;i<total;i++){
+    html+='<button class="cl-nav-dot'+(i===_clSlideIdx?' active':'')+'" onclick="clNavTo('+i+')"></button>';
+  }
+  html+='</div>';
+  if(isLast){
+    html+='<button class="cl-nav-btn cl-nav-next" onclick="closeChangelog()">Verstanden &#10003;</button>';
+  }else{
+    html+='<button class="cl-nav-btn cl-nav-next" onclick="clNavNext()">Weiter &#8594;</button>';
+  }
+  html+='</div>';
+
+  $('changelogContent').innerHTML=html;
+}
+
 function showChangelog(){
   var pub=getPublishedChangelog();
   if(!pub.length)return;
-  var html='<ul class="changelog-list">';
-  pub.forEach(function(item){
-    html+='<li class="tag-'+item.tag+'"><span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>'+esc(item.text)+'</li>';
-  });
-  html+='</ul>';
-  $('changelogContent').innerHTML=html;
+  _clSlides=pub;
+  _clSlideIdx=0;
+  _renderClSlide();
   $('changelogModal').classList.add('show');
 }
+
+window.clNavNext=function(){if(_clSlideIdx<_clSlides.length-1){_clSlideIdx++;_renderClSlide();}};
+window.clNavPrev=function(){if(_clSlideIdx>0){_clSlideIdx--;_renderClSlide();}};
+window.clNavTo=function(i){_clSlideIdx=i;_renderClSlide();};
 
 window.closeChangelog=function(){
   $('changelogModal').classList.remove('show');
@@ -2680,12 +2772,9 @@ window.clPreviewAll=function(){
   var cl=getChangelog();
   var staged=cl.filter(function(v){return v.published&&!v.locked;});
   if(!staged.length){alert('Keine Eintr\u00e4ge zum Vorschauen.');return;}
-  var html='<ul class="changelog-list">';
-  staged.forEach(function(item){
-    html+='<li class="tag-'+item.tag+'"><span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>'+esc(item.text)+'</li>';
-  });
-  html+='</ul>';
-  $('changelogContent').innerHTML=html;
+  _clSlides=staged;
+  _clSlideIdx=0;
+  _renderClSlide();
   $('changelogModal').classList.add('show');
 };
 
