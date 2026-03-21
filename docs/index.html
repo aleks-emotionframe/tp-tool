@@ -662,7 +662,11 @@ body {
 .pend-item:hover .pend-delete { opacity: 1; }
 .pend-item .pend-delete:hover { background: var(--red); color: #fff; }
 .pend-empty { font-size: 13px; color: var(--text3); padding: 12px; text-align: center; }
-.pend-folder { margin-bottom: 12px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.pend-folders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+@media(max-width:900px){.pend-folders-grid{grid-template-columns:1fr;}}
+.pend-folder { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; cursor: grab; transition: box-shadow .15s, opacity .15s; }
+.pend-folder.folder-dragging { opacity: .4; }
+.pend-folder.folder-drag-over { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(232,96,10,0.2); }
 .pend-folder-header { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; user-select: none; font-size: 13px; font-weight: 600; background: var(--surface); }
 .pend-folder-header:hover { background: var(--surface2); }
 .pend-folder-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
@@ -3867,34 +3871,38 @@ function renderMyPendenzen(){
     html+='<div class="pend-empty pend-folder-drop" data-folder="">Keine Pendenzen vorhanden</div>';
   }
 
-  // Folders
-  folders.forEach(function(f){
-    var items=my.filter(function(p){return p.folder===f.id;});
-    var openCount=items.filter(function(p){return!p.done;}).length;
-    html+='<div class="pend-folder">';
-    html+='<div class="pend-folder-header" onclick="toggleMyFolder(\''+f.id+'\')">';
-    html+='<span class="pend-folder-chevron">'+(f.collapsed?'&#9654;':'&#9660;')+'</span>';
-    html+='<span class="pend-folder-dot" style="background:'+esc(f.color||'#3b82f6')+';"></span>';
-    html+='<span class="pend-folder-name">'+esc(f.name)+'</span>';
-    html+='<span class="pend-folder-count">'+openCount+'</span>';
-    html+='<div class="pend-folder-actions" onclick="event.stopPropagation()">';
-    html+='<button onclick="renameMyFolder(\''+f.id+'\')" title="Umbenennen">&#9998;</button>';
-    html+='<button onclick="colorMyFolder(\''+f.id+'\')" title="Farbe">&#127912;</button>';
-    html+='<button class="fd-del" onclick="deleteMyFolder(\''+f.id+'\')" title="L\u00f6schen">&times;</button>';
-    html+='</div></div>';
-    if(!f.collapsed){
-      html+='<div class="pend-folder-body pend-folder-drop" data-folder="'+f.id+'">';
-      if(items.length){
-        html+='<ul class="pend-list">';
-        items.forEach(function(p){html+=_renderMyPendItem(p);});
-        html+='</ul>';
-      }else{
-        html+='<div class="pend-empty" style="padding:8px;">Leer \u2013 Pendenzen hierher ziehen</div>';
+  // Folders in 2-column grid
+  if(folders.length){
+    html+='<div class="pend-folders-grid">';
+    folders.forEach(function(f,fi){
+      var items=my.filter(function(p){return p.folder===f.id;});
+      var openCount=items.filter(function(p){return!p.done;}).length;
+      html+='<div class="pend-folder" draggable="true" data-folder-idx="'+fi+'">';
+      html+='<div class="pend-folder-header" onclick="toggleMyFolder(\''+f.id+'\')">';
+      html+='<span class="pend-folder-chevron">'+(f.collapsed?'&#9654;':'&#9660;')+'</span>';
+      html+='<span class="pend-folder-dot" style="background:'+esc(f.color||'#3b82f6')+';"></span>';
+      html+='<span class="pend-folder-name">'+esc(f.name)+'</span>';
+      html+='<span class="pend-folder-count">'+openCount+'</span>';
+      html+='<div class="pend-folder-actions" onclick="event.stopPropagation()">';
+      html+='<button onclick="renameMyFolder(\''+f.id+'\')" title="Umbenennen">&#9998;</button>';
+      html+='<button onclick="colorMyFolder(\''+f.id+'\')" title="Farbe">&#127912;</button>';
+      html+='<button class="fd-del" onclick="deleteMyFolder(\''+f.id+'\')" title="L\u00f6schen">&times;</button>';
+      html+='</div></div>';
+      if(!f.collapsed){
+        html+='<div class="pend-folder-body pend-folder-drop" data-folder="'+f.id+'">';
+        if(items.length){
+          html+='<ul class="pend-list">';
+          items.forEach(function(p){html+=_renderMyPendItem(p);});
+          html+='</ul>';
+        }else{
+          html+='<div class="pend-empty" style="padding:8px;">Leer \u2013 Pendenzen hierher ziehen</div>';
+        }
+        html+='</div>';
       }
       html+='</div>';
-    }
+    });
     html+='</div>';
-  });
+  }
 
   // Add folder button
   html+='<div class="pend-folder-add" onclick="addMyFolder()">+ Neuer Ordner</div>';
@@ -3904,17 +3912,20 @@ function renderMyPendenzen(){
 }
 
 function _initMyPendDrag(){
-  var dragId=null;
+  var dragId=null,dragFolderIdx=null;
+  // Pendenz item drag
   document.querySelectorAll('#pendenzenView .pend-item[draggable]').forEach(function(el){
     el.addEventListener('dragstart',function(e){
-      dragId=el.dataset.id;
+      dragId=el.dataset.id;dragFolderIdx=null;
       el.style.opacity='.4';
       e.dataTransfer.effectAllowed='move';
+      e.stopPropagation();
     });
     el.addEventListener('dragend',function(){el.style.opacity='';dragId=null;});
   });
+  // Drop zones for pendenz items
   document.querySelectorAll('.pend-folder-drop').forEach(function(zone){
-    zone.addEventListener('dragover',function(e){e.preventDefault();zone.classList.add('drop-over');});
+    zone.addEventListener('dragover',function(e){e.preventDefault();if(dragId)zone.classList.add('drop-over');});
     zone.addEventListener('dragleave',function(e){if(!zone.contains(e.relatedTarget))zone.classList.remove('drop-over');});
     zone.addEventListener('drop',function(e){
       e.preventDefault();zone.classList.remove('drop-over');
@@ -3927,22 +3938,57 @@ function _initMyPendDrag(){
       dragId=null;
     });
   });
-  // Also allow drop on folder headers
+  // Drop on folder headers for pendenz items
   document.querySelectorAll('.pend-folder-header').forEach(function(hdr){
     var folder=hdr.parentElement;
     var fid=folder.querySelector('.pend-folder-drop');
-    if(!fid)return;
-    hdr.addEventListener('dragover',function(e){e.preventDefault();hdr.style.background='rgba(232,96,10,0.1)';});
+    hdr.addEventListener('dragover',function(e){e.preventDefault();if(dragId)hdr.style.background='rgba(232,96,10,0.1)';});
     hdr.addEventListener('dragleave',function(){hdr.style.background='';});
     hdr.addEventListener('drop',function(e){
       e.preventDefault();hdr.style.background='';
-      if(!dragId)return;
-      var folderId=fid.dataset.folder;
-      var list=getMyPendenzen();
-      list.forEach(function(p){if(p.id===dragId)p.folder=folderId||'';});
-      saveMyPendenzen(list);
-      renderMyPendenzen();
-      dragId=null;
+      if(dragId&&fid){
+        var folderId=fid.dataset.folder;
+        var list=getMyPendenzen();
+        list.forEach(function(p){if(p.id===dragId)p.folder=folderId||'';});
+        saveMyPendenzen(list);
+        renderMyPendenzen();
+        dragId=null;
+      }
+    });
+  });
+  // Folder drag to reorder
+  document.querySelectorAll('.pend-folder[draggable]').forEach(function(el){
+    el.addEventListener('dragstart',function(e){
+      if(dragId)return;
+      dragFolderIdx=parseInt(el.dataset.folderIdx);
+      el.classList.add('folder-dragging');
+      e.dataTransfer.effectAllowed='move';
+    });
+    el.addEventListener('dragend',function(){
+      el.classList.remove('folder-dragging');
+      document.querySelectorAll('.pend-folder').forEach(function(f){f.classList.remove('folder-drag-over');});
+      dragFolderIdx=null;
+    });
+    el.addEventListener('dragover',function(e){
+      e.preventDefault();
+      if(dragFolderIdx!==null)el.classList.add('folder-drag-over');
+    });
+    el.addEventListener('dragleave',function(e){
+      if(!el.contains(e.relatedTarget))el.classList.remove('folder-drag-over');
+    });
+    el.addEventListener('drop',function(e){
+      e.preventDefault();
+      el.classList.remove('folder-drag-over');
+      if(dragFolderIdx===null)return;
+      var targetIdx=parseInt(el.dataset.folderIdx);
+      if(dragFolderIdx!==targetIdx){
+        var folders=getMyFolders();
+        var moved=folders.splice(dragFolderIdx,1)[0];
+        folders.splice(targetIdx,0,moved);
+        saveMyFolders(folders);
+        renderMyPendenzen();
+      }
+      dragFolderIdx=null;
     });
   });
 }
