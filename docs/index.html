@@ -541,7 +541,14 @@ body {
   box-shadow: 0 2px 8px rgba(232,96,10,0.3);
 }
 /* ─── PENDENZEN ─── */
-.sidebar-pend-btns { padding: 0 16px 8px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--border); padding-top: 12px; margin-top: auto; }
+.sidebar-pend-btns { padding: 0 16px 8px; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--border); padding-top: 12px; margin-top: auto; }
+.sidebar-pend-btn { padding: 9px 14px; border: 2px solid transparent; border-radius: var(--radius-xs); font-family: var(--font); font-size: 12px; font-weight: 600; cursor: pointer; transition: var(--transition); text-align: left; }
+.pend-btn-my { background: var(--surface2); color: var(--text2); border-color: var(--border); }
+.pend-btn-my:hover { background: #e8f0fe; color: #1a73e8; border-color: #1a73e8; }
+.pend-btn-my.active { background: #e8f0fe; color: #1a73e8; border-color: #1a73e8; box-shadow: 0 0 0 1px #1a73e8; }
+.pend-btn-project { background: var(--surface2); color: var(--text2); border-color: var(--border); }
+.pend-btn-project:hover { background: #fff3e0; color: var(--orange); border-color: var(--orange); }
+.pend-btn-project.active { background: #fff3e0; color: var(--orange); border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }
 .pend-section { margin-bottom: 28px; }
 .pend-section-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 .pend-section-title .pend-badge { font-size: 11px; font-weight: 600; background: var(--surface2); color: var(--text3); border-radius: 10px; padding: 2px 8px; }
@@ -1787,8 +1794,8 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     </div>
     <div class="sidebar-projects" id="projectList"></div>
     <div class="sidebar-pend-btns" id="sidebarPendBtns" style="display:none;">
-      <button class="sidebar-btn" onclick="showPendenzenView('my')">Meine Pendenzen</button>
-      <button class="sidebar-btn" id="projektPendBtn" onclick="showPendenzenView('project')" style="display:none;">Projekt-Pendenzen</button>
+      <button class="sidebar-pend-btn pend-btn-my" id="myPendBtn" onclick="showPendenzenView('my')">Meine Pendenzen</button>
+      <button class="sidebar-pend-btn pend-btn-project" id="projektPendBtn" onclick="showPendenzenView('project')" style="display:none;">Jour Fixe</button>
     </div>
     <div class="sidebar-user" id="currentUserDisplay" style="display:none;"></div>
     <div class="sidebar-bottom">
@@ -2599,6 +2606,7 @@ function showApp(){
       b.classList.toggle('active',b.dataset.view===savedView);
     });
   }
+  _updatePendBtnActive();
   loadProjects();
   checkChangelog();
   // Restore last project
@@ -3333,6 +3341,7 @@ document.querySelectorAll('.sidebar-tab').forEach(function(b){
     this.classList.add('active');
     S.view=this.dataset.view;
     sSet('lastView_'+(S.currentUser?S.currentUser.username:''),S.view);
+    _updatePendBtnActive();
     if(S.pid)showEmpty(false);
   });
 });
@@ -3415,8 +3424,14 @@ window.showPendenzenView=function(type){
   S.view=type==='project'?'pendenzen_project':'pendenzen_my';
   sSet('lastView_'+(S.currentUser?S.currentUser.username:''),S.view);
   $('emptyState').style.display='none';
+  _updatePendBtnActive();
   renderView();
 };
+function _updatePendBtnActive(){
+  var mb=$('myPendBtn'),pb=$('projektPendBtn');
+  if(mb) mb.classList.toggle('active',S.view==='pendenzen_my');
+  if(pb) pb.classList.toggle('active',S.view==='pendenzen_project');
+}
 
 function renderMyPendenzen(){
   var c=$('pendenzenView');
@@ -3477,7 +3492,7 @@ function renderProjectPendenzenView(){
     groups[a].push(p);
   });
 
-  var html='<div class="pend-jour-fixe-title">'+esc(projectName)+' \u2013 Jour Fixe <span class="pend-badge" style="font-size:12px;vertical-align:middle;">'+pOpen+' offen</span></div>';
+  var html='<div class="pend-jour-fixe-title">Jour Fixe <span class="pend-badge" style="font-size:12px;vertical-align:middle;">'+pOpen+' offen</span></div>';
   // Add row
   html+='<div class="pend-add-row" style="margin-bottom:20px;">';
   html+='<input type="text" id="pendProjInput" placeholder="Neue Pendenz..." onkeydown="if(event.key===\'Enter\')addProjectPendenz()">';
