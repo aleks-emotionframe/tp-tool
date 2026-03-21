@@ -1943,12 +1943,12 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <div><label>Vorname *</label><input type="text" id="ueFirstName"></div>
       <div><label>Nachname *</label><input type="text" id="ueLastName"></div>
       <div><label>E-Mail Adresse *</label><input type="email" id="ueEmail"></div>
-      <div><label>Rolle</label>
+      <div id="ueRoleWrap"><label>Rolle</label>
         <select id="ueRole"></select>
       </div>
       <div><label>Firma</label><input type="text" id="ueFirma"></div>
       <div><label>Telefonnummer</label><input type="tel" id="uePhone"></div>
-      <div><label>Kürzel (Avatar)</label><input type="text" id="ueKuerzel" maxlength="3" placeholder="z.B. AB" style="text-transform:uppercase;"></div>
+      <div><label>Kürzel (Avatar) *</label><input type="text" id="ueKuerzel" maxlength="3" placeholder="z.B. AB" style="text-transform:uppercase;"></div>
       <div class="full-width"><label>Neues Passwort (leer lassen um nicht zu ändern)</label><input type="password" id="uePassword" placeholder="Neues Passwort..."></div>
     </div>
     <input type="hidden" id="ueOrigUsername">
@@ -5194,10 +5194,8 @@ window.openMyProfile=function(){
   $('ueFirstName').value=user.firstName||'';
   $('ueLastName').value=user.lastName||'';
   $('ueEmail').value=user.email||user.username||'';
-  var roleSelect=$('ueRole');
-  roleSelect.innerHTML='<option value="'+esc(user.role||'user')+'">'+esc(getRoleDisplay(user.role||'user'))+'</option>';
-  roleSelect.value=user.role||'user';
-  roleSelect.disabled=true;
+  $('ueRole').value=user.role||'user';
+  $('ueRoleWrap').style.display='none';
   $('ueFirma').value=user.firma||'';
   $('uePhone').value=user.phone||'';
   $('ueKuerzel').value=user.kuerzel||'';
@@ -5220,6 +5218,7 @@ window.openUserEdit=function(username){
   roleSelect.innerHTML=getRoles().map(function(r){return '<option value="'+esc(r.id)+'">'+esc(r.name)+'</option>';}).join('');
   roleSelect.value=user.role||'user';
   roleSelect.disabled=false;
+  $('ueRoleWrap').style.display='';
   $('ueFirma').value=user.firma||'';
   $('uePhone').value=user.phone||'';
   $('ueKuerzel').value=user.kuerzel||'';
@@ -5291,6 +5290,7 @@ window.saveUserEdit=function(){
   if(!fn){alert('Bitte Vorname eingeben');return;}
   if(!ln){alert('Bitte Nachname eingeben');return;}
   if(!email){alert('Bitte E-Mail Adresse eingeben');return;}
+  if(!kuerzel){alert('Bitte Kürzel eingeben');return;}
   var un=email;
   var users=getUsers();
   // Check username conflict
