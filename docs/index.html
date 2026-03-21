@@ -8223,23 +8223,24 @@ document.addEventListener('drop',function(e){
 });
 
 /* ─── INIT ─── */
-// Cache-bust: bump this version to force-clear all user data on next load
-var BT_DATA_VERSION='2026-03-21-v1';
+// Cache-bust: bump this version to clear UI caches (preserves user data)
+var BT_DATA_VERSION='2026-03-21-v2';
 (function(){
   var storedVer=localStorage.getItem('bt_data_version');
   if(storedVer!==BT_DATA_VERSION){
-    // Clear all bt_ keys from localStorage
+    // Only clear UI cache keys, NEVER delete user data (users, projects, pendenzen, etc.)
+    var protectedPatterns=['users','roles','p_','pendenzen_','pendFolders_','folders_','ferien_','idx','changelog','currentUser'];
     var toRemove=[];
     for(var i=0;i<localStorage.length;i++){
       var k=localStorage.key(i);
-      if(k.indexOf(PFX)===0)toRemove.push(k);
+      if(k.indexOf(PFX)!==0)continue;
+      var shortKey=k.substring(PFX.length);
+      var isProtected=protectedPatterns.some(function(pat){return shortKey.indexOf(pat)===0;});
+      if(!isProtected)toRemove.push(k);
     }
     toRemove.forEach(function(k){localStorage.removeItem(k);});
-    // Clear IndexedDB
-    try{indexedDB.deleteDatabase('bauterm_backup');}catch(e){}
-    _idb=null;
     localStorage.setItem('bt_data_version',BT_DATA_VERSION);
-    console.log('Cache cleared — data version updated to '+BT_DATA_VERSION);
+    console.log('UI cache cleared ('+toRemove.length+' keys) — data version '+BT_DATA_VERSION+'. User data preserved.');
   }
 })();
 // Restore from IndexedDB if localStorage was wiped, then boot
