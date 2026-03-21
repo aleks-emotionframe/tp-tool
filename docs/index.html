@@ -3827,7 +3827,7 @@ function _updatePendBtnActive(){
 }
 
 function _renderMyPendItem(p){
-  var html='<li class="pend-item'+(p.done?' done':'')+'" draggable="true" data-id="'+p.id+'">';
+  var html='<li class="pend-item'+(p.done?' done':'')+'" draggable="true" data-id="'+p.id+'" style="flex-wrap:wrap;">';
   html+='<div class="pend-check" onclick="toggleMyPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
   html+='<span class="pend-text" ondblclick="editMyPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
   html+=_pendDueLabel(p.due);
@@ -3843,7 +3843,17 @@ function _renderMyPendItem(p){
     if(!pu.length) html+='<div class="pend-move-option" style="color:var(--text3);cursor:default;">Keine Benutzer im Projekt</div>';
     html+='</div></div>';
   }
+  if(!p.done&&(!(p.images)||p.images.length<2)){
+    html+='<label class="pend-img-upload" style="opacity:.5;margin-left:0;padding:0 4px;" title="Bild hinzuf\u00fcgen">&#128247;<input type="file" accept="image/*" style="display:none;" onchange="uploadMyPendImage(\''+p.id+'\',this)"></label>';
+  }
   html+='<button class="pend-delete" onclick="deleteMyPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
+  if(p.images&&p.images.length){
+    html+='<div style="width:100%;display:flex;gap:6px;margin-top:4px;padding-left:28px;">';
+    p.images.forEach(function(img){
+      html+='<img src="'+esc(img)+'" class="pend-thumb" onclick="window.open(this.src)">';
+    });
+    html+='</div>';
+  }
   html+='</li>';
   return html;
 }
@@ -3855,10 +3865,12 @@ function renderMyPendenzen(){
   var myOpen=my.filter(function(p){return!p.done;}).length;
   var html='<div class="pend-section">';
   html+='<div class="pend-section-title">Meine Pendenzen <span class="pend-badge">'+myOpen+' offen</span></div>';
-  html+='<div class="pend-add-row">';
+  html+='<div class="pend-add-row" style="flex-wrap:wrap;">';
   html+='<input type="text" id="pendMyInput" placeholder="Neue Pendenz..." onkeydown="if(event.key===\'Enter\')addMyPendenz()">';
   html+='<input type="date" id="pendMyDue" title="F\u00e4lligkeitsdatum">';
+  html+='<label class="pend-add-img-btn" title="Bilder hinzuf\u00fcgen">&#128247; Bilder <input type="file" accept="image/*" multiple style="display:none;" onchange="previewAddMyImages(this)"></label>';
   html+='<button onclick="addMyPendenz()">Hinzuf\u00fcgen</button>';
+  html+='<div id="pendMyImgPreview" style="width:100%;display:flex;gap:8px;margin-top:4px;"></div>';
   html+='</div>';
 
   // Unsorted items (no folder)
@@ -4382,14 +4394,75 @@ function _initPendDragDrop(){
 }
 
 // --- My Pendenzen CRUD ---
+var _addMyPendImages=[];
+window.previewAddMyImages=function(input){
+  if(!input.files)return;
+  var files=Array.from(input.files).slice(0,2-_addMyPendImages.length);
+  files.forEach(function(file){
+    if(_addMyPendImages.length>=2)return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var img=new Image();
+      img.onload=function(){
+        var canvas=document.createElement('canvas');
+        var maxW=400,maxH=400,w=img.width,h=img.height;
+        if(w>maxW||h>maxH){var r=Math.min(maxW/w,maxH/h);w*=r;h*=r;}
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        _addMyPendImages.push(canvas.toDataURL('image/jpeg',0.7));
+        _renderAddMyImgPreview();
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+};
+function _renderAddMyImgPreview(){
+  var el=$('pendMyImgPreview');if(!el)return;
+  var html='';
+  _addMyPendImages.forEach(function(img,i){
+    html+='<div class="pend-add-img-preview"><img src="'+img+'" style="width:48px;height:48px;border-radius:4px;object-fit:cover;">';
+    html+='<button class="pend-add-img-remove" onclick="_addMyPendImages.splice('+i+',1);_renderAddMyImgPreview();">&times;</button></div>';
+  });
+  el.innerHTML=html;
+}
 window.addMyPendenz=function(){
   var inp=$('pendMyInput');if(!inp)return;
   var text=inp.value.trim();if(!text)return;
   var due=($('pendMyDue')||{}).value||'';
   var list=getMyPendenzen();
-  list.unshift({id:_pendId(),text:text,done:false,due:due,created:new Date().toISOString()});
+  var item={id:_pendId(),text:text,done:false,due:due,created:new Date().toISOString()};
+  if(_addMyPendImages.length)item.images=_addMyPendImages.slice(0,2);
+  list.unshift(item);
   saveMyPendenzen(list);
+  _addMyPendImages=[];
   renderMyPendenzen();
+};
+window.uploadMyPendImage=function(id,input){
+  if(!input.files||!input.files[0])return;
+  var file=input.files[0];
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var canvas=document.createElement('canvas');
+      var maxW=400,maxH=400,w=img.width,h=img.height;
+      if(w>maxW||h>maxH){var r=Math.min(maxW/w,maxH/h);w*=r;h*=r;}
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      var dataUrl=canvas.toDataURL('image/jpeg',0.7);
+      var list=getMyPendenzen();
+      var item=list.find(function(p){return p.id===id;});
+      if(!item)return;
+      if(!item.images)item.images=[];
+      if(item.images.length>=2)return;
+      item.images.push(dataUrl);
+      saveMyPendenzen(list);
+      renderMyPendenzen();
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
 };
 window.toggleMyPendenz=function(id){
   var list=getMyPendenzen();
