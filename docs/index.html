@@ -540,6 +540,29 @@ body {
   color: #fff;
   box-shadow: 0 2px 8px rgba(232,96,10,0.3);
 }
+/* ─── PENDENZEN ─── */
+.pend-section { margin-bottom: 28px; }
+.pend-section-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.pend-section-title .pend-badge { font-size: 11px; font-weight: 600; background: var(--surface2); color: var(--text3); border-radius: 10px; padding: 2px 8px; }
+.pend-add-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.pend-add-row input { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-xs); font-family: var(--font); font-size: 13px; background: var(--bg); color: var(--text); }
+.pend-add-row select { padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-xs); font-family: var(--font); font-size: 13px; background: var(--bg); color: var(--text); min-width: 120px; }
+.pend-add-row button { padding: 8px 16px; border: none; border-radius: var(--radius-xs); background: var(--orange); color: #fff; font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.pend-add-row button:hover { opacity: .85; }
+.pend-list { list-style: none; padding: 0; margin: 0; }
+.pend-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-xs); background: var(--surface); margin-bottom: 4px; transition: var(--transition); }
+.pend-item:hover { background: var(--surface2); }
+.pend-item.done { opacity: .5; }
+.pend-item .pend-check { width: 18px; height: 18px; border-radius: 4px; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: var(--transition); background: var(--bg); }
+.pend-item.done .pend-check { background: var(--green); border-color: var(--green); color: #fff; }
+.pend-item .pend-text { flex: 1; font-size: 13px; color: var(--text); }
+.pend-item.done .pend-text { text-decoration: line-through; color: var(--text3); }
+.pend-item .pend-assignee { font-size: 11px; color: var(--text3); background: var(--surface2); padding: 2px 8px; border-radius: 10px; white-space: nowrap; }
+.pend-item .pend-delete { width: 24px; height: 24px; border: none; background: none; color: var(--text3); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; border-radius: 4px; flex-shrink: 0; opacity: 0; transition: var(--transition); }
+.pend-item:hover .pend-delete { opacity: 1; }
+.pend-item .pend-delete:hover { background: var(--red); color: #fff; }
+.pend-empty { font-size: 13px; color: var(--text3); padding: 12px; text-align: center; }
+
 .icon-btn {
   height: 36px; min-width: 36px; padding: 0 8px;
   display: flex; align-items: center; justify-content: center; gap: 4px;
@@ -1730,6 +1753,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         <button class="sidebar-tab" data-view="kompakt">Kompakt</button>
         <button class="sidebar-tab" data-view="list">Liste</button>
         <button class="sidebar-tab" data-view="gantt">Gantt</button>
+        <button class="sidebar-tab" data-view="pendenzen" style="grid-column:1/-1;">Pendenzen</button>
       </div>
     </div>
     <div class="sidebar-projects" id="projectList"></div>
@@ -1810,6 +1834,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <div id="kompaktView" style="display:none;overflow:hidden;padding:20px 24px;box-sizing:border-box;min-height:0;"></div>
       <div id="listView" style="display:none;height:100%;overflow:auto;"></div>
       <div id="ganttView" style="display:none;height:100%;overflow:hidden;"></div>
+      <div id="pendenzenView" style="display:none;overflow:auto;padding:20px 24px;"></div>
     </div>
   </div>
 </div>
@@ -3263,7 +3288,8 @@ document.querySelectorAll('.sidebar-tab').forEach(function(b){
     this.classList.add('active');
     S.view=this.dataset.view;
     sSet('lastView',S.view);
-    if(S.pid)showEmpty(false);
+    if(S.view==='pendenzen'){$('emptyState').style.display='none';renderView();}
+    else if(S.pid)showEmpty(false);
   });
 });
 
@@ -3272,26 +3298,175 @@ function renderView(){
   $('kompaktView').style.display='none';
   $('listView').style.display='none';
   $('ganttView').style.display='none';
+  $('pendenzenView').style.display='none';
   $('filterBar').style.display='none';
   $('contentArea').style.overflow='auto';
-  if(S.pid)$('kpiStrip').style.display='grid';
-  if(S.view==='dashboard'){
-    $('dashboardView').style.display='block';
-    renderDashboard();
-  }else if(S.view==='kompakt'){
-    $('kompaktView').style.display='flex';
-    $('contentArea').style.overflow='hidden';
-    renderKompakt();
-  }else if(S.view==='list'){
-    $('listView').style.display='block';
-    $('filterBar').style.display='flex';
-    renderList();
-  }else if(S.view==='gantt'){
-    $('ganttView').style.display='flex';
-    $('filterBar').style.display='flex';
-    renderGantt();
+  if(S.view==='pendenzen'){
+    $('kpiStrip').style.display='none';
+    $('pendenzenView').style.display='block';
+    renderPendenzen();
+  }else{
+    if(S.pid)$('kpiStrip').style.display='grid';
+    if(S.view==='dashboard'){
+      $('dashboardView').style.display='block';
+      renderDashboard();
+    }else if(S.view==='kompakt'){
+      $('kompaktView').style.display='flex';
+      $('contentArea').style.overflow='hidden';
+      renderKompakt();
+    }else if(S.view==='list'){
+      $('listView').style.display='block';
+      $('filterBar').style.display='flex';
+      renderList();
+    }else if(S.view==='gantt'){
+      $('ganttView').style.display='flex';
+      $('filterBar').style.display='flex';
+      renderGantt();
+    }
   }
 }
+
+/* ─── PENDENZEN ─── */
+function getMyPendenzen(){
+  if(!S.currentUser)return[];
+  return sGet('pendenzen_'+S.currentUser.username,[])||[];
+}
+function saveMyPendenzen(list){
+  if(!S.currentUser)return;
+  sSet('pendenzen_'+S.currentUser.username,list);
+}
+function getProjectPendenzen(pid){
+  if(!pid)return[];
+  var d=sGet('p_'+pid,{});
+  return d.pendenzen||[];
+}
+function saveProjectPendenzen(pid,list){
+  if(!pid)return;
+  var d=sGet('p_'+pid,{});
+  d.pendenzen=list;
+  sSet('p_'+pid,d);
+}
+function _pendId(){return Date.now()+Math.random().toString(36).substr(2,5);}
+
+function renderPendenzen(){
+  var c=$('pendenzenView');
+  var html='';
+  // --- Meine Pendenzen ---
+  var my=getMyPendenzen();
+  var myOpen=my.filter(function(p){return!p.done;}).length;
+  html+='<div class="pend-section">';
+  html+='<div class="pend-section-title">Meine Pendenzen <span class="pend-badge">'+myOpen+' offen</span></div>';
+  html+='<div class="pend-add-row">';
+  html+='<input type="text" id="pendMyInput" placeholder="Neue Pendenz..." onkeydown="if(event.key===\'Enter\')addMyPendenz()">';
+  html+='<button onclick="addMyPendenz()">Hinzuf\u00fcgen</button>';
+  html+='</div>';
+  if(my.length){
+    html+='<ul class="pend-list">';
+    my.forEach(function(p){
+      html+='<li class="pend-item'+(p.done?' done':'')+'">';
+      html+='<div class="pend-check" onclick="toggleMyPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
+      html+='<span class="pend-text">'+esc(p.text)+'</span>';
+      html+='<button class="pend-delete" onclick="deleteMyPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
+      html+='</li>';
+    });
+    html+='</ul>';
+  }else{
+    html+='<div class="pend-empty">Keine Pendenzen vorhanden</div>';
+  }
+  html+='</div>';
+
+  // --- Projekt-Pendenzen ---
+  if(S.pid){
+    var d=sGet('p_'+S.pid,{});
+    var plist=d.pendenzen||[];
+    var pOpen=plist.filter(function(p){return!p.done;}).length;
+    var projectName=d.name||S.pid;
+    var projectUsers=d.users||[];
+    html+='<div class="pend-section">';
+    html+='<div class="pend-section-title">Projekt: '+esc(projectName)+' <span class="pend-badge">'+pOpen+' offen</span></div>';
+    html+='<div class="pend-add-row">';
+    html+='<input type="text" id="pendProjInput" placeholder="Neue Projekt-Pendenz..." onkeydown="if(event.key===\'Enter\')addProjectPendenz()">';
+    html+='<select id="pendProjAssignee"><option value="">Nicht zugewiesen</option>';
+    projectUsers.forEach(function(uname){
+      var u=findUser(uname);
+      var dn=u?getUserDisplayName(u):uname;
+      html+='<option value="'+esc(uname)+'">'+esc(dn)+'</option>';
+    });
+    html+='</select>';
+    html+='<button onclick="addProjectPendenz()">Hinzuf\u00fcgen</button>';
+    html+='</div>';
+    if(plist.length){
+      html+='<ul class="pend-list">';
+      plist.forEach(function(p){
+        var assigneeLabel='';
+        if(p.assignee){
+          var au=findUser(p.assignee);
+          assigneeLabel=au?getUserDisplayName(au):p.assignee;
+        }
+        html+='<li class="pend-item'+(p.done?' done':'')+'">';
+        html+='<div class="pend-check" onclick="toggleProjectPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
+        html+='<span class="pend-text">'+esc(p.text)+'</span>';
+        if(assigneeLabel) html+='<span class="pend-assignee">'+esc(assigneeLabel)+'</span>';
+        html+='<button class="pend-delete" onclick="deleteProjectPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
+        html+='</li>';
+      });
+      html+='</ul>';
+    }else{
+      html+='<div class="pend-empty">Keine Projekt-Pendenzen vorhanden</div>';
+    }
+    html+='</div>';
+  }else{
+    html+='<div class="pend-section">';
+    html+='<div class="pend-section-title">Projekt-Pendenzen</div>';
+    html+='<div class="pend-empty">W\u00e4hle ein Projekt, um dessen Pendenzen zu sehen</div>';
+    html+='</div>';
+  }
+  c.innerHTML=html;
+}
+
+window.addMyPendenz=function(){
+  var inp=$('pendMyInput');if(!inp)return;
+  var text=inp.value.trim();if(!text)return;
+  var list=getMyPendenzen();
+  list.unshift({id:_pendId(),text:text,done:false,created:new Date().toISOString()});
+  saveMyPendenzen(list);
+  renderPendenzen();
+};
+window.toggleMyPendenz=function(id){
+  var list=getMyPendenzen();
+  list.forEach(function(p){if(p.id===id)p.done=!p.done;});
+  saveMyPendenzen(list);
+  renderPendenzen();
+};
+window.deleteMyPendenz=function(id){
+  var list=getMyPendenzen().filter(function(p){return p.id!==id;});
+  saveMyPendenzen(list);
+  renderPendenzen();
+};
+
+window.addProjectPendenz=function(){
+  if(!S.pid)return;
+  var inp=$('pendProjInput');if(!inp)return;
+  var text=inp.value.trim();if(!text)return;
+  var assignee=($('pendProjAssignee')||{}).value||'';
+  var list=getProjectPendenzen(S.pid);
+  list.unshift({id:_pendId(),text:text,done:false,assignee:assignee,created:new Date().toISOString(),createdBy:S.currentUser?S.currentUser.username:''});
+  saveProjectPendenzen(S.pid,list);
+  renderPendenzen();
+};
+window.toggleProjectPendenz=function(id){
+  if(!S.pid)return;
+  var list=getProjectPendenzen(S.pid);
+  list.forEach(function(p){if(p.id===id)p.done=!p.done;});
+  saveProjectPendenzen(S.pid,list);
+  renderPendenzen();
+};
+window.deleteProjectPendenz=function(id){
+  if(!S.pid)return;
+  var list=getProjectPendenzen(S.pid).filter(function(p){return p.id!==id;});
+  saveProjectPendenzen(S.pid,list);
+  renderPendenzen();
+};
 
 /* ─── DASHBOARD PANELS ─── */
 function dashItem(t,dotColor,extras){
