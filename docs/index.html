@@ -483,26 +483,31 @@ body {
 .changelog-tag.neu { background: #dcfce7; color: #166534; }
 .changelog-tag.fix { background: #fef3c7; color: #92400e; }
 .changelog-tag.update { background: #dbeafe; color: #1e40af; }
-.cl-editor-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 16px; }
-.cl-editor-card.draft { border-left: 4px solid var(--orange); }
-.cl-editor-card.published { border-left: 4px solid var(--green); }
-.cl-editor-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-.cl-editor-header input { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 14px; background: var(--bg); color: var(--text); }
-.cl-editor-header input.cl-version { width: 90px; font-weight: 700; }
-.cl-editor-header input.cl-date { width: 130px; }
-.cl-badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
-.cl-badge.draft { background: #fef3c7; color: #92400e; }
-.cl-badge.published { background: #dcfce7; color: #166534; }
-.cl-item-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-.cl-item-row select { padding: 5px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; background: var(--bg); color: var(--text); }
-.cl-item-row input { flex: 1; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: var(--bg); color: var(--text); }
-.cl-item-row button { background: none; border: none; cursor: pointer; color: var(--red); font-size: 16px; padding: 4px; }
-.cl-add-item { font-size: 12px; color: var(--primary); cursor: pointer; background: none; border: none; padding: 4px 0; }
-.cl-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-.cl-actions button { padding: 6px 14px; border-radius: 6px; font-size: 12px; cursor: pointer; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
-.cl-actions button.publish { background: var(--green); color: #fff; border: none; font-weight: 600; }
-.cl-actions button.unpublish { background: var(--orange); color: #fff; border: none; }
-.cl-actions button.delete { color: var(--red); }
+.cl-add-row { display: flex; gap: 8px; margin-bottom: 20px; }
+.cl-add-row select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: var(--bg); color: var(--text); }
+.cl-add-row input { flex: 1; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: var(--bg); color: var(--text); font-family: var(--font); }
+.cl-add-row button { padding: 8px 16px; border: none; border-radius: 6px; background: var(--orange); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.cl-kanban { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.cl-kanban-col { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.cl-kanban-header { padding: 12px 16px; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.cl-draft-header { background: #fef3c7; color: #92400e; }
+.cl-pub-header { background: #dcfce7; color: #166534; }
+.cl-preview-btn { margin-left: auto; padding: 4px 12px; border: 1px solid currentColor; border-radius: 4px; font-size: 11px; cursor: pointer; background: none; color: inherit; font-weight: 600; }
+.cl-kanban-body { padding: 8px; min-height: 100px; transition: background .15s; }
+.cl-drag-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 6px; cursor: grab; transition: box-shadow .15s; }
+.cl-drag-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+.cl-drag-item.cl-published { border-left: 3px solid var(--green); }
+.cl-drag-text { flex: 1; font-size: 13px; color: var(--text); }
+.cl-drag-pub, .cl-drag-unpub, .cl-drag-edit, .cl-drag-del { width: 24px; height: 24px; border: none; background: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; border-radius: 4px; opacity: 0; transition: var(--transition); flex-shrink: 0; }
+.cl-drag-item:hover .cl-drag-pub, .cl-drag-item:hover .cl-drag-unpub, .cl-drag-item:hover .cl-drag-edit, .cl-drag-item:hover .cl-drag-del { opacity: .7; }
+.cl-drag-pub { color: var(--green); }
+.cl-drag-pub:hover { background: var(--green); color: #fff; opacity: 1 !important; }
+.cl-drag-unpub { color: var(--orange); transform: rotate(180deg); }
+.cl-drag-unpub:hover { background: var(--orange); color: #fff; opacity: 1 !important; }
+.cl-drag-edit { color: var(--text3); }
+.cl-drag-edit:hover { background: var(--surface2); opacity: 1 !important; }
+.cl-drag-del { color: var(--red); }
+.cl-drag-del:hover { background: var(--red); color: #fff; opacity: 1 !important; }
 .search-result-dot {
   width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
 }
@@ -2399,21 +2404,25 @@ function showLogin(){
 }
 /* ─── CHANGELOG ─── */
 var CHANGELOG_SEED=[
-  {version:'1.5.0',date:'2026-03-21',published:false,items:[
-    {tag:'neu',text:'Projekt\u00fcbergreifende Suche \u2013 Vorg\u00e4nge k\u00f6nnen jetzt \u00fcber alle Projekte hinweg gefunden werden'},
-    {tag:'neu',text:'Berechtigung \u00abProjekt erstellen\u00bb \u2013 kann pro Rolle aktiviert oder deaktiviert werden'},
-    {tag:'neu',text:'\u00abMein Profil\u00bb \u2013 Nicht-Admins k\u00f6nnen ihr eigenes Profil bearbeiten'},
-    {tag:'neu',text:'\u00c4nderungsprotokoll \u2013 Neue Funktionen werden nach dem Login angezeigt'},
-    {tag:'update',text:'Rollen & Berechtigungen \u2013 Neue Berechtigung \u00abProjekt erstellen\u00bb hinzugef\u00fcgt'},
-    {tag:'update',text:'Admin Center \u2013 Neuer Tab \u00abChangelog\u00bb zur Verwaltung von \u00c4nderungsmeldungen'}
-  ]}
+  {id:'cl_s1',tag:'neu',text:'Projekt\u00fcbergreifende Suche \u2013 Vorg\u00e4nge k\u00f6nnen jetzt \u00fcber alle Projekte hinweg gefunden werden',published:false,date:'2026-03-21'},
+  {id:'cl_s2',tag:'neu',text:'Berechtigung \u00abProjekt erstellen\u00bb \u2013 kann pro Rolle aktiviert oder deaktiviert werden',published:false,date:'2026-03-21'},
+  {id:'cl_s3',tag:'neu',text:'\u00abMein Profil\u00bb \u2013 Nicht-Admins k\u00f6nnen ihr eigenes Profil bearbeiten',published:false,date:'2026-03-21'},
+  {id:'cl_s4',tag:'neu',text:'K\u00fcrzel (Avatar) \u2013 Benutzer k\u00f6nnen ein K\u00fcrzel als Avatar setzen',published:false,date:'2026-03-21'},
+  {id:'cl_s5',tag:'neu',text:'Pendenzen \u2013 Private Pendenzenlisten und Projekt-Jour-Fixe mit Kanban-Board',published:false,date:'2026-03-21'},
+  {id:'cl_s6',tag:'neu',text:'Jour Fixe \u2013 Spalten erstellen, umbenennen, l\u00f6schen und per Drag & Drop sortieren',published:false,date:'2026-03-21'},
+  {id:'cl_s7',tag:'neu',text:'Pendenzen Bilder \u2013 Bis zu 2 Bilder pro Pendenz hochladen',published:false,date:'2026-03-21'},
+  {id:'cl_s8',tag:'update',text:'Ansicht pro Benutzer \u2013 Letzte Ansicht und Projekt werden pro User gespeichert',published:false,date:'2026-03-21'},
+  {id:'cl_s9',tag:'update',text:'Neues Projekt Button \u2013 Nur f\u00fcr berechtigte Rollen sichtbar',published:false,date:'2026-03-21'},
+  {id:'cl_s10',tag:'update',text:'Changelog \u2013 Kein automatisches Popup mehr, Glocke mit Animation signalisiert Updates',published:false,date:'2026-03-21'},
+  {id:'cl_s11',tag:'update',text:'Rollen & Berechtigungen \u2013 Neue Berechtigung \u00abProjekt erstellen\u00bb hinzugef\u00fcgt',published:false,date:'2026-03-21'},
+  {id:'cl_s12',tag:'update',text:'Admin Center \u2013 Changelog-Verwaltung mit Drag & Drop komplett \u00fcberarbeitet',published:false,date:'2026-03-21'}
 ];
 function getChangelog(){
-  var cl=sGet('changelog',null);
-  if(!cl||!cl.length){cl=CHANGELOG_SEED.map(function(v){return JSON.parse(JSON.stringify(v));});sSet('changelog',cl);}
+  var cl=sGet('changelog2',null);
+  if(!cl){cl=CHANGELOG_SEED.map(function(v){return JSON.parse(JSON.stringify(v));});sSet('changelog2',cl);}
   return cl;
 }
-function saveChangelog(cl){sSet('changelog',cl);}
+function saveChangelog(cl){sSet('changelog2',cl);}
 
 function getPublishedChangelog(){
   return getChangelog().filter(function(v){return v.published;});
@@ -2422,23 +2431,17 @@ function getPublishedChangelog(){
 function getChangelogVersion(){
   var pub=getPublishedChangelog();
   if(!pub.length)return '';
-  return pub[0].version+'_'+pub[0].publishedAt;
+  return pub.length+'_'+Math.max.apply(null,pub.map(function(p){return p.publishedAt||0;}));
 }
 
 function showChangelog(){
   var pub=getPublishedChangelog();
   if(!pub.length)return;
-  var html='';
-  pub.forEach(function(v){
-    html+='<div class="changelog-version">'
-      +'<div class="changelog-version-header">Version '+esc(v.version)
-      +'<span class="changelog-version-date">'+esc(v.date)+'</span></div>'
-      +'<ul class="changelog-list">';
-    (v.items||[]).forEach(function(item){
-      html+='<li><span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>'+esc(item.text)+'</li>';
-    });
-    html+='</ul></div>';
+  var html='<ul class="changelog-list">';
+  pub.forEach(function(item){
+    html+='<li><span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>'+esc(item.text)+'</li>';
   });
+  html+='</ul>';
   $('changelogContent').innerHTML=html;
   $('changelogModal').classList.add('show');
 }
@@ -2487,163 +2490,151 @@ function checkChangelog(){
 }
 
 /* ─── CHANGELOG ADMIN ─── */
+function _clItemHtml(item,isDraft){
+  var html='<div class="cl-drag-item'+(isDraft?'':' cl-published')+'" draggable="true" data-id="'+esc(item.id)+'">';
+  html+='<span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>';
+  html+='<span class="cl-drag-text">'+esc(item.text)+'</span>';
+  if(isDraft){
+    html+='<button class="cl-drag-pub" onclick="clPublishItem(\''+item.id+'\')" title="Ver\u00f6ffentlichen">&#10140;</button>';
+  }else{
+    html+='<button class="cl-drag-unpub" onclick="clUnpublishItem(\''+item.id+'\')" title="Zur\u00fcckziehen">&#10140;</button>';
+  }
+  html+='<button class="cl-drag-edit" onclick="clEditItem(\''+item.id+'\')" title="Bearbeiten">&#9998;</button>';
+  html+='<button class="cl-drag-del" onclick="clDeleteItem(\''+item.id+'\')" title="L\u00f6schen">&times;</button>';
+  html+='</div>';
+  return html;
+}
+
 function renderAdminChangelog(){
   var cl=getChangelog();
   var c=$('adminTabChangelog');
-  var html='<div class="admin-section"><div class="admin-section-title">Changelog verwalten</div>'
-    +'<p style="font-size:13px;color:var(--text3);margin-bottom:16px;">Erstelle Versionseintr\u00e4ge und gib sie frei. Nur ver\u00f6ffentlichte Eintr\u00e4ge werden den Benutzern nach dem Login angezeigt.</p>'
-    +'<button class="admin-btn" style="margin-bottom:16px;background:var(--primary);color:#fff;" onclick="clAddVersion()">+ Neue Version</button>';
-  if(!cl.length){
-    html+='<div class="admin-empty-msg">Keine Changelog-Eintr\u00e4ge vorhanden.</div>';
-  }
-  cl.forEach(function(v,vi){
-    var status=v.published?'published':'draft';
-    html+='<div class="cl-editor-card '+status+'">'
-      +'<div class="cl-editor-header">'
-      +'<input class="cl-version" value="'+esc(v.version)+'" placeholder="z.B. 1.5.0" onchange="clUpdateField('+vi+',\'version\',this.value)">'
-      +'<input class="cl-date" type="date" value="'+esc(v.date||'')+'" onchange="clUpdateField('+vi+',\'date\',this.value)">'
-      +'<span class="cl-badge '+status+'">'+(v.published?'Ver\u00f6ffentlicht':'Entwurf')+'</span>'
-      +'</div>';
-    html+='<div class="cl-items" id="clItems'+vi+'">';
-    (v.items||[]).forEach(function(item,ii){
-      html+='<div class="cl-item-row">'
-        +'<select onchange="clUpdateItem('+vi+','+ii+',\'tag\',this.value)">'
-        +'<option value="neu"'+(item.tag==='neu'?' selected':'')+'>Neu</option>'
-        +'<option value="update"'+(item.tag==='update'?' selected':'')+'>Update</option>'
-        +'<option value="fix"'+(item.tag==='fix'?' selected':'')+'>Fix</option>'
-        +'</select>'
-        +'<input value="'+esc(item.text)+'" placeholder="Beschreibung..." onchange="clUpdateItem('+vi+','+ii+',\'text\',this.value)">'
-        +'<button onclick="clRemoveItem('+vi+','+ii+')" title="Entfernen">&times;</button>'
-        +'</div>';
-    });
-    html+='</div>';
-    html+='<button class="cl-add-item" onclick="clAddItem('+vi+')">+ Eintrag hinzuf\u00fcgen</button>';
-    html+='<div class="cl-actions">';
-    if(!v.published){
-      html+='<button class="publish" onclick="clPublish('+vi+')">Ver\u00f6ffentlichen</button>';
-    } else {
-      html+='<button class="unpublish" onclick="clUnpublish('+vi+')">Zur\u00fcckziehen</button>';
-    }
-    html+='<button onclick="clPreview('+vi+')">Vorschau</button>';
-    html+='<button class="delete" onclick="clDelete('+vi+')">L\u00f6schen</button>';
-    html+='</div></div>';
-  });
-  html+='</div>';
-
-  // History section: all published changelogs
+  var drafts=cl.filter(function(v){return!v.published;});
   var published=cl.filter(function(v){return v.published;});
-  html+='<div class="admin-section" style="margin-top:32px;"><div class="admin-section-title">Bisherige Releases</div>';
-  if(!published.length){
-    html+='<div class="admin-empty-msg">Noch keine ver\u00f6ffentlichten Changelogs.</div>';
-  } else {
-    published.forEach(function(v){
-      var dateStr=v.date;
-      if(dateStr&&dateStr.indexOf('-')>0){var dp=dateStr.split('-');dateStr=dp[2]+'.'+dp[1]+'.'+dp[0];}
-      html+='<div style="background:var(--card);border:1px solid var(--border);border-left:4px solid var(--green);border-radius:10px;padding:14px 18px;margin-bottom:10px;">'
-        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
-        +'<strong style="font-size:14px;">Version '+esc(v.version)+'</strong>'
-        +'<span style="font-size:12px;color:var(--text3);">'+esc(dateStr)+'</span>'
-        +'</div>'
-        +'<ul style="margin:0;padding-left:18px;">';
-      (v.items||[]).forEach(function(item){
-        html+='<li style="font-size:13px;margin-bottom:3px;"><span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>'+esc(item.text)+'</li>';
-      });
-      html+='</ul></div>';
-    });
-  }
+
+  var html='<div class="admin-section"><div class="admin-section-title">Changelog verwalten</div>'
+    +'<p style="font-size:13px;color:var(--text3);margin-bottom:16px;">Ziehe Eintr\u00e4ge zwischen den Bereichen oder nutze die Pfeile. Nur ver\u00f6ffentlichte Eintr\u00e4ge sehen die Benutzer.</p>';
+
+  // Add new item
+  html+='<div class="cl-add-row">';
+  html+='<select id="clNewTag"><option value="neu">Neu</option><option value="update">Update</option><option value="fix">Fix</option></select>';
+  html+='<input type="text" id="clNewText" placeholder="Beschreibung des Updates..." onkeydown="if(event.key===\'Enter\')clAddItem()">';
+  html+='<button onclick="clAddItem()">Hinzuf\u00fcgen</button>';
   html+='</div>';
 
+  // Two-column layout
+  html+='<div class="cl-kanban">';
+
+  // Drafts column
+  html+='<div class="cl-kanban-col">';
+  html+='<div class="cl-kanban-header cl-draft-header">Entw\u00fcrfe <span class="pend-badge">'+drafts.length+'</span></div>';
+  html+='<div class="cl-kanban-body cl-drop-zone" data-target="draft">';
+  if(drafts.length){
+    drafts.forEach(function(item){html+=_clItemHtml(item,true);});
+  }else{
+    html+='<div class="admin-empty-msg" style="padding:20px;">Keine Entw\u00fcrfe</div>';
+  }
+  html+='</div></div>';
+
+  // Published column
+  html+='<div class="cl-kanban-col">';
+  html+='<div class="cl-kanban-header cl-pub-header">Ver\u00f6ffentlicht <span class="pend-badge">'+published.length+'</span>';
+  html+='<button class="cl-preview-btn" onclick="clPreviewAll()" title="Vorschau">Vorschau</button>';
+  html+='</div>';
+  html+='<div class="cl-kanban-body cl-drop-zone" data-target="published">';
+  if(published.length){
+    published.forEach(function(item){html+=_clItemHtml(item,false);});
+  }else{
+    html+='<div class="admin-empty-msg" style="padding:20px;">Keine ver\u00f6ffentlichten Updates</div>';
+  }
+  html+='</div></div>';
+
+  html+='</div></div>';
   c.innerHTML=html;
+  _initClDragDrop();
 }
 
-window.clAddVersion=function(){
-  var cl=getChangelog();
-  var today=new Date().toISOString().substring(0,10);
-  cl.unshift({version:'',date:today,items:[],published:false});
-  saveChangelog(cl);
-  renderAdminChangelog();
-};
-
-window.clUpdateField=function(vi,field,val){
-  var cl=getChangelog();
-  if(cl[vi])cl[vi][field]=val;
-  saveChangelog(cl);
-};
-
-window.clAddItem=function(vi){
-  var cl=getChangelog();
-  if(!cl[vi])return;
-  if(!cl[vi].items)cl[vi].items=[];
-  cl[vi].items.push({tag:'neu',text:''});
-  saveChangelog(cl);
-  renderAdminChangelog();
-};
-
-window.clUpdateItem=function(vi,ii,field,val){
-  var cl=getChangelog();
-  if(cl[vi]&&cl[vi].items&&cl[vi].items[ii]){
-    cl[vi].items[ii][field]=val;
-  }
-  saveChangelog(cl);
-};
-
-window.clRemoveItem=function(vi,ii){
-  var cl=getChangelog();
-  if(cl[vi]&&cl[vi].items){
-    cl[vi].items.splice(ii,1);
-  }
-  saveChangelog(cl);
-  renderAdminChangelog();
-};
-
-window.clPublish=function(vi){
-  var cl=getChangelog();
-  if(!cl[vi])return;
-  if(!cl[vi].version){alert('Bitte Versionsnummer eingeben.');return;}
-  if(!cl[vi].items||!cl[vi].items.length){alert('Bitte mindestens einen Eintrag hinzuf\u00fcgen.');return;}
-  var empty=cl[vi].items.some(function(it){return !it.text.trim();});
-  if(empty){alert('Bitte alle Eintr\u00e4ge ausf\u00fcllen.');return;}
-  cl[vi].published=true;
-  cl[vi].publishedAt=Date.now();
-  saveChangelog(cl);
-  addLog('changelog','Changelog ver\u00f6ffentlicht','Version '+cl[vi].version);
-  updateChangelogBell();
-  renderAdminChangelog();
-};
-
-window.clUnpublish=function(vi){
-  var cl=getChangelog();
-  if(!cl[vi])return;
-  cl[vi].published=false;
-  delete cl[vi].publishedAt;
-  saveChangelog(cl);
-  updateChangelogBell();
-  addLog('changelog','Changelog zur\u00fcckgezogen','Version '+cl[vi].version);
-  renderAdminChangelog();
-};
-
-window.clPreview=function(vi){
-  var cl=getChangelog();
-  if(!cl[vi])return;
-  var v=cl[vi];
-  var html='<div class="changelog-version">'
-    +'<div class="changelog-version-header">Version '+esc(v.version||'?')
-    +'<span class="changelog-version-date">'+esc(v.date||'')+'</span></div>'
-    +'<ul class="changelog-list">';
-  (v.items||[]).forEach(function(item){
-    html+='<li><span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>'+esc(item.text||'...')+'</li>';
+function _initClDragDrop(){
+  var dragId=null;
+  document.querySelectorAll('.cl-drag-item').forEach(function(el){
+    el.addEventListener('dragstart',function(e){
+      dragId=el.dataset.id;
+      el.style.opacity='.4';
+      e.dataTransfer.effectAllowed='move';
+    });
+    el.addEventListener('dragend',function(){el.style.opacity='';dragId=null;});
   });
-  html+='</ul></div>';
-  $('changelogContent').innerHTML=html;
-  $('changelogModal').classList.add('show');
-};
+  document.querySelectorAll('.cl-drop-zone').forEach(function(zone){
+    zone.addEventListener('dragover',function(e){e.preventDefault();zone.style.background='rgba(232,96,10,0.06)';});
+    zone.addEventListener('dragleave',function(e){if(!zone.contains(e.relatedTarget))zone.style.background='';});
+    zone.addEventListener('drop',function(e){
+      e.preventDefault();zone.style.background='';
+      if(!dragId)return;
+      var target=zone.dataset.target;
+      var cl=getChangelog();
+      cl.forEach(function(item){
+        if(item.id===dragId){
+          if(target==='published'&&!item.published){item.published=true;item.publishedAt=Date.now();}
+          else if(target==='draft'&&item.published){item.published=false;delete item.publishedAt;}
+        }
+      });
+      saveChangelog(cl);
+      updateChangelogBell();
+      renderAdminChangelog();
+      dragId=null;
+    });
+  });
+}
 
-window.clDelete=function(vi){
-  if(!confirm('Changelog-Eintrag wirklich l\u00f6schen?'))return;
+window.clAddItem=function(){
+  var tag=($('clNewTag')||{}).value||'neu';
+  var text=($('clNewText')||{}).value;
+  if(!text||!text.trim())return;
   var cl=getChangelog();
-  cl.splice(vi,1);
+  cl.push({id:'cl_'+Date.now(),tag:tag,text:text.trim(),published:false,date:new Date().toISOString().substring(0,10)});
   saveChangelog(cl);
   renderAdminChangelog();
+};
+
+window.clPublishItem=function(id){
+  var cl=getChangelog();
+  cl.forEach(function(item){if(item.id===id){item.published=true;item.publishedAt=Date.now();}});
+  saveChangelog(cl);
+  updateChangelogBell();
+  renderAdminChangelog();
+};
+
+window.clUnpublishItem=function(id){
+  var cl=getChangelog();
+  cl.forEach(function(item){if(item.id===id){item.published=false;delete item.publishedAt;}});
+  saveChangelog(cl);
+  updateChangelogBell();
+  renderAdminChangelog();
+};
+
+window.clEditItem=function(id){
+  var cl=getChangelog();
+  var item=cl.find(function(i){return i.id===id;});
+  if(!item)return;
+  openPromptModal('Eintrag bearbeiten',item.text,function(val){
+    var cl2=getChangelog();
+    var it=cl2.find(function(i){return i.id===id;});
+    if(it)it.text=val;
+    saveChangelog(cl2);
+    renderAdminChangelog();
+  });
+};
+
+window.clDeleteItem=function(id){
+  var cl=getChangelog().filter(function(i){return i.id!==id;});
+  saveChangelog(cl);
+  updateChangelogBell();
+  renderAdminChangelog();
+};
+
+window.clPreviewAll=function(){
+  var pub=getPublishedChangelog();
+  if(!pub.length){alert('Keine ver\u00f6ffentlichten Eintr\u00e4ge.');return;}
+  showChangelog();
 };
 
 function showApp(){
