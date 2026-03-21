@@ -663,7 +663,7 @@ body {
 .fv-card-del { border: none; background: none; color: var(--text3); cursor: pointer; font-size: 18px; padding: 4px; line-height: 1; border-radius: 4px; }
 .fv-card-del:hover { color: var(--red); background: #fef2f2; }
 .fv-card-body { padding: 16px 20px; }
-.fv-card-notes { margin-bottom: 14px; }
+.fv-card-notes { margin-top: 14px; }
 .fv-card-notes textarea { width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; background: var(--bg); color: var(--text); font-family: var(--font); resize: vertical; line-height: 1.5; }
 .fv-card-notes textarea::placeholder { color: var(--text3); }
 .fv-card-notes textarea:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 2px rgba(232,96,10,0.12); }
@@ -5282,11 +5282,6 @@ function _renderFVSection(projectUsers,ferien){
     // ── Body ──
     html+='<div class="fv-card-body">';
 
-    // Notes
-    html+='<div class="fv-card-notes">';
-    html+='<textarea placeholder="Notizen zur Vertretung (z.B. wichtige Infos, Termine, Hinweise)..." onblur="saveFVNotes(\''+card.id+'\',this)">'+esc(card.notes||'')+'</textarea>';
-    html+='</div>';
-
     // Tasks
     if(totalCount){
       html+='<ul class="fv-task-list">';
@@ -5395,6 +5390,11 @@ function _renderFVSection(projectUsers,ferien){
 
       html+='</div>';
     }
+
+    // Notes (at the end)
+    html+='<div class="fv-card-notes">';
+    html+='<textarea placeholder="Notizen zur Vertretung (z.B. wichtige Infos, Termine, Hinweise)..." onblur="saveFVNotes(\''+card.id+'\',this)">'+esc(card.notes||'')+'</textarea>';
+    html+='</div>';
 
     html+='</div>'; // .fv-card-body
     html+='</div>'; // .fv-card
