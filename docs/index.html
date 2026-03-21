@@ -1205,6 +1205,18 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 .bug-modal-body input, .bug-modal-body textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-xs); background: var(--surface2); color: var(--text); font-family: var(--font); font-size: 14px; transition: var(--transition); resize: vertical; }
 .bug-modal-body input:focus, .bug-modal-body textarea:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(232,96,10,0.12); }
 .bug-modal-body textarea { min-height: 120px; }
+.bug-minimize-btn { background: none; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-size: 16px; padding: 2px 8px; color: var(--text3); transition: var(--transition); }
+.bug-minimize-btn:hover { background: var(--surface2); color: var(--text); }
+.bug-overlay.minimized { background: none; pointer-events: none; }
+.bug-overlay.minimized .bug-modal { display: none; }
+.bug-floating-pill { position: fixed; bottom: 24px; right: 24px; z-index: 1200; background: var(--orange); color: #fff; border: none; border-radius: 28px; padding: 12px 20px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 20px rgba(232,96,10,0.4); display: none; align-items: center; gap: 8px; font-family: var(--font); animation: clBounce .4s ease; pointer-events: auto; }
+.bug-floating-pill:hover { transform: scale(1.05); }
+.bug-floating-pill.show { display: flex; }
+.bug-screenshot-area { border: 2px dashed var(--border); border-radius: 8px; padding: 16px; text-align: center; transition: var(--transition); }
+.bug-screenshot-area.drag-hover { border-color: var(--orange); background: rgba(232,96,10,0.04); }
+.bug-screenshot-empty { color: var(--text3); }
+.bug-screenshot-upload { display: inline-block; margin-top: 6px; padding: 6px 14px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; cursor: pointer; color: var(--text2); transition: var(--transition); }
+.bug-screenshot-upload:hover { border-color: var(--orange); color: var(--orange); }
 .bug-field { margin-bottom: 16px; }
 .bug-modal-footer { padding: 0 20px 20px; display: flex; justify-content: flex-end; gap: 10px; }
 .bug-modal-footer button { padding: 10px 20px; border-radius: var(--radius-xs); font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition); }
@@ -2072,7 +2084,10 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
   <div class="bug-modal">
     <div class="bug-modal-header">
       <h3>&#128172; Feedback</h3>
-      <button class="pred-popover-close" onclick="closeBugReport()">&times;</button>
+      <div style="display:flex;gap:4px;">
+        <button class="bug-minimize-btn" onclick="toggleBugMinimize()" title="Minimieren f&uuml;r Screenshot">&#128247;</button>
+        <button class="pred-popover-close" onclick="closeBugReport()">&times;</button>
+      </div>
     </div>
     <div class="bug-modal-body" id="bugBody">
       <div class="bug-field">
@@ -2091,6 +2106,22 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         <label>Beschreibung</label>
         <textarea id="bugDesc" placeholder="Beschreibe dein Anliegen m&ouml;glichst genau..."></textarea>
       </div>
+      <div class="bug-field">
+        <label>Screenshot (optional)</label>
+        <div class="bug-screenshot-area" id="bugScreenshotArea">
+          <div class="bug-screenshot-empty" id="bugScreenshotEmpty">
+            <div style="font-size:24px;margin-bottom:6px;">&#128247;</div>
+            <div style="font-size:12px;">Bild hier einf&uuml;gen (Ctrl+V)</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:4px;">oder</div>
+            <label class="bug-screenshot-upload">Datei ausw&auml;hlen<input type="file" accept="image/*" style="display:none;" onchange="bugUploadScreenshot(this)"></label>
+            <div style="font-size:11px;color:var(--text3);margin-top:6px;">Tipp: Klicke &#128247; oben um das Formular zu minimieren und einen Screenshot zu machen</div>
+          </div>
+          <div id="bugScreenshotPreview" style="display:none;position:relative;">
+            <img id="bugScreenshotImg" style="max-width:100%;border-radius:6px;border:1px solid var(--border);">
+            <button onclick="removeBugScreenshot()" style="position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:12px;">&times;</button>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="bug-modal-footer" id="bugFooter">
       <button class="bug-cancel-btn" onclick="closeBugReport()">Abbrechen</button>
@@ -2098,6 +2129,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     </div>
   </div>
 </div>
+<button class="bug-floating-pill" id="bugFloatingPill" onclick="toggleBugMinimize()">&#128247; Screenshot machen &mdash; dann hier klicken</button>
 
 <!-- ADMIN CENTER -->
 <div class="admin-overlay" id="adminOverlay">
@@ -6060,7 +6092,64 @@ window.openBugReport=function(){
   $('bugOverlay').classList.add('show');
   setTimeout(function(){$('bugSubject').focus();},100);
 };
-window.closeBugReport=function(){$('bugOverlay').classList.remove('show');};
+window.closeBugReport=function(){
+  $('bugOverlay').classList.remove('show');
+  $('bugOverlay').classList.remove('minimized');
+  document.getElementById('bugFloatingPill').classList.remove('show');
+  _bugScreenshotData=null;
+};
+var _bugScreenshotData=null;
+window.toggleBugMinimize=function(){
+  var overlay=document.getElementById('bugOverlay');
+  var pill=document.getElementById('bugFloatingPill');
+  if(overlay.classList.contains('minimized')){
+    overlay.classList.remove('minimized');
+    pill.classList.remove('show');
+  }else{
+    overlay.classList.add('minimized');
+    pill.classList.add('show');
+  }
+};
+window.bugUploadScreenshot=function(input){
+  if(!input.files||!input.files[0])return;
+  var reader=new FileReader();
+  reader.onload=function(e){_setBugScreenshot(e.target.result);};
+  reader.readAsDataURL(input.files[0]);
+};
+function _setBugScreenshot(dataUrl){
+  _bugScreenshotData=dataUrl;
+  var img=document.getElementById('bugScreenshotImg');
+  img.src=dataUrl;
+  document.getElementById('bugScreenshotPreview').style.display='block';
+  document.getElementById('bugScreenshotEmpty').style.display='none';
+}
+window.removeBugScreenshot=function(){
+  _bugScreenshotData=null;
+  document.getElementById('bugScreenshotPreview').style.display='none';
+  document.getElementById('bugScreenshotEmpty').style.display='block';
+};
+// Paste from clipboard
+document.addEventListener('paste',function(e){
+  var overlay=document.getElementById('bugOverlay');
+  if(!overlay||(!overlay.classList.contains('show')&&!overlay.classList.contains('minimized')))return;
+  var items=e.clipboardData&&e.clipboardData.items;
+  if(!items)return;
+  for(var i=0;i<items.length;i++){
+    if(items[i].type.indexOf('image')>-1){
+      var file=items[i].getAsFile();
+      var reader=new FileReader();
+      reader.onload=function(ev){
+        _setBugScreenshot(ev.target.result);
+        // If minimized, expand back
+        var pill=document.getElementById('bugFloatingPill');
+        if(pill.classList.contains('show'))toggleBugMinimize();
+      };
+      reader.readAsDataURL(file);
+      e.preventDefault();
+      break;
+    }
+  }
+});
 window.sendBugReport=function(){
   var type=($('bugType')||{}).value||'bug';
   var typeLabels={bug:'Bug',idea:'Verbesserung',other:'Feedback'};
@@ -6076,14 +6165,18 @@ window.sendBugReport=function(){
     +'Projekt: '+(proj||'Kein Projekt')+'\n'
     +'Browser: '+navigator.userAgent+'\n'
     +'Datum: '+new Date().toLocaleString('de-CH')+'\n\n'
-    +'Beschreibung:\n'+desc;
+    +'Beschreibung:\n'+desc
+    +(_bugScreenshotData?'\n\n[Screenshot angeh\u00e4ngt \u2013 bitte Bild separat aus Zwischenablage einf\u00fcgen]':'');
   var mailto='mailto:aleks@emotionframe.ch'
     +'?subject='+encodeURIComponent('[BAUTERM '+(typeLabels[type]||'Feedback')+'] '+subj)
     +'&body='+encodeURIComponent(body);
   window.open(mailto,'_blank');
-  $('bugBody').innerHTML='<div class="bug-sent-msg">&#10003; Vielen Dank! Dein E-Mail-Programm wurde ge\u00f6ffnet.</div>';
+  $('bugBody').innerHTML='<div class="bug-sent-msg">&#10003; Vielen Dank! Dein E-Mail-Programm wurde ge\u00f6ffnet.'
+    +(_bugScreenshotData?'<br><span style="font-size:12px;color:var(--text3);">Bitte f\u00fcge den Screenshot aus der Zwischenablage in die E-Mail ein.</span>':'')
+    +'</div>';
   $('bugFooter').style.display='none';
-  setTimeout(closeBugReport,3000);
+  _bugScreenshotData=null;
+  setTimeout(closeBugReport,4000);
 };
 
 window.openDPEnd=function(ev,uid){
