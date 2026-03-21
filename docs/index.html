@@ -3727,13 +3727,11 @@ function finishCreate(id,name,tasks,xml){
 window.doSave=function(){
   if(!S.pid)return;
   var d=sGet('p_'+S.pid,{});d.tasks=S.tasks;sSet('p_'+S.pid,d);
-  runKiAnalyse();
 };
 function autoSave(){
   if(!S.pid)return;
   var d=sGet('p_'+S.pid,{});d.tasks=S.tasks;sSet('p_'+S.pid,d);
   var f=$('saveFlash');f.classList.add('show');setTimeout(function(){f.classList.remove('show');},1200);
-  runKiAnalyse();
 }
 
 function dlFile(c,n,m){var b=new Blob([c],{type:m}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);}
@@ -3757,11 +3755,11 @@ window.toggleKiAnalyse=function(){
 };
 
 function runKiAnalyse(){
-  var strip=$('kiAnalyseStrip');
-  var badge=$('kiAnalyseBadge');
-  var body=$('kiAnalyseBody');
-  if(!S.tasks||!S.tasks.length){if(strip)strip.style.display='none';return;}
-  strip.style.display='block';
+  var strip=document.getElementById('kiAnalyseStrip');
+  if(!strip)return;
+  if(!S.tasks||!S.tasks.length){strip.style.display='none';return;}
+  // Only show on views that also show KPI strip
+  if(S.view==='pendenzen_my'||S.view==='pendenzen_project'||S.view==='ferien')return;
 
   var tasks=S.tasks;
   var work=tasks.filter(function(t){return!t.summary;});
@@ -3965,17 +3963,18 @@ function runKiAnalyse(){
   // Sort: danger first, then warning, then info
   insights.sort(function(a,b){return a.sort-b.sort;});
 
-  // Limit to avoid info overload
-  if(insights.length>12)insights=insights.slice(0,12);
-
   // Count by severity
   var dangerCount=insights.filter(function(i){return i.severity==='danger';}).length;
   var warnCount=insights.filter(function(i){return i.severity==='warning';}).length;
   var total=insights.length;
 
   // Update badge
-  badge.textContent=total+(total===1?' Hinweis':' Hinweise');
-  badge.className='ki-analyse-badge '+(dangerCount?'red':warnCount?'orange':'green');
+  var badgeEl=document.getElementById('kiAnalyseBadge');
+  var bodyEl=document.getElementById('kiAnalyseBody');
+  if(badgeEl){
+    badgeEl.textContent=total+(total===1?' Hinweis':' Hinweise');
+    badgeEl.className='ki-analyse-badge '+(dangerCount?'red':warnCount?'orange':'green');
+  }
 
   // Render insights
   var html='';
@@ -3994,7 +3993,7 @@ function runKiAnalyse(){
     }
     html+='</div></div>';
   });
-  body.innerHTML=html;
+  if(bodyEl)bodyEl.innerHTML=html;
 }
 
 /* ─── KPI ─── */
