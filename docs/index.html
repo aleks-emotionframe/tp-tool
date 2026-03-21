@@ -954,6 +954,38 @@ body {
 .kpi-bar { height: 4px; background: var(--surface2); border-radius: 2px; margin-top: 10px; overflow: hidden; }
 .kpi-bar-fill { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
 
+/* --- KI-ANALYSE --- */
+.ki-analyse-strip { margin: 0 24px 0; }
+.ki-analyse-toggle { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: var(--transition); user-select: none; }
+.ki-analyse-toggle:hover { border-color: var(--border2); box-shadow: var(--shadow); }
+.ki-analyse-toggle-left { display: flex; align-items: center; gap: 8px; }
+.ki-analyse-icon { font-size: 16px; }
+.ki-analyse-title { font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: 0.3px; }
+.ki-analyse-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+.ki-analyse-badge.green { background: var(--green-light); color: var(--green); }
+.ki-analyse-badge.orange { background: var(--orange-light); color: var(--orange); }
+.ki-analyse-badge.red { background: rgba(239,68,68,0.1); color: #ef4444; }
+.ki-analyse-chevron { font-size: 10px; color: var(--text3); transition: transform 0.2s; }
+.ki-analyse-chevron.open { transform: rotate(180deg); }
+.ki-analyse-body { padding: 12px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.ki-insight { display: flex; gap: 12px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); border-left: 3px solid var(--border); transition: var(--transition); }
+.ki-insight:hover { border-color: var(--border2); box-shadow: var(--shadow); }
+.ki-insight.danger { border-left-color: #ef4444; }
+.ki-insight.warning { border-left-color: var(--orange); }
+.ki-insight.info { border-left-color: var(--blue); }
+.ki-insight.success { border-left-color: var(--green); }
+.ki-insight-icon { font-size: 18px; flex-shrink: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+.ki-insight.danger .ki-insight-icon { background: rgba(239,68,68,0.1); color: #ef4444; }
+.ki-insight.warning .ki-insight-icon { background: var(--orange-light); color: var(--orange); }
+.ki-insight.info .ki-insight-icon { background: var(--blue-light); color: var(--blue); }
+.ki-insight.success .ki-insight-icon { background: var(--green-light); color: var(--green); }
+.ki-insight-content { flex: 1; min-width: 0; }
+.ki-insight-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.ki-insight-desc { font-size: 12px; color: var(--text3); margin-top: 2px; line-height: 1.4; }
+.ki-insight-tasks { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.ki-insight-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--surface2); color: var(--text2); cursor: pointer; transition: var(--transition); white-space: nowrap; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+.ki-insight-tag:hover { background: var(--orange-light); color: var(--orange); }
+
 /* --- DASHBOARD PANELS --- */
 .dash-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .dash-panel {
@@ -2092,6 +2124,19 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         <div class="kpi-value" id="kpiDuration">-</div>
         <div class="kpi-sub" id="kpiDurationSub">-</div>
       </div>
+    </div>
+
+    <!-- KI-Analyse Panel -->
+    <div class="ki-analyse-strip" id="kiAnalyseStrip" style="display:none">
+      <div class="ki-analyse-toggle" onclick="toggleKiAnalyse()">
+        <div class="ki-analyse-toggle-left">
+          <span class="ki-analyse-icon">&#9889;</span>
+          <span class="ki-analyse-title">KI-Analyse</span>
+          <span class="ki-analyse-badge" id="kiAnalyseBadge">0</span>
+        </div>
+        <span class="ki-analyse-chevron" id="kiAnalyseChevron">&#9660;</span>
+      </div>
+      <div class="ki-analyse-body" id="kiAnalyseBody" style="display:none"></div>
     </div>
 
     <div class="filter-bar" id="filterBar" style="display:none">
@@ -3696,8 +3741,258 @@ function showEmpty(show){
   $('listView').style.display='none';
   $('ganttView').style.display='none';
   $('kpiStrip').style.display=show?'none':'grid';
+  $('kiAnalyseStrip').style.display=show?'none':'block';
   $('filterBar').style.display='none';
   if(!show){renderView();}
+}
+
+/* ─── KI-ANALYSE ─── */
+window.toggleKiAnalyse=function(){
+  var body=$('kiAnalyseBody');
+  var chev=$('kiAnalyseChevron');
+  if(body.style.display==='none'){body.style.display='';chev.classList.add('open');}
+  else{body.style.display='none';chev.classList.remove('open');}
+};
+
+function runKiAnalyse(){
+  var strip=$('kiAnalyseStrip');
+  var badge=$('kiAnalyseBadge');
+  var body=$('kiAnalyseBody');
+  if(!S.tasks||!S.tasks.length){if(strip)strip.style.display='none';return;}
+  strip.style.display='block';
+
+  var tasks=S.tasks;
+  var work=tasks.filter(function(t){return!t.summary;});
+  var taskByUid={};
+  tasks.forEach(function(t){taskByUid[t.uid]=t;});
+  var today=fmtISO(new Date());
+  var insights=[];
+
+  // ── 1. Überfällige Vorgänger blockieren Nachfolger ──
+  work.forEach(function(t){
+    if((t.percentComplete||0)>=100)return;
+    var preds=t.predecessors||[];
+    preds.forEach(function(p){
+      var pt=taskByUid[p.uid];
+      if(!pt||pt.summary)return;
+      if(pt.finish&&pt.finish<today&&(pt.percentComplete||0)<100){
+        var daysLate=Math.ceil((new Date(today)-new Date(pt.finish))/86400000);
+        insights.push({
+          severity:'danger',icon:'&#9888;',
+          title:'Blockierter Vorgang',
+          desc:'\u00ab'+esc(t.name)+'\u00bb wartet auf \u00ab'+esc(pt.name)+'\u00bb, die bereits '+daysLate+' Tag'+(daysLate!==1?'e':'')+' \u00fcberf\u00e4llig ist.',
+          tasks:[pt,t],sort:0
+        });
+      }
+    });
+  });
+
+  // ── 2. Enge Pufferzeit (< 3 Tage zwischen Vorgänger-Ende und Nachfolger-Start) ──
+  work.forEach(function(t){
+    if((t.percentComplete||0)>=100)return;
+    var preds=t.predecessors||[];
+    preds.forEach(function(p){
+      if(p.type!==1&&p.type!==undefined)return; // Only EA (Finish-to-Start)
+      var pt=taskByUid[p.uid];
+      if(!pt||pt.summary||(pt.percentComplete||0)>=100)return;
+      if(pt.finish&&t.start){
+        var buffer=Math.ceil((new Date(t.start)-new Date(pt.finish))/86400000);
+        if(buffer>=0&&buffer<=2){
+          insights.push({
+            severity:'warning',icon:'&#9200;',
+            title:'Enge Pufferzeit'+(buffer===0?' (kein Puffer)':' ('+buffer+' Tag'+(buffer!==1?'e':'')+')'),
+            desc:'Zwischen \u00ab'+esc(pt.name)+'\u00bb und \u00ab'+esc(t.name)+'\u00bb gibt es '+(buffer===0?'keinen':'nur '+buffer+' Tag'+(buffer!==1?'e':''))+' Puffer. Verz\u00f6gerungen wirken sich direkt aus.',
+            tasks:[pt,t],sort:1
+          });
+        }
+      }
+    });
+  });
+
+  // ── 3. Kritische Aufgaben-Häufung (viele kritische Tasks gleichzeitig) ──
+  var critWork=work.filter(function(t){return t.critical&&(t.percentComplete||0)<100&&t.start&&t.finish;});
+  if(critWork.length>=3){
+    // Find weeks with multiple critical tasks
+    var weekBuckets={};
+    critWork.forEach(function(t){
+      var s=new Date(t.start),e=new Date(t.finish);
+      for(var d=new Date(s);d<=e;d.setDate(d.getDate()+7)){
+        var wk=fmtISO(d).substring(0,7)+'-W'+Math.ceil(d.getDate()/7);
+        if(!weekBuckets[wk])weekBuckets[wk]={tasks:[],start:fmtISO(d)};
+        if(weekBuckets[wk].tasks.indexOf(t)===-1)weekBuckets[wk].tasks.push(t);
+      }
+    });
+    Object.keys(weekBuckets).forEach(function(wk){
+      var b=weekBuckets[wk];
+      if(b.tasks.length>=3){
+        insights.push({
+          severity:'warning',icon:'&#9889;',
+          title:'Kritische H\u00e4ufung ('+b.tasks.length+' Aufgaben)',
+          desc:b.tasks.length+' kritische Aufgaben laufen gleichzeitig in der Woche ab '+fmtDate(b.start)+'. Ein Engpass ist wahrscheinlich.',
+          tasks:b.tasks,sort:2
+        });
+      }
+    });
+  }
+
+  // ── 4. Lange Abhängigkeitsketten (chain length >= 4) ──
+  var chainMemo={};
+  function getChainLen(uid,visited){
+    if(chainMemo[uid]!==undefined)return chainMemo[uid];
+    if(!visited)visited={};
+    if(visited[uid])return 0;
+    visited[uid]=true;
+    var t=taskByUid[uid];
+    if(!t)return 0;
+    var maxLen=0;
+    (t.predecessors||[]).forEach(function(p){
+      var len=getChainLen(p.uid,visited);
+      if(len>maxLen)maxLen=len;
+    });
+    chainMemo[uid]=maxLen+1;
+    return maxLen+1;
+  }
+  var longestChain=0,longestEnd=null;
+  work.forEach(function(t){
+    var cl=getChainLen(t.uid,{});
+    if(cl>longestChain){longestChain=cl;longestEnd=t;}
+  });
+  if(longestChain>=4){
+    // Build chain
+    var chain=[];
+    var cur=longestEnd;
+    while(cur&&chain.length<longestChain){
+      chain.unshift(cur);
+      var best=null,bestLen=0;
+      (cur.predecessors||[]).forEach(function(p){
+        var pt=taskByUid[p.uid];
+        if(pt){var cl=getChainLen(p.uid,{});if(cl>bestLen){bestLen=cl;best=pt;}}
+      });
+      cur=best;
+    }
+    insights.push({
+      severity:'info',icon:'&#128279;',
+      title:'Lange Abh\u00e4ngigkeitskette ('+longestChain+' Stufen)',
+      desc:'Eine Kette von '+longestChain+' aufeinanderfolgenden Aufgaben erh\u00f6ht das Verz\u00f6gerungsrisiko. Jede Versp\u00e4tung pflanzt sich fort.',
+      tasks:chain,sort:3
+    });
+  }
+
+  // ── 5. Aufgaben ohne Puffer am Projektende ──
+  var maxFinish='';
+  work.forEach(function(t){if(t.finish&&t.finish>maxFinish)maxFinish=t.finish;});
+  if(maxFinish){
+    var endTasks=work.filter(function(t){
+      if((t.percentComplete||0)>=100)return false;
+      if(!t.finish)return false;
+      var daysToEnd=Math.ceil((new Date(maxFinish)-new Date(t.finish))/86400000);
+      return daysToEnd<=3&&t.critical;
+    });
+    if(endTasks.length>=2){
+      insights.push({
+        severity:'warning',icon:'&#127937;',
+        title:'Engpass am Projektende',
+        desc:endTasks.length+' kritische Aufgaben enden innerhalb der letzten 3 Tage des Projekts. Das Risiko einer Projekt\u00fcberschreitung ist hoch.',
+        tasks:endTasks,sort:2
+      });
+    }
+  }
+
+  // ── 6. Überlappende Aufgaben mit gleichen Abhängigkeiten (Ressourcenkonflikt) ──
+  for(var i=0;i<work.length;i++){
+    for(var j=i+1;j<work.length;j++){
+      var a=work[i],b=work[j];
+      if(!a.start||!a.finish||!b.start||!b.finish)continue;
+      if((a.percentComplete||0)>=100||(b.percentComplete||0)>=100)continue;
+      // Check if they share a predecessor
+      var aPreds=(a.predecessors||[]).map(function(p){return p.uid;});
+      var bPreds=(b.predecessors||[]).map(function(p){return p.uid;});
+      var shared=aPreds.filter(function(u){return bPreds.indexOf(u)!==-1;});
+      if(!shared.length)continue;
+      // Check overlap
+      if(a.start<=b.finish&&b.start<=a.finish){
+        var overlapStart=a.start>b.start?a.start:b.start;
+        var overlapEnd=a.finish<b.finish?a.finish:b.finish;
+        var overlapDays=Math.ceil((new Date(overlapEnd)-new Date(overlapStart))/86400000)+1;
+        if(overlapDays>=2){
+          insights.push({
+            severity:'info',icon:'&#8644;',
+            title:'Parallele Aufgaben mit gleicher Abh\u00e4ngigkeit',
+            desc:'\u00ab'+esc(a.name)+'\u00bb und \u00ab'+esc(b.name)+'\u00bb \u00fcberlappen sich '+overlapDays+' Tage und h\u00e4ngen vom gleichen Vorg\u00e4nger ab. M\u00f6glicher Ressourcenkonflikt.',
+            tasks:[a,b],sort:4
+          });
+        }
+      }
+    }
+  }
+
+  // ── 7. Aufgaben mit 0% die bereits gestartet sein sollten ──
+  work.forEach(function(t){
+    if(t.start&&t.start<today&&(t.percentComplete||0)===0&&!t.critical){
+      var daysSince=Math.ceil((new Date(today)-new Date(t.start))/86400000);
+      if(daysSince>=5){
+        insights.push({
+          severity:'warning',icon:'&#9888;',
+          title:'Nicht gestartete Aufgabe',
+          desc:'\u00ab'+esc(t.name)+'\u00bb h\u00e4tte vor '+daysSince+' Tagen starten sollen, ist aber noch bei 0%.',
+          tasks:[t],sort:1
+        });
+      }
+    }
+  });
+
+  // ── 8. Alles gut ──
+  if(!insights.length){
+    insights.push({
+      severity:'success',icon:'&#10003;',
+      title:'Keine Auff\u00e4lligkeiten',
+      desc:'Alle Vorg\u00e4nge laufen planm\u00e4\u00dfig. Es wurden keine Kollisionen oder Risiken erkannt.',
+      tasks:[],sort:99
+    });
+  }
+
+  // Deduplicate similar insights (same title + same task UIDs)
+  var seen={};
+  insights=insights.filter(function(ins){
+    var key=ins.title+'|'+ins.tasks.map(function(t){return t.uid;}).sort().join(',');
+    if(seen[key])return false;
+    seen[key]=true;
+    return true;
+  });
+
+  // Sort: danger first, then warning, then info
+  insights.sort(function(a,b){return a.sort-b.sort;});
+
+  // Limit to avoid info overload
+  if(insights.length>12)insights=insights.slice(0,12);
+
+  // Count by severity
+  var dangerCount=insights.filter(function(i){return i.severity==='danger';}).length;
+  var warnCount=insights.filter(function(i){return i.severity==='warning';}).length;
+  var total=insights.length;
+
+  // Update badge
+  badge.textContent=total+(total===1?' Hinweis':' Hinweise');
+  badge.className='ki-analyse-badge '+(dangerCount?'red':warnCount?'orange':'green');
+
+  // Render insights
+  var html='';
+  insights.forEach(function(ins){
+    html+='<div class="ki-insight '+ins.severity+'">'
+      +'<div class="ki-insight-icon">'+ins.icon+'</div>'
+      +'<div class="ki-insight-content">'
+      +'<div class="ki-insight-title">'+ins.title+'</div>'
+      +'<div class="ki-insight-desc">'+ins.desc+'</div>';
+    if(ins.tasks.length){
+      html+='<div class="ki-insight-tasks">';
+      ins.tasks.forEach(function(t){
+        html+='<span class="ki-insight-tag" onclick="openTaskDetail('+t.uid+')" title="'+esc(t.name)+'">'+esc(t.name)+'</span>';
+      });
+      html+='</div>';
+    }
+    html+='</div></div>';
+  });
+  body.innerHTML=html;
 }
 
 /* ─── KPI ─── */
@@ -3728,6 +4023,7 @@ function updateKPI(){
   $('kpiProgBar').style.width=avgProg+'%';
   $('kpiDuration').textContent=dur+' Tage';
   $('kpiDurationSub').textContent=minD?fmtDate(fmtISO(minD))+' \u2013 '+fmtDate(fmtISO(maxD)):'-';
+  runKiAnalyse();
 }
 
 /* ─── FILTER ─── */
@@ -3873,18 +4169,21 @@ function renderView(){
   $('contentArea').style.overflow='auto';
   if(S.view==='pendenzen_my'){
     $('kpiStrip').style.display='none';
+    $('kiAnalyseStrip').style.display='none';
     $('pendenzenView').style.display='block';
     renderMyPendenzen();
   }else if(S.view==='pendenzen_project'){
     $('kpiStrip').style.display='none';
+    $('kiAnalyseStrip').style.display='none';
     $('projektPendenzenView').style.display='block';
     renderProjectPendenzenView();
   }else if(S.view==='ferien'){
     $('kpiStrip').style.display='none';
+    $('kiAnalyseStrip').style.display='none';
     $('ferienView').style.display='block';
     renderFerien();
   }else{
-    if(S.pid)$('kpiStrip').style.display='grid';
+    if(S.pid){$('kpiStrip').style.display='grid';$('kiAnalyseStrip').style.display='block';}
     if(S.view==='dashboard'){
       $('dashboardView').style.display='block';
       renderDashboard();
