@@ -3914,7 +3914,7 @@ function _renderMyPendItem(p){
   }
   // Comment display
   if(p.comment){
-    html+='<div class="pend-comment-display" style="width:100%;padding:6px 10px 6px 28px;font-size:12px;color:var(--text3);font-style:italic;line-height:1.4;">'+esc(p.comment)+'</div>';
+    // Comment hidden until toggle - orange dot on icon indicates it exists
   }
   // Comment input (shown via toggle)
   html+='<div class="pend-comment-input" id="pendComment_'+p.id+'" style="display:none;width:100%;padding:4px 0 0 28px;">';
