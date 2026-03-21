@@ -465,6 +465,7 @@ body {
 .search-result-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .search-result-name mark { background: var(--orange-light); color: var(--orange); font-weight: 600; border-radius: 2px; padding: 0 1px; }
 .search-result-meta { font-size: 11px; color: var(--text3); white-space: nowrap; }
+.search-result-project { font-size: 10px; color: var(--primary); background: var(--bg2); border-radius: 3px; padding: 1px 5px; white-space: nowrap; margin-left: auto; }
 .search-result-dot {
   width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
 }
@@ -2849,32 +2850,51 @@ document.addEventListener('click',function(e){
   if(!e.target.closest('.search-wrapper'))closeSearchDropdown();
 });
 
+function getAllTasksAcrossProjects(){
+  var idx=getIdx();
+  var allTasks=[];
+  idx.forEach(function(p){
+    var d=sGet('p_'+p.id,null);
+    if(!d||!d.tasks)return;
+    d.tasks.forEach(function(t){
+      if(!t.summary){
+        allTasks.push({task:t,projectId:p.id,projectName:p.name});
+      }
+    });
+  });
+  return allTasks;
+}
+
 function updateSearchDropdown(val){
   var dd=$('searchDropdown');
   _searchIdx=-1;
-  if(!val||val.trim().length<1||!S.tasks.length){
+  if(!val||val.trim().length<1){
     dd.classList.remove('show');return;
   }
   var q=val.toLowerCase();
   var today=fmtISO(new Date());
-  var matches=S.tasks.filter(function(t){
-    return !t.summary&&t.name.toLowerCase().indexOf(q)>=0;
-  }).slice(0,12);
+  var allTasks=getAllTasksAcrossProjects();
+  var matches=allTasks.filter(function(item){
+    return item.task.name.toLowerCase().indexOf(q)>=0;
+  }).slice(0,15);
   if(!matches.length){
     dd.innerHTML='<div class="search-no-results">Kein Vorgang gefunden</div>';
     dd.classList.add('show');return;
   }
   var html='';
-  matches.forEach(function(t){
+  matches.forEach(function(item){
+    var t=item.task;
     var pct=t.percentComplete||0;
     var dotColor=pct>=100?'background:var(--green)':
       (t.finish&&t.finish<today&&pct<100?'background:var(--red)':'background:var(--orange)');
     // Highlight matching text
     var idx=t.name.toLowerCase().indexOf(q);
     var nameParts=esc(t.name.substring(0,idx))+'<mark>'+esc(t.name.substring(idx,idx+q.length))+'</mark>'+esc(t.name.substring(idx+q.length));
-    html+='<div class="search-result" data-uid="'+t.uid+'">'
+    var isOtherProject=item.projectId!=S.pid;
+    html+='<div class="search-result" data-uid="'+t.uid+'" data-pid="'+item.projectId+'">'
       +'<div class="search-result-dot" style="'+dotColor+'"></div>'
       +'<div class="search-result-name">'+nameParts+'</div>'
+      +(isOtherProject?'<div class="search-result-project">'+esc(item.projectName)+'</div>':'')
       +'<div class="search-result-meta">'+pct+'%</div>'
       +'</div>';
   });
@@ -2882,7 +2902,12 @@ function updateSearchDropdown(val){
   dd.classList.add('show');
   dd.querySelectorAll('.search-result').forEach(function(el){
     el.addEventListener('click',function(){
-      openTaskDetail(parseInt(this.dataset.uid));
+      var pid=this.dataset.pid;
+      var uid=parseInt(this.dataset.uid);
+      if(pid!=S.pid){
+        loadProject(pid);
+      }
+      openTaskDetail(uid);
       closeSearchDropdown();
     });
   });
