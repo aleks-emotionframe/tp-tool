@@ -661,6 +661,8 @@ body {
 .pend-item .pend-delete { width: 26px; height: 26px; border: 1px solid var(--border); background: var(--bg); color: var(--text3); cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; border-radius: 6px; flex-shrink: 0; transition: var(--transition); }
 .pend-item .pend-delete:hover { background: var(--red); color: #fff; border-color: var(--red); }
 .pend-empty { font-size: 13px; color: var(--text3); padding: 12px; text-align: center; }
+.pend-from-tp { border-left: 3px solid var(--orange) !important; }
+.pend-tp-badge { font-size: 9px; font-weight: 800; color: #fff; background: var(--orange); padding: 1px 5px; border-radius: 3px; flex-shrink: 0; letter-spacing: .5px; }
 .pend-folders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 @media(max-width:900px){.pend-folders-grid{grid-template-columns:1fr;}}
 .pend-folder { border: 1px solid var(--border); border-radius: 8px; overflow: visible; cursor: grab; transition: box-shadow .15s, opacity .15s; }
@@ -3883,8 +3885,10 @@ function _updatePendBtnActive(){
 }
 
 function _renderMyPendItem(p){
-  var html='<li class="pend-item'+(p.done?' done':'')+'" draggable="true" data-id="'+p.id+'" style="flex-wrap:wrap;">';
+  var isFromTP=p.source==='terminplan';
+  var html='<li class="pend-item'+(p.done?' done':'')+(isFromTP?' pend-from-tp':'')+'" draggable="true" data-id="'+p.id+'" style="flex-wrap:wrap;">';
   html+='<div class="pend-check" onclick="toggleMyPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
+  if(isFromTP) html+='<span class="pend-tp-badge" title="Aus Terminplan: '+esc(p.taskProject||'')+'">TP</span>';
   html+='<span class="pend-text" ondblclick="editMyPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
   html+=_pendDueLabel(p.due);
   if(S.pid){
@@ -5568,15 +5572,42 @@ window.openTaskDetail=function(uid){
     g+='</div>';
   }
 
-  // Link to table view
-  g+='<div style="grid-column:1/-1;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">'
+  // Actions
+  g+='<div style="grid-column:1/-1;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
     +'<a href="#" onclick="goToTaskInList('+t.uid+');return false;" style="display:inline-flex;align-items:center;gap:6px;color:var(--orange);font-size:13px;font-weight:600;text-decoration:none;">'
-    +'<span style="font-size:16px;">&#8594;</span> In Tabelle anzeigen</a></div>';
+    +'<span style="font-size:16px;">&#8594;</span> In Tabelle anzeigen</a>'
+    +'<button onclick="addTaskToPendenzen('+t.uid+')" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'\';this.style.color=\'\'">'
+    +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Zu meinen Pendenzen</button>'
+    +'</div>';
 
   $('tdGrid').innerHTML=g;
   $('taskDetailModal').classList.add('show');
 };
 
+window.addTaskToPendenzen=function(uid){
+  var t=findTask(uid);if(!t||!S.currentUser)return;
+  var list=getMyPendenzen();
+  // Check if already added
+  if(list.some(function(p){return p.taskUid===uid&&p.taskPid===S.pid;})){
+    alert('Diese Arbeit ist bereits in Ihren Pendenzen.');return;
+  }
+  var projectName=_getProjectName(S.pid);
+  list.unshift({
+    id:_pendId(),
+    text:t.name,
+    done:false,
+    due:t.finish||'',
+    created:new Date().toISOString(),
+    taskUid:uid,
+    taskPid:S.pid,
+    taskProject:projectName,
+    source:'terminplan'
+  });
+  saveMyPendenzen(list);
+  // Visual feedback
+  var btn=event.target.closest('button');
+  if(btn){btn.textContent='\u2713 Hinzugef\u00fcgt';btn.style.color='var(--green)';btn.style.borderColor='var(--green)';}
+};
 window.updateTaskProgress=function(val){
   val=Math.max(0,Math.min(100,parseInt(val)||0));
   var slider=$('tdSlider'),inp=$('tdPctInput'),fill=$('tdProgressFill');
