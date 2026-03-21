@@ -3888,9 +3888,9 @@ function _renderMyPendItem(p){
     html+='</div></div>';
   }
   if(!p.done&&(!(p.images)||p.images.length<2)){
-    html+='<label class="pend-action-btn" title="Bild hinzuf\u00fcgen"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><input type="file" accept="image/*" style="display:none;" onchange="uploadMyPendImage(\''+p.id+'\',this)"></label>';
+    html+='<label class="pend-action-btn" title="Bild hinzuf\u00fcgen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><input type="file" accept="image/*" style="display:none;" onchange="uploadMyPendImage(\''+p.id+'\',this)"></label>';
   }
-  html+='<button class="pend-action-btn" onclick="toggleMyPendComment(\''+p.id+'\')" title="Kommentar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+(p.comment?'<span style="position:absolute;top:-2px;right:-2px;width:6px;height:6px;background:var(--orange);border-radius:50%;"></span>':'')+'</button>';
+  html+='<button class="pend-action-btn" onclick="toggleMyPendComment(\''+p.id+'\')" title="Kommentar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+(p.comment?'<span style="position:absolute;top:-2px;right:-2px;width:6px;height:6px;background:var(--orange);border-radius:50%;"></span>':'')+'</button>';
   html+='<button class="pend-delete" onclick="deleteMyPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
   // Images
   if(p.images&&p.images.length){
@@ -4272,9 +4272,9 @@ function _renderPendCard(p,isDone){
     html+='<div class="pend-card-actions">';
     html+='<button class="pend-action-btn" onclick="toggleProjectPendenz(\''+p.id+'\')" title="Erledigt" style="width:auto;padding:3px 10px;gap:4px;font-size:11px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg> Erledigt</button>';
     if(!(p.images)||p.images.length<2){
-      html+='<label class="pend-action-btn" title="Bild hinzuf\u00fcgen"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><input type="file" accept="image/*" style="display:none;" onchange="uploadPendImage(\''+p.id+'\',this)"></label>';
+      html+='<label class="pend-action-btn" title="Bild hinzuf\u00fcgen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><input type="file" accept="image/*" style="display:none;" onchange="uploadPendImage(\''+p.id+'\',this)"></label>';
     }
-    html+='<button class="pend-action-btn" onclick="toggleProjPendComment(\''+p.id+'\')" title="Kommentar" style="position:relative;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+(p.comment?'<span style="position:absolute;top:-2px;right:-2px;width:6px;height:6px;background:var(--orange);border-radius:50%;"></span>':'')+'</button>';
+    html+='<button class="pend-action-btn" onclick="toggleProjPendComment(\''+p.id+'\')" title="Kommentar" style="position:relative;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>'+(p.comment?'<span style="position:absolute;top:-2px;right:-2px;width:6px;height:6px;background:var(--orange);border-radius:50%;"></span>':'')+'</button>';
     html+='</div>';
   }
   // Comment input
