@@ -541,6 +541,7 @@ body {
   box-shadow: 0 2px 8px rgba(232,96,10,0.3);
 }
 /* ─── PENDENZEN ─── */
+.sidebar-pend-btns { padding: 0 16px 8px; display: flex; flex-direction: column; gap: 4px; border-top: 1px solid var(--border); padding-top: 12px; margin-top: auto; }
 .pend-section { margin-bottom: 28px; }
 .pend-section-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 .pend-section-title .pend-badge { font-size: 11px; font-weight: 600; background: var(--surface2); color: var(--text3); border-radius: 10px; padding: 2px 8px; }
@@ -562,6 +563,14 @@ body {
 .pend-item:hover .pend-delete { opacity: 1; }
 .pend-item .pend-delete:hover { background: var(--red); color: #fff; }
 .pend-empty { font-size: 13px; color: var(--text3); padding: 12px; text-align: center; }
+.pend-due { font-size: 11px; padding: 2px 8px; border-radius: 10px; white-space: nowrap; background: var(--surface2); color: var(--text3); }
+.pend-overdue { background: var(--red); color: #fff; }
+.pend-today { background: var(--orange); color: #fff; }
+.pend-soon { background: #fef3cd; color: #856404; }
+.pend-edit-input { flex: 1; padding: 4px 8px; border: 1px solid var(--orange); border-radius: var(--radius-xs); font-family: var(--font); font-size: 13px; background: var(--bg); color: var(--text); outline: none; }
+.pend-edit-date, .pend-edit-assignee { padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius-xs); font-family: var(--font); font-size: 12px; background: var(--bg); color: var(--text); margin-left: 6px; }
+.pend-text { display: flex; align-items: center; gap: 4px; }
+.pend-add-row input[type=date] { max-width: 140px; }
 
 .icon-btn {
   height: 36px; min-width: 36px; padding: 0 8px;
@@ -1753,10 +1762,13 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         <button class="sidebar-tab" data-view="kompakt">Kompakt</button>
         <button class="sidebar-tab" data-view="list">Liste</button>
         <button class="sidebar-tab" data-view="gantt">Gantt</button>
-        <button class="sidebar-tab" data-view="pendenzen" style="grid-column:1/-1;">Pendenzen</button>
       </div>
     </div>
     <div class="sidebar-projects" id="projectList"></div>
+    <div class="sidebar-pend-btns" id="sidebarPendBtns" style="display:none;">
+      <button class="sidebar-btn" onclick="showPendenzenView('my')">Meine Pendenzen</button>
+      <button class="sidebar-btn" id="projektPendBtn" onclick="showPendenzenView('project')" style="display:none;">Projekt-Pendenzen</button>
+    </div>
     <div class="sidebar-user" id="currentUserDisplay" style="display:none;"></div>
     <div class="sidebar-bottom">
       <button class="sidebar-btn primary" id="newProjectBtn" onclick="showNewDialog()" style="display:none;">+ Neues Projekt</button>
@@ -1835,6 +1847,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <div id="listView" style="display:none;height:100%;overflow:auto;"></div>
       <div id="ganttView" style="display:none;height:100%;overflow:hidden;"></div>
       <div id="pendenzenView" style="display:none;overflow:auto;padding:20px 24px;"></div>
+      <div id="projektPendenzenView" style="display:none;overflow:auto;padding:20px 24px;"></div>
     </div>
   </div>
 </div>
@@ -2651,9 +2664,18 @@ function updateUserDisplay(){
     }
     var npBtn=$('newProjectBtn');
     if(npBtn) npBtn.style.display=userHasPerm('create_project')?'':'none';
+    var spb=$('sidebarPendBtns');
+    if(spb) spb.style.display='flex';
+    updateProjektPendBtn();
   } else {
     el.style.display='none';
+    var spb=$('sidebarPendBtns');
+    if(spb) spb.style.display='none';
   }
+}
+function updateProjektPendBtn(){
+  var btn=$('projektPendBtn');
+  if(btn) btn.style.display=S.pid?'':'none';
 }
 
 $('loginForm').addEventListener('submit',function(e){
@@ -3058,6 +3080,7 @@ function loadProject(id){
   updateKPI();
   applyFilters();
   updateXmlUploadBtn();
+  updateProjektPendBtn();
 }
 
 function userHasPerm(key){
@@ -3288,8 +3311,7 @@ document.querySelectorAll('.sidebar-tab').forEach(function(b){
     this.classList.add('active');
     S.view=this.dataset.view;
     sSet('lastView_'+(S.currentUser?S.currentUser.username:''),S.view);
-    if(S.view==='pendenzen'){$('emptyState').style.display='none';renderView();}
-    else if(S.pid)showEmpty(false);
+    if(S.pid)showEmpty(false);
   });
 });
 
@@ -3299,12 +3321,17 @@ function renderView(){
   $('listView').style.display='none';
   $('ganttView').style.display='none';
   $('pendenzenView').style.display='none';
+  $('projektPendenzenView').style.display='none';
   $('filterBar').style.display='none';
   $('contentArea').style.overflow='auto';
-  if(S.view==='pendenzen'){
+  if(S.view==='pendenzen_my'){
     $('kpiStrip').style.display='none';
     $('pendenzenView').style.display='block';
-    renderPendenzen();
+    renderMyPendenzen();
+  }else if(S.view==='pendenzen_project'){
+    $('kpiStrip').style.display='none';
+    $('projektPendenzenView').style.display='block';
+    renderProjectPendenzenView();
   }else{
     if(S.pid)$('kpiStrip').style.display='grid';
     if(S.view==='dashboard'){
@@ -3348,24 +3375,44 @@ function saveProjectPendenzen(pid,list){
 }
 function _pendId(){return Date.now()+Math.random().toString(36).substr(2,5);}
 
-function renderPendenzen(){
+function _pendDueLabel(due){
+  if(!due)return'';
+  var d=new Date(due+'T00:00:00');
+  var today=new Date();today.setHours(0,0,0,0);
+  var diff=Math.round((d-today)/(1000*60*60*24));
+  var cls='pend-due';
+  if(diff<0)cls+=' pend-overdue';
+  else if(diff===0)cls+=' pend-today';
+  else if(diff<=3)cls+=' pend-soon';
+  var label=d.toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit',year:'numeric'});
+  return '<span class="'+cls+'">'+label+'</span>';
+}
+
+window.showPendenzenView=function(type){
+  document.querySelectorAll('.sidebar-tab').forEach(function(x){x.classList.remove('active');});
+  S.view=type==='project'?'pendenzen_project':'pendenzen_my';
+  $('emptyState').style.display='none';
+  renderView();
+};
+
+function renderMyPendenzen(){
   var c=$('pendenzenView');
-  var html='';
-  // --- Meine Pendenzen ---
   var my=getMyPendenzen();
   var myOpen=my.filter(function(p){return!p.done;}).length;
-  html+='<div class="pend-section">';
+  var html='<div class="pend-section">';
   html+='<div class="pend-section-title">Meine Pendenzen <span class="pend-badge">'+myOpen+' offen</span></div>';
   html+='<div class="pend-add-row">';
   html+='<input type="text" id="pendMyInput" placeholder="Neue Pendenz..." onkeydown="if(event.key===\'Enter\')addMyPendenz()">';
+  html+='<input type="date" id="pendMyDue" title="F\u00e4lligkeitsdatum">';
   html+='<button onclick="addMyPendenz()">Hinzuf\u00fcgen</button>';
   html+='</div>';
   if(my.length){
     html+='<ul class="pend-list">';
     my.forEach(function(p){
-      html+='<li class="pend-item'+(p.done?' done':'')+'">';
+      html+='<li class="pend-item'+(p.done?' done':'')+'" data-id="'+p.id+'">';
       html+='<div class="pend-check" onclick="toggleMyPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
-      html+='<span class="pend-text">'+esc(p.text)+'</span>';
+      html+='<span class="pend-text" ondblclick="editMyPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
+      html+=_pendDueLabel(p.due);
       html+='<button class="pend-delete" onclick="deleteMyPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
       html+='</li>';
     });
@@ -3374,98 +3421,153 @@ function renderPendenzen(){
     html+='<div class="pend-empty">Keine Pendenzen vorhanden</div>';
   }
   html+='</div>';
-
-  // --- Projekt-Pendenzen ---
-  if(S.pid){
-    var d=sGet('p_'+S.pid,{});
-    var plist=d.pendenzen||[];
-    var pOpen=plist.filter(function(p){return!p.done;}).length;
-    var projectName=d.name||S.pid;
-    var projectUsers=d.users||[];
-    html+='<div class="pend-section">';
-    html+='<div class="pend-section-title">Projekt: '+esc(projectName)+' <span class="pend-badge">'+pOpen+' offen</span></div>';
-    html+='<div class="pend-add-row">';
-    html+='<input type="text" id="pendProjInput" placeholder="Neue Projekt-Pendenz..." onkeydown="if(event.key===\'Enter\')addProjectPendenz()">';
-    html+='<select id="pendProjAssignee"><option value="">Nicht zugewiesen</option>';
-    projectUsers.forEach(function(uname){
-      var u=findUser(uname);
-      var dn=u?getUserDisplayName(u):uname;
-      html+='<option value="'+esc(uname)+'">'+esc(dn)+'</option>';
-    });
-    html+='</select>';
-    html+='<button onclick="addProjectPendenz()">Hinzuf\u00fcgen</button>';
-    html+='</div>';
-    if(plist.length){
-      html+='<ul class="pend-list">';
-      plist.forEach(function(p){
-        var assigneeLabel='';
-        if(p.assignee){
-          var au=findUser(p.assignee);
-          assigneeLabel=au?getUserDisplayName(au):p.assignee;
-        }
-        html+='<li class="pend-item'+(p.done?' done':'')+'">';
-        html+='<div class="pend-check" onclick="toggleProjectPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
-        html+='<span class="pend-text">'+esc(p.text)+'</span>';
-        if(assigneeLabel) html+='<span class="pend-assignee">'+esc(assigneeLabel)+'</span>';
-        html+='<button class="pend-delete" onclick="deleteProjectPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
-        html+='</li>';
-      });
-      html+='</ul>';
-    }else{
-      html+='<div class="pend-empty">Keine Projekt-Pendenzen vorhanden</div>';
-    }
-    html+='</div>';
-  }else{
-    html+='<div class="pend-section">';
-    html+='<div class="pend-section-title">Projekt-Pendenzen</div>';
-    html+='<div class="pend-empty">W\u00e4hle ein Projekt, um dessen Pendenzen zu sehen</div>';
-    html+='</div>';
-  }
   c.innerHTML=html;
 }
 
+function renderProjectPendenzenView(){
+  var c=$('projektPendenzenView');
+  if(!S.pid){
+    c.innerHTML='<div class="pend-section"><div class="pend-section-title">Projekt-Pendenzen</div>'
+      +'<div class="pend-empty">W\u00e4hle ein Projekt, um dessen Pendenzen zu sehen</div></div>';
+    return;
+  }
+  var d=sGet('p_'+S.pid,{});
+  var plist=d.pendenzen||[];
+  var pOpen=plist.filter(function(p){return!p.done;}).length;
+  var projectName=d.name||S.pid;
+  var projectUsers=d.users||[];
+  var html='<div class="pend-section">';
+  html+='<div class="pend-section-title">'+esc(projectName)+' \u2013 Pendenzen <span class="pend-badge">'+pOpen+' offen</span></div>';
+  html+='<div class="pend-add-row">';
+  html+='<input type="text" id="pendProjInput" placeholder="Neue Projekt-Pendenz..." onkeydown="if(event.key===\'Enter\')addProjectPendenz()">';
+  html+='<input type="date" id="pendProjDue" title="F\u00e4lligkeitsdatum">';
+  html+='<select id="pendProjAssignee"><option value="">Nicht zugewiesen</option>';
+  projectUsers.forEach(function(uname){
+    var u=findUser(uname);
+    var dn=u?getUserDisplayName(u):uname;
+    html+='<option value="'+esc(uname)+'">'+esc(dn)+'</option>';
+  });
+  html+='</select>';
+  html+='<button onclick="addProjectPendenz()">Hinzuf\u00fcgen</button>';
+  html+='</div>';
+  if(plist.length){
+    html+='<ul class="pend-list">';
+    plist.forEach(function(p){
+      var assigneeLabel='';
+      if(p.assignee){var au=findUser(p.assignee);assigneeLabel=au?getUserDisplayName(au):p.assignee;}
+      html+='<li class="pend-item'+(p.done?' done':'')+'" data-id="'+p.id+'">';
+      html+='<div class="pend-check" onclick="toggleProjectPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
+      html+='<span class="pend-text" ondblclick="editProjectPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
+      html+=_pendDueLabel(p.due);
+      if(assigneeLabel) html+='<span class="pend-assignee">'+esc(assigneeLabel)+'</span>';
+      html+='<button class="pend-delete" onclick="deleteProjectPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
+      html+='</li>';
+    });
+    html+='</ul>';
+  }else{
+    html+='<div class="pend-empty">Keine Projekt-Pendenzen vorhanden</div>';
+  }
+  html+='</div>';
+  c.innerHTML=html;
+}
+
+// --- My Pendenzen CRUD ---
 window.addMyPendenz=function(){
   var inp=$('pendMyInput');if(!inp)return;
   var text=inp.value.trim();if(!text)return;
+  var due=($('pendMyDue')||{}).value||'';
   var list=getMyPendenzen();
-  list.unshift({id:_pendId(),text:text,done:false,created:new Date().toISOString()});
+  list.unshift({id:_pendId(),text:text,done:false,due:due,created:new Date().toISOString()});
   saveMyPendenzen(list);
-  renderPendenzen();
+  renderMyPendenzen();
 };
 window.toggleMyPendenz=function(id){
   var list=getMyPendenzen();
   list.forEach(function(p){if(p.id===id)p.done=!p.done;});
   saveMyPendenzen(list);
-  renderPendenzen();
+  renderMyPendenzen();
 };
 window.deleteMyPendenz=function(id){
   var list=getMyPendenzen().filter(function(p){return p.id!==id;});
   saveMyPendenzen(list);
-  renderPendenzen();
+  renderMyPendenzen();
+};
+window.editMyPendenz=function(id){
+  var list=getMyPendenzen();
+  var item=list.find(function(p){return p.id===id;});
+  if(!item)return;
+  var li=document.querySelector('.pend-item[data-id="'+id+'"]');
+  if(!li)return;
+  var textEl=li.querySelector('.pend-text');
+  textEl.innerHTML='<input type="text" class="pend-edit-input" value="'+esc(item.text)+'">'
+    +'<input type="date" class="pend-edit-date" value="'+(item.due||'')+'">';
+  var inp=textEl.querySelector('input[type=text]');
+  inp.focus();
+  var save=function(){
+    var nv=inp.value.trim();if(!nv)nv=item.text;
+    item.text=nv;
+    item.due=textEl.querySelector('.pend-edit-date').value||'';
+    saveMyPendenzen(list);renderMyPendenzen();
+  };
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter')save();if(e.key==='Escape')renderMyPendenzen();});
+  inp.addEventListener('blur',function(){setTimeout(save,150);});
 };
 
+// --- Project Pendenzen CRUD ---
 window.addProjectPendenz=function(){
   if(!S.pid)return;
   var inp=$('pendProjInput');if(!inp)return;
   var text=inp.value.trim();if(!text)return;
+  var due=($('pendProjDue')||{}).value||'';
   var assignee=($('pendProjAssignee')||{}).value||'';
   var list=getProjectPendenzen(S.pid);
-  list.unshift({id:_pendId(),text:text,done:false,assignee:assignee,created:new Date().toISOString(),createdBy:S.currentUser?S.currentUser.username:''});
+  list.unshift({id:_pendId(),text:text,done:false,due:due,assignee:assignee,created:new Date().toISOString(),createdBy:S.currentUser?S.currentUser.username:''});
   saveProjectPendenzen(S.pid,list);
-  renderPendenzen();
+  renderProjectPendenzenView();
 };
 window.toggleProjectPendenz=function(id){
   if(!S.pid)return;
   var list=getProjectPendenzen(S.pid);
   list.forEach(function(p){if(p.id===id)p.done=!p.done;});
   saveProjectPendenzen(S.pid,list);
-  renderPendenzen();
+  renderProjectPendenzenView();
 };
 window.deleteProjectPendenz=function(id){
   if(!S.pid)return;
   var list=getProjectPendenzen(S.pid).filter(function(p){return p.id!==id;});
   saveProjectPendenzen(S.pid,list);
-  renderPendenzen();
+  renderProjectPendenzenView();
+};
+window.editProjectPendenz=function(id){
+  if(!S.pid)return;
+  var list=getProjectPendenzen(S.pid);
+  var item=list.find(function(p){return p.id===id;});
+  if(!item)return;
+  var d=sGet('p_'+S.pid,{});
+  var projectUsers=d.users||[];
+  var li=document.querySelector('.pend-item[data-id="'+id+'"]');
+  if(!li)return;
+  var textEl=li.querySelector('.pend-text');
+  var selHtml='<select class="pend-edit-assignee"><option value="">Nicht zugewiesen</option>';
+  projectUsers.forEach(function(uname){
+    var u=findUser(uname);var dn=u?getUserDisplayName(u):uname;
+    selHtml+='<option value="'+esc(uname)+'"'+(item.assignee===uname?' selected':'')+'>'+esc(dn)+'</option>';
+  });
+  selHtml+='</select>';
+  textEl.innerHTML='<input type="text" class="pend-edit-input" value="'+esc(item.text)+'">'
+    +'<input type="date" class="pend-edit-date" value="'+(item.due||'')+'">'
+    +selHtml;
+  var inp=textEl.querySelector('input[type=text]');
+  inp.focus();
+  var save=function(){
+    var nv=inp.value.trim();if(!nv)nv=item.text;
+    item.text=nv;
+    item.due=textEl.querySelector('.pend-edit-date').value||'';
+    item.assignee=textEl.querySelector('.pend-edit-assignee').value||'';
+    saveProjectPendenzen(S.pid,list);renderProjectPendenzenView();
+  };
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter')save();if(e.key==='Escape')renderProjectPendenzenView();});
+  inp.addEventListener('blur',function(){setTimeout(save,150);});
 };
 
 /* ─── DASHBOARD PANELS ─── */
