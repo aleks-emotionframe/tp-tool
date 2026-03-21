@@ -641,6 +641,42 @@ body {
 .ferien-my-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--surface); border-radius: 6px; margin-bottom: 4px; }
 .ferien-my-item span { flex: 1; font-size: 13px; }
 .ferien-my-item button { border: none; background: none; color: var(--red); cursor: pointer; font-size: 16px; }
+
+/* ─── FERIENVERTRETUNG ─── */
+.fv-section { margin-top: 32px; }
+.fv-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.fv-title-row h4 { font-size: 15px; font-weight: 700; color: var(--text); margin: 0; }
+.fv-title-row .fv-badge { font-size: 11px; font-weight: 600; background: var(--surface2); color: var(--text3); border-radius: 10px; padding: 2px 8px; }
+.fv-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.fv-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; position: relative; transition: var(--transition); }
+.fv-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.fv-card-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 12px; color: var(--text3); }
+.fv-card-head .fv-user-chip { display: inline-flex; align-items: center; gap: 5px; background: var(--surface2); padding: 3px 8px 3px 4px; border-radius: 12px; font-weight: 600; color: var(--text); font-size: 11px; }
+.fv-card-head .fv-date-range { font-size: 11px; color: var(--text3); }
+.fv-card-arrow { color: var(--text3); font-size: 13px; }
+.fv-task-list { list-style: none; padding: 0; margin: 0; }
+.fv-task-item { display: flex; align-items: flex-start; gap: 8px; padding: 5px 0; font-size: 13px; color: var(--text); border-bottom: 1px solid var(--border); }
+.fv-task-item:last-child { border-bottom: none; }
+.fv-task-check { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border); background: var(--bg); cursor: pointer; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
+.fv-task-check:hover { border-color: var(--orange); }
+.fv-task-check.done { background: var(--orange); border-color: var(--orange); color: #fff; }
+.fv-task-text { flex: 1; line-height: 1.4; }
+.fv-task-text.done { text-decoration: line-through; color: var(--text3); }
+.fv-task-del { border: none; background: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 0 2px; opacity: 0; transition: opacity .15s; }
+.fv-task-item:hover .fv-task-del { opacity: 1; }
+.fv-task-del:hover { color: var(--red); }
+.fv-add-row { display: flex; gap: 6px; margin-top: 8px; }
+.fv-add-row input { flex: 1; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; background: var(--bg); color: var(--text); font-family: var(--font); }
+.fv-add-row input::placeholder { color: var(--text3); }
+.fv-add-row button { padding: 6px 10px; border: none; border-radius: 6px; background: var(--orange); color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font); white-space: nowrap; }
+.fv-add-row button:hover { filter: brightness(.92); }
+.fv-empty { text-align: center; padding: 24px; color: var(--text3); font-size: 13px; }
+.fv-new-card { border: 2px dashed var(--border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.fv-new-card label { font-size: 12px; font-weight: 600; color: var(--text2); }
+.fv-new-card select, .fv-new-card input { padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; background: var(--bg); color: var(--text); font-family: var(--font); }
+.fv-new-card .fv-new-btn { padding: 8px 16px; border: none; border-radius: 6px; background: var(--orange); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; font-family: var(--font); align-self: flex-start; }
+.fv-new-card .fv-new-btn:hover { filter: brightness(.92); }
+
 .pend-section { margin-bottom: 28px; }
 .pend-section-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 .pend-section-title .pend-badge { font-size: 11px; font-weight: 600; background: var(--surface2); color: var(--text3); border-radius: 10px; padding: 2px 8px; }
@@ -4983,11 +5019,189 @@ function renderFerien(){
     html+='</div>';
   }
 
+  // Ferienvertretung section
+  html+=_renderFVSection(projectUsers,ferien);
+
   c.innerHTML=html;
 }
 
 window.ferienPrev=function(){_ferienMonth--;if(_ferienMonth<0){_ferienMonth=11;_ferienYear--;}renderFerien();};
 window.ferienNext=function(){_ferienMonth++;if(_ferienMonth>11){_ferienMonth=0;_ferienYear++;}renderFerien();};
+
+/* ─── FERIENVERTRETUNG ─── */
+function _getFV(){return sGet('ferien_vertretung',[]);}
+function _saveFV(list){sSet('ferien_vertretung',list);}
+
+function _getFVForProject(pid){
+  if(!pid)return[];
+  var d=sGet('p_'+pid,{});
+  var pu=(d.users||[]).map(function(u){return u.toLowerCase();});
+  return _getFV().filter(function(v){
+    return pu.indexOf(v.abwesend.toLowerCase())>-1||pu.indexOf(v.vertretung.toLowerCase())>-1;
+  });
+}
+
+window.addFVCard=function(){
+  if(!S.pid||!S.currentUser)return;
+  var sel=$('fvUserSelect');
+  var vertr=$('fvVertrSelect');
+  if(!sel||!vertr||!sel.value||!vertr.value)return;
+  if(sel.value===vertr.value){alert('Abwesende Person und Vertretung dürfen nicht identisch sein.');return;}
+  var ferien=_getFerien(S.pid);
+  var userFerien=ferien.filter(function(f){return f.user===sel.value;});
+  if(!userFerien.length){alert('Diese Person hat keine Ferien eingetragen.');return;}
+  // Find nearest upcoming vacation
+  var today=new Date().toISOString().substring(0,10);
+  var upcoming=userFerien.filter(function(f){return f.bis>=today;}).sort(function(a,b){return a.von<b.von?-1:1;})[0];
+  if(!upcoming){alert('Keine aktuellen oder zukünftigen Ferien gefunden.');return;}
+  var list=_getFV();
+  // Check if card already exists for this combination & period
+  var exists=list.some(function(v){return v.abwesend===sel.value&&v.vertretung===vertr.value&&v.von===upcoming.von&&v.bis===upcoming.bis;});
+  if(exists){alert('Vertretungskarte existiert bereits.');return;}
+  list.push({id:'fv_'+Date.now(),abwesend:sel.value,vertretung:vertr.value,von:upcoming.von,bis:upcoming.bis,tasks:[]});
+  _saveFV(list);
+  renderFerien();
+};
+
+window.addFVTask=function(cardId){
+  var inp=$('fvTaskInput_'+cardId);
+  if(!inp||!inp.value.trim())return;
+  var list=_getFV();
+  var card=list.find(function(v){return v.id===cardId;});
+  if(!card)return;
+  card.tasks.push({id:'fvt_'+Date.now(),text:inp.value.trim(),done:false});
+  _saveFV(list);
+  renderFerien();
+  // Re-focus input after render
+  setTimeout(function(){var ni=$('fvTaskInput_'+cardId);if(ni)ni.focus();},50);
+};
+
+window.toggleFVTask=function(cardId,taskId){
+  var list=_getFV();
+  var card=list.find(function(v){return v.id===cardId;});
+  if(!card)return;
+  var task=card.tasks.find(function(t){return t.id===taskId;});
+  if(task)task.done=!task.done;
+  _saveFV(list);
+  renderFerien();
+};
+
+window.deleteFVTask=function(cardId,taskId){
+  var list=_getFV();
+  var card=list.find(function(v){return v.id===cardId;});
+  if(!card)return;
+  card.tasks=card.tasks.filter(function(t){return t.id!==taskId;});
+  _saveFV(list);
+  renderFerien();
+};
+
+window.deleteFVCard=function(cardId){
+  if(!confirm('Vertretungskarte löschen?'))return;
+  var list=_getFV().filter(function(v){return v.id!==cardId;});
+  _saveFV(list);
+  renderFerien();
+};
+
+window.fvTaskKeydown=function(e,cardId){
+  if(e.key==='Enter'){e.preventDefault();addFVTask(cardId);}
+};
+
+function _renderFVSection(projectUsers,ferien){
+  var me=S.currentUser?S.currentUser.username:'';
+  var fvList=_getFVForProject(S.pid);
+  var today=new Date().toISOString().substring(0,10);
+
+  var html='<div class="fv-section">';
+  html+='<div class="fv-title-row"><h4>Ferienvertretung</h4>';
+  if(fvList.length)html+='<span class="fv-badge">'+fvList.length+'</span>';
+  html+='</div>';
+
+  // Existing cards
+  if(fvList.length){
+    html+='<div class="fv-cards">';
+    fvList.forEach(function(card){
+      var uAbw=findUser(card.abwesend);
+      var uVer=findUser(card.vertretung);
+      var dnAbw=uAbw?getUserDisplayName(uAbw):card.abwesend;
+      var dnVer=uVer?getUserDisplayName(uVer):card.vertretung;
+      var vonD=card.von.split('-');var bisD=card.bis.split('-');
+      var isActive=today>=card.von&&today<=card.bis;
+      var isPast=today>card.bis;
+      var doneCount=card.tasks.filter(function(t){return t.done;}).length;
+      var totalCount=card.tasks.length;
+
+      html+='<div class="fv-card" style="'+(isActive?'border-color:var(--orange);border-width:2px;':'')+(isPast?'opacity:0.55;':'')+'">';
+      // Header
+      html+='<div class="fv-card-head">';
+      html+='<span class="fv-user-chip">'+renderAvatar(uAbw||{username:card.abwesend,displayName:dnAbw},16)+' '+esc(dnAbw)+'</span>';
+      html+='<span class="fv-card-arrow">&rarr;</span>';
+      html+='<span class="fv-user-chip">'+renderAvatar(uVer||{username:card.vertretung,displayName:dnVer},16)+' '+esc(dnVer)+'</span>';
+      html+='<span class="fv-date-range">'+vonD[2]+'.'+vonD[1]+'. – '+bisD[2]+'.'+bisD[1]+'.'+bisD[0]+'</span>';
+      if(totalCount)html+='<span style="margin-left:auto;font-size:11px;color:'+(doneCount===totalCount?'var(--green)':'var(--text3)')+';">'+doneCount+'/'+totalCount+'</span>';
+      html+='<button onclick="deleteFVCard(\''+card.id+'\')" style="border:none;background:none;color:var(--text3);cursor:pointer;font-size:14px;margin-left:'+(totalCount?'4px':'auto')+';" title="Karte löschen">&times;</button>';
+      html+='</div>';
+
+      // Tasks
+      html+='<ul class="fv-task-list">';
+      card.tasks.forEach(function(task){
+        html+='<li class="fv-task-item">';
+        html+='<div class="fv-task-check'+(task.done?' done':'')+'" onclick="toggleFVTask(\''+card.id+'\',\''+task.id+'\')">'+(task.done?'&#10003;':'')+'</div>';
+        html+='<span class="fv-task-text'+(task.done?' done':'')+'">'+esc(task.text)+'</span>';
+        html+='<button class="fv-task-del" onclick="deleteFVTask(\''+card.id+'\',\''+task.id+'\')" title="Löschen">&times;</button>';
+        html+='</li>';
+      });
+      html+='</ul>';
+
+      // Add task input
+      if(!isPast){
+        html+='<div class="fv-add-row">';
+        html+='<input id="fvTaskInput_'+card.id+'" type="text" placeholder="Aufgabe hinzufügen..." onkeydown="fvTaskKeydown(event,\''+card.id+'\')">';
+        html+='<button onclick="addFVTask(\''+card.id+'\')">+</button>';
+        html+='</div>';
+      }
+
+      html+='</div>';
+    });
+
+    // New card creator within the cards grid
+    html+=_renderFVNewCard(projectUsers);
+    html+='</div>';
+  } else {
+    // Empty state with inline new card
+    html+='<div class="fv-cards">';
+    html+=_renderFVNewCard(projectUsers);
+    html+='</div>';
+  }
+
+  html+='</div>';
+  return html;
+}
+
+function _renderFVNewCard(projectUsers){
+  if(projectUsers.length<2)return '';
+  var html='<div class="fv-new-card">';
+  html+='<label>Neue Vertretung erstellen</label>';
+  html+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">';
+  html+='<select id="fvUserSelect"><option value="">Wer ist abwesend?</option>';
+  projectUsers.forEach(function(uname){
+    var u=findUser(uname);
+    var dn=u?getUserDisplayName(u):uname;
+    html+='<option value="'+esc(uname)+'">'+esc(dn)+'</option>';
+  });
+  html+='</select>';
+  html+='<span style="color:var(--text3);font-size:12px;">vertreten durch</span>';
+  html+='<select id="fvVertrSelect"><option value="">Wer vertritt?</option>';
+  projectUsers.forEach(function(uname){
+    var u=findUser(uname);
+    var dn=u?getUserDisplayName(u):uname;
+    html+='<option value="'+esc(uname)+'">'+esc(dn)+'</option>';
+  });
+  html+='</select>';
+  html+='<button class="fv-new-btn" onclick="addFVCard()">Erstellen</button>';
+  html+='</div>';
+  html+='</div>';
+  return html;
+}
 
 window.openFerienFullscreen=function(){
   var modal=document.getElementById('ferienFullModal');
