@@ -6806,6 +6806,7 @@ function renderAdminUsers(){
     +'<div><label>Nachname *</label><input type="text" id="ncLastName" placeholder="Mustermann"></div>'
     +'<div><label>E-Mail Adresse *</label><input type="email" id="ncEmail" placeholder="max@firma.de"></div>'
     +'<div><label>Passwort *</label><input type="password" id="ncPassword" placeholder="Min. 4 Zeichen"></div>'
+    +'<div><label>K\u00fcrzel (Avatar) *</label><input type="text" id="ncKuerzel" maxlength="3" placeholder="z.B. MKL" style="text-transform:uppercase;"></div>'
     +'<div><label>Firma</label><input type="text" id="ncFirma" placeholder="Firma GmbH"></div>'
     +'<div><label>Telefonnummer</label><input type="tel" id="ncPhone" placeholder="+49 123 456789"></div>'
     +'<div><label>Rolle</label><select id="ncRole">'+getRoles().map(function(r){return '<option value="'+esc(r.id)+'"'+(r.id==='user'?' selected':'')+'>'+esc(r.name)+'</option>';}).join('')+'</select></div>'
@@ -7138,11 +7139,13 @@ window.adminCreateUser=function(){
   var ln=($('ncLastName')||{}).value;
   var email=($('ncEmail')||{}).value;
   var pw=($('ncPassword')||{}).value;
+  var kuerzel=(($('ncKuerzel')||{}).value||'').trim().toUpperCase();
   var firma=($('ncFirma')||{}).value;
   var phone=($('ncPhone')||{}).value;
   var role=($('ncRole')||{}).value||'user';
   if(!fn||!fn.trim()){alert('Bitte Vorname eingeben');return;}
   if(!ln||!ln.trim()){alert('Bitte Nachname eingeben');return;}
+  if(!kuerzel){alert('Bitte K\u00fcrzel eingeben (z.B. Initialen)');return;}
   if(!email||!email.trim()){alert('Bitte E-Mail Adresse eingeben');return;}
   var un=email.trim();
   var _minPw=getAppSettings().minPasswordLength||4;
@@ -7154,14 +7157,14 @@ window.adminCreateUser=function(){
   }
   users.push({
     username:un,password:pw,firstName:fn,lastName:ln,
-    displayName:fn+' '+ln,role:role,
+    displayName:fn+' '+ln,role:role,kuerzel:kuerzel,
     firma:(firma||'').trim(),phone:(phone||'').trim(),
     email:un,avatar:null,locked:false
   });
   saveUsers(users);
   addLog('create','Benutzer erstellt',fn+' '+ln+' ('+un+')');
   // Clear form
-  ['ncFirstName','ncLastName','ncPassword','ncFirma','ncPhone','ncEmail'].forEach(function(id){
+  ['ncFirstName','ncLastName','ncPassword','ncKuerzel','ncFirma','ncPhone','ncEmail'].forEach(function(id){
     var el=$(id);if(el)el.value='';
   });
   renderAdminUsers();
