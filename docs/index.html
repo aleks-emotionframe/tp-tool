@@ -591,8 +591,14 @@ body {
 .pend-card.dragging { opacity: .4; }
 .pend-card.done { opacity: .45; }
 .pend-card-top { display: flex; align-items: flex-start; gap: 8px; }
-.pend-card .pend-check { width: 16px; height: 16px; border-radius: 3px; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 11px; transition: var(--transition); background: var(--bg); }
+.pend-card .pend-check { width: 20px; height: 20px; border-radius: 4px; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; font-size: 12px; transition: var(--transition); background: var(--bg); }
+.pend-card .pend-check:hover { border-color: var(--green); background: rgba(34,197,94,0.1); }
 .pend-card.done .pend-check { background: var(--green); border-color: var(--green); color: #fff; }
+.pend-card-actions { display: flex; align-items: center; gap: 4px; margin-top: 6px; padding-left: 28px; }
+.pend-card-actions button { padding: 3px 10px; border: 1px solid var(--border); border-radius: var(--radius-xs); background: var(--bg); color: var(--text3); font-size: 11px; font-family: var(--font); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 4px; }
+.pend-card-actions button:hover { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.06); }
+.pend-card-actions .pend-img-upload { opacity: 1; margin-left: 0; padding: 3px 10px; border: 1px solid var(--border); border-radius: var(--radius-xs); font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px; color: var(--text3); background: var(--bg); }
+.pend-card-actions .pend-img-upload:hover { border-color: var(--orange); color: var(--orange); }
 .pend-card-text { flex: 1; font-size: 13px; color: var(--text); line-height: 1.4; }
 .pend-card.done .pend-card-text { text-decoration: line-through; color: var(--text3); }
 .pend-card-meta { display: flex; align-items: center; gap: 6px; margin-top: 6px; padding-left: 24px; }
@@ -631,6 +637,10 @@ body {
 .pend-img-upload { font-size: 12px; color: var(--text3); cursor: pointer; padding: 2px 8px; display: inline-flex; align-items: center; gap: 2px; margin-left: 24px; opacity: 0; transition: var(--transition); }
 .pend-card:hover .pend-img-upload { opacity: 1; }
 .pend-img-upload:hover { color: var(--orange); }
+.pend-add-img-btn { padding: 8px 14px; border: 1px solid var(--border); border-radius: var(--radius-xs); font-family: var(--font); font-size: 13px; cursor: pointer; color: var(--text3); background: var(--bg); display: flex; align-items: center; gap: 4px; transition: var(--transition); white-space: nowrap; }
+.pend-add-img-btn:hover { border-color: var(--orange); color: var(--orange); }
+.pend-add-img-preview { width: 48px; height: 48px; border-radius: 4px; object-fit: cover; border: 1px solid var(--border); position: relative; display: inline-block; }
+.pend-add-img-remove { position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; background: var(--red); color: #fff; border: none; border-radius: 50%; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
 .icon-btn {
   height: 36px; min-width: 36px; padding: 0 8px;
@@ -3566,7 +3576,7 @@ function renderProjectPendenzenView(){
 
   var html='<div class="pend-jour-fixe-title">Jour Fixe <span class="pend-badge" style="font-size:12px;vertical-align:middle;">'+pOpen+' offen</span></div>';
   // Add row
-  html+='<div class="pend-add-row" style="margin-bottom:20px;">';
+  html+='<div class="pend-add-row" style="margin-bottom:20px;flex-wrap:wrap;">';
   html+='<input type="text" id="pendProjInput" placeholder="Neue Pendenz..." onkeydown="if(event.key===\'Enter\')addProjectPendenz()">';
   html+='<input type="date" id="pendProjDue" title="F\u00e4lligkeitsdatum">';
   html+='<select id="pendProjAssignee">';
@@ -3574,7 +3584,9 @@ function renderProjectPendenzenView(){
     html+='<option value="'+esc(col.id)+'">'+esc(col.label)+'</option>';
   });
   html+='</select>';
+  html+='<label class="pend-add-img-btn" title="Bilder hinzuf\u00fcgen">&#128247; Bilder <input type="file" id="pendProjImages" accept="image/*" multiple style="display:none;" onchange="previewAddImages(this)"></label>';
   html+='<button onclick="addProjectPendenz()">Hinzuf\u00fcgen</button>';
+  html+='<div id="pendProjImgPreview" style="width:100%;display:flex;gap:8px;margin-top:4px;"></div>';
   html+='</div>';
 
   // Kanban columns
@@ -3643,12 +3655,12 @@ function renderProjectPendenzenView(){
 function _renderPendCard(p,isDone){
   var html='<div class="pend-card'+(isDone?' done':'')+'" draggable="true" data-id="'+p.id+'">';
   html+='<div class="pend-card-top">';
-  html+='<div class="pend-check" onclick="toggleProjectPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
+  html+='<div class="pend-check" onclick="toggleProjectPendenz(\''+p.id+'\')" title="Als erledigt markieren">'+(p.done?'&#10003;':'')+'</div>';
   html+='<span class="pend-card-text" ondblclick="editProjectPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
   html+='<button class="pend-delete" onclick="deleteProjectPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
   html+='</div>';
   var dueLbl=_pendDueLabel(p.due);
-  if(dueLbl||((p.images||[]).length)){
+  if(dueLbl||(p.images&&p.images.length)){
     html+='<div class="pend-card-meta">';
     if(dueLbl) html+=dueLbl;
     if(p.images&&p.images.length){
@@ -3658,11 +3670,16 @@ function _renderPendCard(p,isDone){
     }
     html+='</div>';
   }
-  // Image upload (only if less than 2 images)
-  if(!p.done&&(!(p.images)||p.images.length<2)){
-    html+='<label class="pend-img-upload" title="Bild hinzuf\u00fcgen">';
-    html+='&#128247; <input type="file" accept="image/*" style="display:none;" onchange="uploadPendImage(\''+p.id+'\',this)">';
-    html+='</label>';
+  // Actions row
+  if(!p.done){
+    html+='<div class="pend-card-actions">';
+    html+='<button onclick="toggleProjectPendenz(\''+p.id+'\')">&#10003; Erledigt</button>';
+    if(!(p.images)||p.images.length<2){
+      html+='<label class="pend-img-upload" title="Bild hinzuf\u00fcgen">';
+      html+='&#128247; Bild <input type="file" accept="image/*" style="display:none;" onchange="uploadPendImage(\''+p.id+'\',this)">';
+      html+='</label>';
+    }
+    html+='</div>';
   }
   html+='</div>';
   return html;
@@ -3916,6 +3933,38 @@ window.editMyPendenz=function(id){
 };
 
 // --- Project Pendenzen CRUD ---
+var _addPendImages=[];
+window.previewAddImages=function(input){
+  if(!input.files)return;
+  var files=Array.from(input.files).slice(0,2-_addPendImages.length);
+  files.forEach(function(file){
+    if(_addPendImages.length>=2)return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var img=new Image();
+      img.onload=function(){
+        var canvas=document.createElement('canvas');
+        var maxW=400,maxH=400,w=img.width,h=img.height;
+        if(w>maxW||h>maxH){var r=Math.min(maxW/w,maxH/h);w*=r;h*=r;}
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        _addPendImages.push(canvas.toDataURL('image/jpeg',0.7));
+        _renderAddImgPreview();
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+};
+function _renderAddImgPreview(){
+  var el=$('pendProjImgPreview');if(!el)return;
+  var html='';
+  _addPendImages.forEach(function(img,i){
+    html+='<div class="pend-add-img-preview"><img src="'+img+'" style="width:48px;height:48px;border-radius:4px;object-fit:cover;">';
+    html+='<button class="pend-add-img-remove" onclick="_addPendImages.splice('+i+',1);_renderAddImgPreview();">&times;</button></div>';
+  });
+  el.innerHTML=html;
+}
 window.addProjectPendenz=function(){
   if(!S.pid)return;
   var inp=$('pendProjInput');if(!inp)return;
@@ -3923,8 +3972,11 @@ window.addProjectPendenz=function(){
   var due=($('pendProjDue')||{}).value||'';
   var assignee=($('pendProjAssignee')||{}).value||'_unassigned';
   var list=getProjectPendenzen(S.pid);
-  list.unshift({id:_pendId(),text:text,done:false,due:due,assignee:assignee,created:new Date().toISOString(),createdBy:S.currentUser?S.currentUser.username:''});
+  var item={id:_pendId(),text:text,done:false,due:due,assignee:assignee,created:new Date().toISOString(),createdBy:S.currentUser?S.currentUser.username:''};
+  if(_addPendImages.length)item.images=_addPendImages.slice(0,2);
+  list.unshift(item);
   saveProjectPendenzen(S.pid,list);
+  _addPendImages=[];
   renderProjectPendenzenView();
 };
 window.toggleProjectPendenz=function(id){
