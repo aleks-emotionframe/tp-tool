@@ -709,8 +709,10 @@ body {
 .pend-card .pend-check:hover { border-color: var(--green); background: rgba(34,197,94,0.1); }
 .pend-card.done .pend-check { background: var(--green); border-color: var(--green); color: #fff; }
 .pend-card-actions { display: flex; align-items: center; gap: 4px; margin-top: 6px; padding-left: 28px; }
-.pend-card-actions button { padding: 3px 10px; border: 1px solid var(--border); border-radius: var(--radius-xs); background: var(--bg); color: var(--text3); font-size: 11px; font-family: var(--font); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 4px; }
-.pend-card-actions button:hover { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.06); }
+.pend-card-actions { gap: 6px; }
+.pend-card-actions .pend-action-btn { min-width: 28px; min-height: 28px; }
+.pend-card-actions button:not(.pend-action-btn) { padding: 3px 10px; border: 1px solid var(--border); border-radius: var(--radius-xs); background: var(--bg); color: var(--text3); font-size: 11px; font-family: var(--font); cursor: pointer; transition: var(--transition); display: flex; align-items: center; gap: 4px; }
+.pend-card-actions button:not(.pend-action-btn):hover { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.06); }
 .pend-card-actions .pend-img-upload { opacity: 1; margin-left: 0; padding: 3px 10px; border: 1px solid var(--border); border-radius: var(--radius-xs); font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px; color: var(--text3); background: var(--bg); }
 .pend-card-actions .pend-img-upload:hover { border-color: var(--orange); color: var(--orange); }
 .pend-card-text { flex: 1; font-size: 13px; color: var(--text); line-height: 1.4; }
