@@ -2276,6 +2276,16 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     </div>
   </div>
 </div>
+<div class="modal-bg" id="confirmModal">
+  <div class="modal" style="max-width:380px;text-align:center;padding:28px;">
+    <div style="font-size:32px;margin-bottom:12px;">&#9888;</div>
+    <div id="confirmMsg" style="font-size:14px;color:var(--text);margin-bottom:20px;line-height:1.5;"></div>
+    <div class="modal-btns" style="justify-content:center;">
+      <button onclick="closeConfirmModal()">Abbrechen</button>
+      <button style="background:var(--red);color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-family:var(--font);font-weight:600;" onclick="doConfirmModal()">L&ouml;schen</button>
+    </div>
+  </div>
+</div>
 
 <!-- NEW PROJECT MODAL -->
 <div class="modal-bg" id="newModal">
@@ -4640,10 +4650,21 @@ window.toggleMyPendenz=function(id){
   saveMyPendenzen(list);
   renderMyPendenzen();
 };
+var _confirmCb=null;
+function openConfirmModal(msg,cb){
+  $('confirmMsg').innerHTML=msg;
+  _confirmCb=cb;
+  $('confirmModal').classList.add('show');
+}
+window.closeConfirmModal=function(){$('confirmModal').classList.remove('show');_confirmCb=null;};
+window.doConfirmModal=function(){var cb=_confirmCb;closeConfirmModal();if(cb)cb();};
+
 window.deleteMyPendenz=function(id){
-  var list=getMyPendenzen().filter(function(p){return p.id!==id;});
-  saveMyPendenzen(list);
-  renderMyPendenzen();
+  openConfirmModal('M\u00f6chten Sie diese Pendenz wirklich l\u00f6schen?',function(){
+    var list=getMyPendenzen().filter(function(p){return p.id!==id;});
+    saveMyPendenzen(list);
+    renderMyPendenzen();
+  });
 };
 window.toggleMoveMenu=function(id){
   document.querySelectorAll('.pend-move-menu').forEach(function(m){
@@ -4758,9 +4779,11 @@ window.toggleProjectPendenz=function(id){
 };
 window.deleteProjectPendenz=function(id){
   if(!S.pid)return;
-  var list=getProjectPendenzen(S.pid).filter(function(p){return p.id!==id;});
-  saveProjectPendenzen(S.pid,list);
-  renderProjectPendenzenView();
+  openConfirmModal('M\u00f6chten Sie diese Pendenz wirklich l\u00f6schen?',function(){
+    var list=getProjectPendenzen(S.pid).filter(function(p){return p.id!==id;});
+    saveProjectPendenzen(S.pid,list);
+    renderProjectPendenzenView();
+  });
 };
 window.editProjectPendenz=function(id){
   if(!S.pid)return;
