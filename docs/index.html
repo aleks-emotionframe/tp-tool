@@ -612,6 +612,8 @@ body {
 /* ─── FERIENKALENDER ─── */
 .ferien-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
 .ferien-title { font-size: 18px; font-weight: 700; color: var(--text); }
+.ferien-fullscreen-btn { padding: 6px 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text2); font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font); transition: var(--transition); }
+.ferien-fullscreen-btn:hover { background: var(--surface2); color: var(--text); }
 .ferien-nav { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .ferien-nav button { width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
 .ferien-nav button:hover { background: var(--surface2); }
@@ -625,9 +627,8 @@ body {
 .ferien-cell { border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); position: relative; min-height: 32px; cursor: default; }
 .ferien-cell.weekend { background: #fef2f2; }
 .ferien-cell.today { background: rgba(232,96,10,0.06); }
-.ferien-cell.vacation { background: #dbeafe; }
-.ferien-cell.vacation-own { background: #bfdbfe; cursor: pointer; }
-.ferien-cell.vacation-own:hover { background: #93c5fd; }
+.ferien-cell.vacation-own { cursor: pointer; }
+.ferien-cell.vacation-own:hover { filter: brightness(.85); }
 .ferien-cell.selectable { cursor: pointer; }
 .ferien-cell.selectable:hover { background: rgba(59,130,246,0.1); }
 .ferien-legend { display: flex; gap: 16px; margin-top: 16px; font-size: 12px; color: var(--text3); align-items: center; }
@@ -2169,6 +2170,22 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 </div>
 
 <!-- PROMPT MODAL -->
+<!-- FERIEN FULLSCREEN MODAL -->
+<div class="modal-bg" id="ferienFullModal" style="z-index:1100;">
+  <div class="modal" style="max-width:95vw;width:95vw;max-height:90vh;padding:24px;display:flex;flex-direction:column;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div class="ferien-title">Ferienkalender \u2013 Grossansicht</div>
+      <div class="ferien-nav" style="margin-left:auto;">
+        <button onclick="ferienPrev();renderFerienFull()">&#8249;</button>
+        <div class="ferien-month" id="ferienFullMonth"></div>
+        <button onclick="ferienNext();renderFerienFull()">&#8250;</button>
+      </div>
+      <button onclick="$('ferienFullModal').classList.remove('show')" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);margin-left:8px;">&times;</button>
+    </div>
+    <div id="ferienFullContent" style="overflow:auto;flex:1;"></div>
+  </div>
+</div>
+
 <div class="modal-bg" id="promptModal">
   <div class="modal" style="max-width:400px;">
     <h3 id="promptTitle">Eingabe</h3>
@@ -4294,6 +4311,13 @@ window.editProjectPendenz=function(id){
 
 /* ─── FERIENKALENDER ─── */
 var _ferienMonth=new Date().getMonth(),_ferienYear=new Date().getFullYear();
+var _ferienColors=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16'];
+function _ferienUserColor(uname,users){
+  var idx=(users||[]).indexOf(uname);
+  if(idx<0)idx=0;
+  return _ferienColors[idx%_ferienColors.length];
+}
+function _ferienUserBg(color,own){return own?color+'55':color+'28';}
 
 window.showFerienView=function(){
   document.querySelectorAll('.sidebar-tab').forEach(function(x){x.classList.remove('active');});
@@ -4334,6 +4358,7 @@ function renderFerien(){
 
   var html='<div class="ferien-header">';
   html+='<div class="ferien-title">Ferienkalender</div>';
+  html+='<button class="ferien-fullscreen-btn" onclick="openFerienFullscreen()" title="Grossansicht">&#9974; Grossansicht</button>';
   html+='<div class="ferien-nav">';
   html+='<button onclick="ferienPrev()">&#8249;</button>';
   html+='<div class="ferien-month">'+monthNames[month]+' '+year+'</div>';
@@ -4368,25 +4393,27 @@ function renderFerien(){
   projectUsers.forEach(function(uname){
     var u=findUser(uname);
     var dn=u?getUserDisplayName(u):uname;
-    var ini=u?getUserInitials(u):'?';
-    html+='<div class="ferien-user-label">'+renderAvatar(u||{username:uname,displayName:uname},20)+' '+esc(dn)+'</div>';
+    var uColor=_ferienUserColor(uname,projectUsers);
+    html+='<div class="ferien-user-label"><span class="ferien-legend-dot" style="background:'+uColor+';"></span>'+renderAvatar(u||{username:uname,displayName:uname},20)+' '+esc(dn)+'</div>';
     for(var day=1;day<=daysInMonth;day++){
       var dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
       var dt=new Date(year,month,day);
       var dow=dt.getDay();
       var isWeekend=dow===0||dow===6;
       var isToday=dt.getTime()===today.getTime();
-      // Check if this date is within any vacation for this user
       var isVacation=ferien.some(function(f){return f.user===uname&&dateStr>=f.von&&dateStr<=f.bis;});
       var isOwn=uname===me&&isVacation;
       var cls='ferien-cell';
       if(isWeekend)cls+=' weekend';
       if(isToday)cls+=' today';
-      if(isVacation)cls+=' vacation';
-      if(isOwn)cls+=' vacation-own';
       if(uname===me&&!isVacation)cls+=' selectable';
+      var style='';
+      if(isVacation){
+        style='background:'+_ferienUserBg(uColor,isOwn)+';';
+        if(isOwn)cls+=' vacation-own';
+      }
       var onclick=isOwn?'onclick="removeFerienDay(\''+dateStr+'\')"':'';
-      html+='<div class="'+cls+'" '+onclick+' title="'+(isVacation?esc(dn)+' \u2013 Ferien':dateStr)+'"></div>';
+      html+='<div class="'+cls+'" style="'+style+'" '+onclick+' title="'+(isVacation?esc(dn)+' \u2013 Ferien':dateStr)+'"></div>';
     }
   });
 
@@ -4394,9 +4421,12 @@ function renderFerien(){
 
   // Legend
   html+='<div class="ferien-legend">';
-  html+='<span><span class="ferien-legend-dot" style="background:#bfdbfe;"></span>Meine Ferien</span>';
-  html+='<span><span class="ferien-legend-dot" style="background:#dbeafe;"></span>Team-Ferien</span>';
-  html+='<span><span class="ferien-legend-dot" style="background:#fef2f2;"></span>Wochenende</span>';
+  projectUsers.forEach(function(uname){
+    var u=findUser(uname);var dn=u?getUserDisplayName(u):uname;
+    var uColor=_ferienUserColor(uname,projectUsers);
+    html+='<span><span class="ferien-legend-dot" style="background:'+uColor+';"></span>'+esc(dn)+'</span>';
+  });
+  html+='<span><span class="ferien-legend-dot" style="background:#fef2f2;border:1px solid #fecaca;"></span>Wochenende</span>';
   html+='</div>';
 
   // My vacations list
@@ -4419,6 +4449,57 @@ function renderFerien(){
 
 window.ferienPrev=function(){_ferienMonth--;if(_ferienMonth<0){_ferienMonth=11;_ferienYear--;}renderFerien();};
 window.ferienNext=function(){_ferienMonth++;if(_ferienMonth>11){_ferienMonth=0;_ferienYear++;}renderFerien();};
+
+window.openFerienFullscreen=function(){
+  $('ferienFullModal').classList.add('show');
+  renderFerienFull();
+};
+function renderFerienFull(){
+  if(!S.pid)return;
+  var d=sGet('p_'+S.pid,{});
+  var projectUsers=d.users||[];
+  var ferien=_getFerien(S.pid);
+  var year=_ferienYear,month=_ferienMonth;
+  var daysInMonth=new Date(year,month+1,0).getDate();
+  var monthNames=['Januar','Februar','M\u00e4rz','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  var dayNames=['Mo','Di','Mi','Do','Fr','Sa','So'];
+  var today=new Date();today.setHours(0,0,0,0);
+  $('ferienFullMonth').textContent=monthNames[month]+' '+year;
+  var html='<div class="ferien-grid" style="--days:'+daysInMonth+';font-size:13px;">';
+  html+='<div class="ferien-corner" style="min-width:180px;"></div>';
+  for(var day=1;day<=daysInMonth;day++){
+    var dt=new Date(year,month,day);var dow=dt.getDay();
+    var cls='ferien-day-header';
+    if(dow===0||dow===6)cls+=' weekend';
+    if(dt.getTime()===today.getTime())cls+=' today';
+    html+='<div class="'+cls+'" style="padding:8px 4px;font-size:13px;">'+day+'<br><span style="font-size:11px;">'+dayNames[(dow+6)%7]+'</span></div>';
+  }
+  projectUsers.forEach(function(uname){
+    var u=findUser(uname);var dn=u?getUserDisplayName(u):uname;
+    var uColor=_ferienUserColor(uname,projectUsers);
+    html+='<div class="ferien-user-label" style="min-width:180px;font-size:13px;padding:10px 12px;"><span class="ferien-legend-dot" style="background:'+uColor+';width:14px;height:14px;"></span>'+renderAvatar(u||{username:uname,displayName:uname},24)+' '+esc(dn)+'</div>';
+    for(var day=1;day<=daysInMonth;day++){
+      var dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+      var dt=new Date(year,month,day);var dow=dt.getDay();
+      var isVacation=ferien.some(function(f){return f.user===uname&&dateStr>=f.von&&dateStr<=f.bis;});
+      var cls='ferien-cell';
+      if(dow===0||dow===6)cls+=' weekend';
+      if(dt.getTime()===today.getTime())cls+=' today';
+      var style='min-height:40px;';
+      if(isVacation)style+='background:'+_ferienUserBg(uColor,false)+';';
+      html+='<div class="'+cls+'" style="'+style+'" title="'+(isVacation?esc(dn)+' \u2013 Ferien':dateStr)+'"></div>';
+    }
+  });
+  html+='</div>';
+  // Legend
+  html+='<div class="ferien-legend" style="margin-top:16px;font-size:13px;">';
+  projectUsers.forEach(function(uname){
+    var u=findUser(uname);var dn=u?getUserDisplayName(u):uname;
+    html+='<span><span class="ferien-legend-dot" style="background:'+_ferienUserColor(uname,projectUsers)+';width:14px;height:14px;"></span>'+esc(dn)+'</span>';
+  });
+  html+='</div>';
+  $('ferienFullContent').innerHTML=html;
+}
 
 window.addFerien=function(){
   if(!S.pid||!S.currentUser)return;
