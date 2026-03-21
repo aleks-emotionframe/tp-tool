@@ -2225,6 +2225,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <button class="admin-tab" onclick="switchAdminTab('backup',this)">Backup</button>
       <button class="admin-tab" onclick="switchAdminTab('settings',this)">Einstellungen</button>
       <button class="admin-tab" onclick="switchAdminTab('logs',this)">Aktivit&auml;tslog</button>
+      <button class="admin-tab" onclick="switchAdminTab('analytics',this)">Nutzungsanalyse</button>
       <button class="admin-tab" onclick="switchAdminTab('changelog',this)">Changelog</button>
     </div>
 
@@ -2248,6 +2249,9 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 
     <!-- TAB: Aktivitätslog -->
     <div class="admin-tab-content" id="adminTabLogs" style="display:none"></div>
+
+    <!-- TAB: Nutzungsanalyse -->
+    <div class="admin-tab-content" id="adminTabAnalytics" style="display:none"></div>
 
     <!-- TAB: Changelog -->
     <div class="admin-tab-content" id="adminTabChangelog" style="display:none"></div>
@@ -3609,6 +3613,7 @@ function loadProjects(){
 
 function loadProject(id){
   var d=sGet('p_'+id,null);if(!d)return;
+  trackUsage('action','action:project_switch');
   S.pid=id;S.tasks=d.tasks||[];
   sSet('lastPid_'+(S.currentUser?S.currentUser.username:''),id);
   var idx=getIdx(),p=idx.find(function(x){return x.id==id;});
@@ -3729,6 +3734,7 @@ function updateKPI(){
 var _searchIdx=-1;
 $('searchInput').addEventListener('input',function(){
   S.search=this.value.toLowerCase();
+  if(S.search.length===1)trackUsage('action','action:search');
   applyFilters();
   updateSearchDropdown(this.value);
 });
@@ -3827,7 +3833,7 @@ function closeSearchDropdown(){
   _searchIdx=-1;
 }
 
-$('critOnly').addEventListener('change',function(){S.critOnly=this.checked;applyFilters();});
+$('critOnly').addEventListener('change',function(){S.critOnly=this.checked;trackUsage('action','action:filter');applyFilters();});
 $('hideCompleted').addEventListener('change',function(){S.hideCompleted=this.checked;applyFilters();});
 
 function applyFilters(){
@@ -3849,6 +3855,7 @@ document.querySelectorAll('.sidebar-tab').forEach(function(b){
     this.classList.add('active');
     S.view=this.dataset.view;
     sSet('lastView_'+(S.currentUser?S.currentUser.username:''),S.view);
+    trackUsage('view','view:'+S.view);
     _updatePendBtnActive();
     if(S.pid)showEmpty(false);
   });
@@ -3943,6 +3950,7 @@ function _pendDueLabel(due){
 window.showPendenzenView=function(type){
   document.querySelectorAll('.sidebar-tab').forEach(function(x){x.classList.remove('active');});
   S.view=type==='project'?'pendenzen_project':'pendenzen_my';
+  trackUsage('view','view:'+S.view);
   sSet('lastView_'+(S.currentUser?S.currentUser.username:''),S.view);
   $('emptyState').style.display='none';
   _updatePendBtnActive();
@@ -4916,6 +4924,7 @@ function _ferienUserBg(color,own){return own?color+'55':color+'28';}
 window.showFerienView=function(){
   document.querySelectorAll('.sidebar-tab').forEach(function(x){x.classList.remove('active');});
   S.view='ferien';
+  trackUsage('view','view:ferien');
   sSet('lastView_'+(S.currentUser?S.currentUser.username:''),S.view);
   $('emptyState').style.display='none';
   _updatePendBtnActive();
@@ -6014,6 +6023,7 @@ window.closeKompaktDetail=function(){
 /* ─── TASK DETAIL POPUP ─── */
 var _tdUid=null;
 window.openTaskDetail=function(uid){
+  trackUsage('action','action:task_edit');
   var t=findTask(uid);if(!t)return;
   // Close kompakt detail popup if open, so task detail appears on top
   if($('kompaktDetailModal').classList.contains('show'))closeKompaktDetail();
@@ -7195,6 +7205,7 @@ function getAllUsersWithProjects(){
 }
 
 window.openAdmin=function(){
+  trackUsage('action','action:admin_open');
   $('adminOverlay').classList.add('show');
   // Reset to projects tab
   switchAdminTab('projects',document.querySelector('.admin-tab'));
@@ -7212,12 +7223,12 @@ window.switchAdminTab=function(tab,btn){
   tabs.forEach(function(t){t.classList.remove('active');});
   if(btn)btn.classList.add('active');
   // Show/hide content
-  var allTabs=['Projects','Users','Roles','Permissions','Backup','Settings','Logs','Changelog'];
+  var allTabs=['Projects','Users','Roles','Permissions','Backup','Settings','Logs','Analytics','Changelog'];
   allTabs.forEach(function(t){
     var el=$('adminTab'+t);
     if(el)el.style.display='none';
   });
-  var tabMap={projects:'Projects',users:'Users',roles:'Roles',permissions:'Permissions',backup:'Backup',settings:'Settings',logs:'Logs',changelog:'Changelog'};
+  var tabMap={projects:'Projects',users:'Users',roles:'Roles',permissions:'Permissions',backup:'Backup',settings:'Settings',logs:'Logs',analytics:'Analytics',changelog:'Changelog'};
   var el=$('adminTab'+(tabMap[tab]||'Projects'));
   if(el)el.style.display='block';
   // Render
@@ -7228,6 +7239,7 @@ window.switchAdminTab=function(tab,btn){
   if(tab==='backup')renderAdminBackup();
   if(tab==='settings')renderAdminSettings();
   if(tab==='logs')renderAdminLogs();
+  if(tab==='analytics')renderAdminAnalytics();
   if(tab==='changelog')renderAdminChangelog();
 };
 
@@ -8377,8 +8389,260 @@ window.adminFactoryReset=function(){
   location.reload();
 };
 
+/* ─── USAGE TRACKING & ANALYTICS ─── */
+function trackUsage(category,action){
+  var data=sGet('usage_analytics',{});
+  var today=new Date().toISOString().substring(0,10);
+  if(!data.events)data.events=[];
+  if(!data.daily)data.daily={};
+  if(!data.daily[today])data.daily[today]={views:0,actions:0,features:{}};
+  data.daily[today].views+=(category==='view'?1:0);
+  data.daily[today].actions+=(category==='action'?1:0);
+  if(!data.daily[today].features[action])data.daily[today].features[action]=0;
+  data.daily[today].features[action]++;
+  data.events.push({t:Date.now(),c:category,a:action,u:(S.currentUser?S.currentUser.username:'')});
+  if(data.events.length>2000)data.events=data.events.slice(-1500);
+  // Keep max 90 days
+  var keys=Object.keys(data.daily).sort();
+  if(keys.length>90){keys.slice(0,keys.length-90).forEach(function(k){delete data.daily[k];});}
+  sSet('usage_analytics',data);
+}
+
+function renderAdminAnalytics(){
+  var c=$('adminTabAnalytics');
+  var data=sGet('usage_analytics',{events:[],daily:{}});
+  var logs=sGet('activity_log',[]);
+  var users=sGet('users',[]);
+
+  // --- Aggregate from activity_log ---
+  var actionsByType={};
+  var actionsByUser={};
+  var activityByDay={};
+  logs.forEach(function(l){
+    actionsByType[l.type]=(actionsByType[l.type]||0)+1;
+    actionsByUser[l.user||'System']=(actionsByUser[l.user||'System']||0)+1;
+    var day=l.timestamp?l.timestamp.substring(0,10):'';
+    if(day){activityByDay[day]=(activityByDay[day]||0)+1;}
+  });
+
+  // --- Aggregate from usage_analytics ---
+  var featureUsage={};
+  var dailyKeys=Object.keys(data.daily||{}).sort();
+  var last14=dailyKeys.slice(-14);
+  last14.forEach(function(day){
+    var d=data.daily[day];
+    if(d&&d.features){
+      Object.keys(d.features).forEach(function(f){
+        featureUsage[f]=(featureUsage[f]||0)+d.features[f];
+      });
+    }
+  });
+
+  // --- Aggregate user sessions from events ---
+  var userSessions={};
+  (data.events||[]).forEach(function(e){
+    if(e.u){userSessions[e.u]=(userSessions[e.u]||0)+1;}
+  });
+
+  var html='';
+
+  // ── Overview Cards ──
+  var totalEvents=(data.events||[]).length;
+  var totalLogEntries=logs.length;
+  var activeDays=Object.keys(data.daily||{}).length;
+  var activeUsers=Object.keys(userSessions).length||Object.keys(actionsByUser).length;
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;">';
+  html+='<div class="admin-card" style="text-align:center;padding:16px;"><div style="font-size:28px;font-weight:700;color:var(--orange);">'+totalLogEntries+'</div><div style="font-size:12px;color:var(--text3);margin-top:4px;">Aktivit\u00e4ten gesamt</div></div>';
+  html+='<div class="admin-card" style="text-align:center;padding:16px;"><div style="font-size:28px;font-weight:700;color:var(--blue);">'+totalEvents+'</div><div style="font-size:12px;color:var(--text3);margin-top:4px;">Interaktionen erfasst</div></div>';
+  html+='<div class="admin-card" style="text-align:center;padding:16px;"><div style="font-size:28px;font-weight:700;color:var(--green);">'+activeUsers+'</div><div style="font-size:12px;color:var(--text3);margin-top:4px;">Aktive Benutzer</div></div>';
+  html+='<div class="admin-card" style="text-align:center;padding:16px;"><div style="font-size:28px;font-weight:700;color:var(--text2);">'+activeDays+'</div><div style="font-size:12px;color:var(--text3);margin-top:4px;">Aktive Tage</div></div>';
+  html+='</div>';
+
+  // ── Activity Timeline (last 14 days bar chart) ──
+  html+='<div class="admin-section"><div class="admin-section-title">Aktivit\u00e4t der letzten 14 Tage</div>';
+  html+='<div class="admin-card"><div class="admin-card-body">';
+  var allDays14=[];
+  var now=new Date();
+  for(var i=13;i>=0;i--){
+    var d=new Date(now);d.setDate(d.getDate()-i);
+    allDays14.push(d.toISOString().substring(0,10));
+  }
+  var maxDay=1;
+  allDays14.forEach(function(day){
+    var cnt=(activityByDay[day]||0)+(data.daily&&data.daily[day]?(data.daily[day].views+data.daily[day].actions):0);
+    if(cnt>maxDay)maxDay=cnt;
+  });
+  html+='<div style="display:flex;align-items:flex-end;gap:4px;height:120px;padding:8px 0;">';
+  allDays14.forEach(function(day){
+    var cnt=(activityByDay[day]||0)+(data.daily&&data.daily[day]?(data.daily[day].views+data.daily[day].actions):0);
+    var pct=Math.max(cnt>0?4:0,Math.round(cnt/maxDay*100));
+    var parts=day.split('-');
+    var label=parts[2]+'.'+parts[1]+'.';
+    var isToday=day===now.toISOString().substring(0,10);
+    html+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">'
+      +'<div style="font-size:10px;color:var(--text3);font-weight:600;">'+cnt+'</div>'
+      +'<div style="width:100%;height:'+pct+'%;min-height:'+(cnt>0?4:0)+'px;background:'+(isToday?'var(--orange)':'var(--blue)')+';border-radius:4px 4px 0 0;transition:height 0.3s;"></div>'
+      +'<div style="font-size:9px;color:var(--text3);white-space:nowrap;'+(isToday?'font-weight:700;color:var(--orange);':'')+'">'+label+'</div>'
+      +'</div>';
+  });
+  html+='</div>';
+  html+='</div></div></div>';
+
+  // ── Feature Usage (horizontal bars) ──
+  var featureLabels={
+    'view:dashboard':'Dashboard',
+    'view:gantt':'Gantt-Ansicht',
+    'view:list':'Listenansicht',
+    'view:kompakt':'Kompaktansicht',
+    'view:pendenzen_my':'Meine Pendenzen',
+    'view:pendenzen_project':'Projekt-Pendenzen',
+    'view:ferien':'Ferienvertretung',
+    'action:task_edit':'Aufgabe bearbeitet',
+    'action:task_create':'Aufgabe erstellt',
+    'action:filter':'Filter verwendet',
+    'action:search':'Suche verwendet',
+    'action:export':'Export durchgef\u00fchrt',
+    'action:xml_upload':'XML-Upload',
+    'action:admin_open':'Admin Center ge\u00f6ffnet',
+    'action:project_switch':'Projekt gewechselt',
+    'action:drag_drop':'Drag & Drop verwendet',
+    'action:comment':'Kommentar geschrieben'
+  };
+  var featureEntries=Object.keys(featureUsage).map(function(k){return{key:k,label:featureLabels[k]||k,count:featureUsage[k]};});
+  featureEntries.sort(function(a,b){return b.count-a.count;});
+
+  if(featureEntries.length){
+    var maxFeat=featureEntries[0].count||1;
+    html+='<div class="admin-section"><div class="admin-section-title">Meistgenutzte Features <span class="admin-badge blue">letzte 14 Tage</span></div>';
+    html+='<div class="admin-card"><div class="admin-card-body" style="display:flex;flex-direction:column;gap:8px;">';
+    featureEntries.slice(0,12).forEach(function(f){
+      var pct=Math.round(f.count/maxFeat*100);
+      var isView=f.key.indexOf('view:')===0;
+      html+='<div style="display:flex;align-items:center;gap:10px;">'
+        +'<div style="width:160px;font-size:12px;font-weight:500;color:var(--text);text-align:right;flex-shrink:0;">'+esc(f.label)+'</div>'
+        +'<div style="flex:1;height:22px;background:var(--surface2);border-radius:6px;overflow:hidden;">'
+        +'<div style="height:100%;width:'+pct+'%;background:'+(isView?'var(--blue)':'var(--orange)')+';border-radius:6px;transition:width 0.4s;min-width:2px;"></div>'
+        +'</div>'
+        +'<div style="width:40px;font-size:12px;font-weight:600;color:var(--text2);">'+f.count+'</div>'
+        +'</div>';
+    });
+    html+='</div></div></div>';
+  }
+
+  // ── Aktionen nach Typ (Donut-style list) ──
+  var typeLabels={create:'Erstellt',edit:'Bearbeitet','delete':'Gel\u00f6scht',login:'Login',settings:'Einstellungen',backup:'Backup',changelog:'Changelog'};
+  var typeColors={create:'var(--green)',edit:'var(--blue)','delete':'#ef4444',login:'var(--orange)',settings:'#8b5cf6',backup:'#06b6d4',changelog:'#f59e0b'};
+  var typeEntries=Object.keys(actionsByType).map(function(k){return{key:k,label:typeLabels[k]||k,count:actionsByType[k]};});
+  typeEntries.sort(function(a,b){return b.count-a.count;});
+  var totalByType=typeEntries.reduce(function(s,e){return s+e.count;},0)||1;
+
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">';
+
+  // Left: Actions by type
+  if(typeEntries.length){
+    html+='<div class="admin-section"><div class="admin-section-title">Aktionen nach Typ</div>';
+    html+='<div class="admin-card"><div class="admin-card-body" style="display:flex;flex-direction:column;gap:6px;">';
+    typeEntries.forEach(function(t){
+      var pct=Math.round(t.count/totalByType*100);
+      var color=typeColors[t.key]||'var(--text3)';
+      html+='<div style="display:flex;align-items:center;gap:8px;">'
+        +'<div style="width:10px;height:10px;border-radius:50%;background:'+color+';flex-shrink:0;"></div>'
+        +'<div style="width:100px;font-size:12px;color:var(--text);">'+esc(t.label)+'</div>'
+        +'<div style="flex:1;height:16px;background:var(--surface2);border-radius:4px;overflow:hidden;">'
+        +'<div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:4px;"></div>'
+        +'</div>'
+        +'<div style="font-size:12px;font-weight:600;color:var(--text2);width:50px;text-align:right;">'+t.count+' ('+pct+'%)</div>'
+        +'</div>';
+    });
+    html+='</div></div></div>';
+  }
+
+  // Right: Most active users
+  var userEntries=Object.keys(actionsByUser).map(function(k){return{name:k,count:actionsByUser[k]};});
+  userEntries.sort(function(a,b){return b.count-a.count;});
+  if(userEntries.length){
+    var maxUser=userEntries[0].count||1;
+    html+='<div class="admin-section"><div class="admin-section-title">Aktivste Benutzer</div>';
+    html+='<div class="admin-card"><div class="admin-card-body" style="display:flex;flex-direction:column;gap:6px;">';
+    userEntries.slice(0,10).forEach(function(u,i){
+      var pct=Math.round(u.count/maxUser*100);
+      var colors=['var(--orange)','var(--blue)','var(--green)','#8b5cf6','#06b6d4','#f59e0b','#ef4444','#ec4899'];
+      var color=colors[i%colors.length];
+      // Find user object for avatar
+      var uObj=users.find(function(x){return x.username===u.name;});
+      var avatar=uObj?renderAvatar(uObj,20):'<div style="width:20px;height:20px;border-radius:50%;background:'+color+';display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700;">'+esc(u.name.substring(0,2).toUpperCase())+'</div>';
+      html+='<div style="display:flex;align-items:center;gap:8px;">'
+        +avatar
+        +'<div style="width:100px;font-size:12px;color:var(--text);font-weight:500;">'+esc(u.name)+'</div>'
+        +'<div style="flex:1;height:16px;background:var(--surface2);border-radius:4px;overflow:hidden;">'
+        +'<div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:4px;"></div>'
+        +'</div>'
+        +'<div style="font-size:12px;font-weight:600;color:var(--text2);width:40px;text-align:right;">'+u.count+'</div>'
+        +'</div>';
+    });
+    html+='</div></div></div>';
+  }
+  html+='</div>';
+
+  // ── Heatmap: Aktionen pro Wochentag & Stunde ──
+  var hoursByDay=[];
+  for(var d=0;d<7;d++){hoursByDay[d]=[];for(var h=0;h<24;h++)hoursByDay[d][h]=0;}
+  (data.events||[]).forEach(function(e){
+    var dt=new Date(e.t);
+    hoursByDay[dt.getDay()][dt.getHours()]++;
+  });
+  logs.forEach(function(l){
+    if(l.timestamp){
+      var dt=new Date(l.timestamp);
+      if(!isNaN(dt.getTime()))hoursByDay[dt.getDay()][dt.getHours()]++;
+    }
+  });
+  var maxHeat=1;
+  hoursByDay.forEach(function(row){row.forEach(function(v){if(v>maxHeat)maxHeat=v;});});
+  var dayNames=['So','Mo','Di','Mi','Do','Fr','Sa'];
+
+  html+='<div class="admin-section" style="margin-top:16px;"><div class="admin-section-title">Nutzungszeiten (Heatmap)</div>';
+  html+='<div class="admin-card"><div class="admin-card-body" style="overflow-x:auto;">';
+  html+='<div style="display:grid;grid-template-columns:32px repeat(24,1fr);gap:2px;min-width:500px;">';
+  // Header row
+  html+='<div></div>';
+  for(var h=0;h<24;h++){
+    html+='<div style="text-align:center;font-size:9px;color:var(--text3);padding-bottom:2px;">'+h+'</div>';
+  }
+  // Data rows
+  for(var d=1;d<=6;d++){_renderHeatRow(d);}
+  _renderHeatRow(0); // Sunday last
+  function _renderHeatRow(d){
+    html+='<div style="font-size:10px;color:var(--text2);font-weight:600;display:flex;align-items:center;">'+dayNames[d]+'</div>';
+    for(var h=0;h<24;h++){
+      var v=hoursByDay[d][h];
+      var intensity=v/maxHeat;
+      var bg=v===0?'var(--surface2)':'rgba(232,96,10,'+Math.max(0.15,intensity).toFixed(2)+')';
+      html+='<div title="'+dayNames[d]+' '+h+':00 \u2013 '+v+' Aktionen" style="aspect-ratio:1;border-radius:3px;background:'+bg+';cursor:default;"></div>';
+    }
+  }
+  html+='</div>';
+  html+='<div style="display:flex;align-items:center;gap:8px;margin-top:8px;justify-content:flex-end;">'
+    +'<span style="font-size:10px;color:var(--text3);">Weniger</span>';
+  [0,0.2,0.4,0.7,1].forEach(function(v){
+    var bg=v===0?'var(--surface2)':'rgba(232,96,10,'+Math.max(0.15,v).toFixed(2)+')';
+    html+='<div style="width:14px;height:14px;border-radius:3px;background:'+bg+';"></div>';
+  });
+  html+='<span style="font-size:10px;color:var(--text3);">Mehr</span></div>';
+  html+='</div></div></div>';
+
+  // ── Info & Reset ──
+  html+='<div style="margin-top:16px;display:flex;align-items:center;justify-content:space-between;">'
+    +'<div style="font-size:11px;color:var(--text3);">Daten werden lokal gespeichert. Die Erfassung beginnt ab jetzt automatisch.</div>'
+    +'<button class="admin-btn danger" onclick="if(confirm(\'Nutzungsdaten wirklich zur\u00fccksetzen?\')){sSet(\'usage_analytics\',{events:[],daily:{}});renderAdminAnalytics();}">Daten zur\u00fccksetzen</button>'
+    +'</div>';
+
+  c.innerHTML=html;
+}
+
 /* ─── ACTIVITY LOG ─── */
 function addLog(type,msg,detail){
+  trackUsage('action','action:'+type);
   var logs=sGet('activity_log',[]);
   var s=getAppSettings();
   var max=s.maxReuploadLogEntries||100;
