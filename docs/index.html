@@ -2177,7 +2177,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <div class="ferien-title">Ferienkalender &#8211; Grossansicht</div>
       <div style="display:flex;align-items:center;gap:6px;margin-left:12px;">
         <label style="font-size:12px;font-weight:600;color:var(--text3);">Monate:</label>
-        <select id="ferienFullMonths" onchange="_ferienFullMonthCount=parseInt(this.value);renderFerienFull()" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg);color:var(--text);">
+        <select id="ferienFullMonths" onchange="window._ferienFullMonthCount=parseInt(this.value);renderFerienFull()" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:var(--bg);color:var(--text);">
           <option value="1">1 Monat</option>
           <option value="2">2 Monate</option>
           <option value="3" selected>3 Monate</option>
@@ -4464,10 +4464,12 @@ window.ferienNext=function(){_ferienMonth++;if(_ferienMonth>11){_ferienMonth=0;_
 
 window.openFerienFullscreen=function(){
   $('ferienFullModal').classList.add('show');
+  var sel=document.getElementById('ferienFullMonths');
+  if(sel)sel.value=String(window._ferienFullMonthCount);
   renderFerienFull();
 };
-var _ferienFullMonthCount=3;
-function _getFerienFullMonths(){return _ferienFullMonthCount;}
+window._ferienFullMonthCount=3;
+function _getFerienFullMonths(){return window._ferienFullMonthCount;}
 
 function _renderFerienMonthGrid(year,month,projectUsers,ferien,fontSize){
   var daysInMonth=new Date(year,month+1,0).getDate();
