@@ -506,6 +506,7 @@ body {
 .cl-drag-unpub:hover { background: var(--orange); color: #fff; opacity: 1 !important; }
 .cl-drag-edit { color: var(--text3); }
 .cl-drag-edit:hover { background: var(--surface2); opacity: 1 !important; }
+.cl-drag-date { font-size: 11px; color: var(--text3); white-space: nowrap; flex-shrink: 0; }
 .cl-drag-del { color: var(--red); }
 .cl-drag-del:hover { background: var(--red); color: #fff; opacity: 1 !important; }
 .cl-release-btn { width: 100%; padding: 12px; border: none; border-radius: 6px; background: var(--green); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: var(--transition); font-family: var(--font); }
@@ -2499,6 +2500,10 @@ function _clItemHtml(item,state){
   var html='<div class="cl-drag-item '+cls+'" draggable="true" data-id="'+esc(item.id)+'">';
   html+='<span class="changelog-tag '+item.tag+'">'+esc(item.tag)+'</span>';
   html+='<span class="cl-drag-text">'+esc(item.text)+'</span>';
+  if(state==='draft'&&item.date){
+    var dp=item.date.split('-');
+    html+='<span class="cl-drag-date">'+dp[2]+'.'+dp[1]+'.'+dp[0]+'</span>';
+  }
   if(state==='draft'){
     html+='<button class="cl-drag-pub" onclick="clPublishItem(\''+item.id+'\')" title="Nach rechts schieben">&#10140;</button>';
   }else{
@@ -2513,7 +2518,7 @@ function _clItemHtml(item,state){
 function renderAdminChangelog(){
   var cl=getChangelog();
   var c=$('adminTabChangelog');
-  var drafts=cl.filter(function(v){return!v.published;});
+  var drafts=cl.filter(function(v){return!v.published;}).sort(function(a,b){return(b.date||'').localeCompare(a.date||'');});
   var staged=cl.filter(function(v){return v.published&&!v.locked;});
   var released=cl.filter(function(v){return v.published&&v.locked;});
 
