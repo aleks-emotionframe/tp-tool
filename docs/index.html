@@ -2926,7 +2926,14 @@ function renderProjectItem(p,container){
 }
 
 function loadProjects(){
-  var idx=getIdx();S.projects=idx;
+  var idx=getIdx();
+  // Non-admin users only see projects they are assigned to
+  if(S.currentUser&&S.currentUser.role!=='admin'){
+    var assignedIds={};
+    getUserAssignedProjects().forEach(function(p){assignedIds[p.id]=true;});
+    idx=idx.filter(function(p){return assignedIds[p.id];});
+  }
+  S.projects=idx;
   var c=$('projectList');c.innerHTML='';
   if(!idx.length){c.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">Noch keine Projekte</div>';return;}
 
@@ -3159,7 +3166,7 @@ document.addEventListener('click',function(e){
 });
 
 function getAllTasksAcrossProjects(){
-  var idx=getIdx();
+  var idx=(S.currentUser&&S.currentUser.role!=='admin')?getUserAssignedProjects():getIdx();
   var allTasks=[];
   idx.forEach(function(p){
     var d=sGet('p_'+p.id,null);
