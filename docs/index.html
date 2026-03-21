@@ -4647,16 +4647,36 @@ window.showFerienView=function(){
   renderView();
 };
 
+function _getAllFerien(){
+  return sGet('ferien_global',[])||[];
+}
+function _saveAllFerien(list){
+  sSet('ferien_global',list);
+}
 function _getFerien(pid){
   if(!pid)return[];
   var d=sGet('p_'+pid,{});
-  return d.ferien||[];
+  var projectUsers=(d.users||[]).map(function(u){return u.toLowerCase();});
+  // Migrate old per-project ferien to global
+  if(d.ferien&&d.ferien.length){
+    var global=_getAllFerien();
+    d.ferien.forEach(function(f){
+      if(!global.some(function(g){return g.id===f.id;}))global.push(f);
+    });
+    _saveAllFerien(global);
+    delete d.ferien;
+    sSet('p_'+pid,d);
+  }
+  return _getAllFerien().filter(function(f){
+    return projectUsers.indexOf(f.user.toLowerCase())>-1;
+  });
 }
 function _saveFerien(pid,list){
-  if(!pid)return;
-  var d=sGet('p_'+pid,{});
-  d.ferien=list;
-  sSet('p_'+pid,d);
+  // Save globally — replace entries for the current user, keep others
+  var me=S.currentUser?S.currentUser.username:'';
+  var global=_getAllFerien().filter(function(f){return f.user!==me;});
+  list.forEach(function(f){if(f.user===me)global.push(f);});
+  _saveAllFerien(global);
 }
 
 function renderFerien(){
@@ -4914,53 +4934,48 @@ window.ferienPrevFull=function(){_ferienMonth--;if(_ferienMonth<0){_ferienMonth=
 window.ferienNextFull=function(){_ferienMonth++;if(_ferienMonth>11){_ferienMonth=0;_ferienYear++;}renderFerienFull();};
 
 window.addFerien=function(){
-  if(!S.pid||!S.currentUser)return;
+  if(!S.currentUser)return;
   var von=$('ferienVon').value;
   var bis=$('ferienBis').value;
   if(!von||!bis){alert('Bitte Von- und Bis-Datum eingeben.');return;}
   if(bis<von){alert('Bis-Datum muss nach Von-Datum liegen.');return;}
-  var list=_getFerien(S.pid);
-  list.push({id:'fer_'+Date.now(),user:S.currentUser.username,von:von,bis:bis});
-  _saveFerien(S.pid,list);
+  var global=_getAllFerien();
+  global.push({id:'fer_'+Date.now(),user:S.currentUser.username,von:von,bis:bis});
+  _saveAllFerien(global);
   renderFerien();
 };
 
 window.deleteFerien=function(id){
-  if(!S.pid||!S.currentUser)return;
-  var list=_getFerien(S.pid).filter(function(f){
+  if(!S.currentUser)return;
+  var global=_getAllFerien().filter(function(f){
     return!(f.id===id&&f.user===S.currentUser.username);
   });
-  _saveFerien(S.pid,list);
+  _saveAllFerien(global);
   renderFerien();
 };
 
 window.removeFerienDay=function(dateStr){
-  if(!S.pid||!S.currentUser)return;
+  if(!S.currentUser)return;
   var me=S.currentUser.username;
-  var list=_getFerien(S.pid);
-  // Find the vacation entry that covers this date
+  var list=_getAllFerien();
   var entry=list.find(function(f){return f.user===me&&dateStr>=f.von&&dateStr<=f.bis;});
   if(!entry)return;
-  // If single day, just delete
   if(entry.von===entry.bis){
     list=list.filter(function(f){return f.id!==entry.id;});
   }else if(dateStr===entry.von){
-    // Shrink from start
     var next=new Date(dateStr+'T00:00:00');next.setDate(next.getDate()+1);
     entry.von=next.toISOString().substring(0,10);
   }else if(dateStr===entry.bis){
-    // Shrink from end
     var prev=new Date(dateStr+'T00:00:00');prev.setDate(prev.getDate()-1);
     entry.bis=prev.toISOString().substring(0,10);
   }else{
-    // Split into two
     var newEnd=new Date(dateStr+'T00:00:00');newEnd.setDate(newEnd.getDate()-1);
     var newStart=new Date(dateStr+'T00:00:00');newStart.setDate(newStart.getDate()+1);
     var oldBis=entry.bis;
     entry.bis=newEnd.toISOString().substring(0,10);
     list.push({id:'fer_'+Date.now(),user:me,von:newStart.toISOString().substring(0,10),bis:oldBis});
   }
-  _saveFerien(S.pid,list);
+  _saveAllFerien(list);
   renderFerien();
 };
 
