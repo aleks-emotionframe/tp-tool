@@ -3727,11 +3727,13 @@ function finishCreate(id,name,tasks,xml){
 window.doSave=function(){
   if(!S.pid)return;
   var d=sGet('p_'+S.pid,{});d.tasks=S.tasks;sSet('p_'+S.pid,d);
+  runKiAnalyse();
 };
 function autoSave(){
   if(!S.pid)return;
   var d=sGet('p_'+S.pid,{});d.tasks=S.tasks;sSet('p_'+S.pid,d);
   var f=$('saveFlash');f.classList.add('show');setTimeout(function(){f.classList.remove('show');},1200);
+  runKiAnalyse();
 }
 
 function dlFile(c,n,m){var b=new Blob([c],{type:m}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(a.href);}
