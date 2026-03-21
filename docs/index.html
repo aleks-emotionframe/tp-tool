@@ -608,6 +608,16 @@ body {
 .pend-move-option { padding: 8px 14px; font-size: 13px; color: var(--text); cursor: pointer; transition: var(--transition); }
 .pend-move-option:hover { background: var(--surface2); color: var(--orange); }
 .pend-jour-fixe-title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 16px; }
+.pend-column-header { cursor: grab; user-select: none; }
+.pend-column.col-dragging { opacity: .4; }
+.pend-column.col-drag-over { border-color: var(--orange); box-shadow: 0 0 0 2px rgba(232,96,10,0.2); }
+.pend-col-actions { display: flex; gap: 2px; margin-left: auto; align-items: center; }
+.pend-col-actions button { width: 22px; height: 22px; border: none; background: none; color: var(--text3); cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center; border-radius: 3px; opacity: 0; transition: var(--transition); padding: 0; }
+.pend-column:hover .pend-col-actions button { opacity: .7; }
+.pend-col-actions button:hover { opacity: 1 !important; background: var(--surface2); }
+.pend-col-actions .col-del:hover { background: var(--red); color: #fff; }
+.pend-add-col { min-width: 120px; border: 2px dashed var(--border); border-radius: var(--radius); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text3); font-size: 13px; font-weight: 600; transition: var(--transition); padding: 20px; }
+.pend-add-col:hover { border-color: var(--orange); color: var(--orange); }
 
 .icon-btn {
   height: 36px; min-width: 36px; padding: 0 8px;
@@ -3489,6 +3499,23 @@ function _getProjectName(pid){
   return p?p.name:pid;
 }
 
+function _getJfCols(pid){
+  var d=sGet('p_'+pid,{});
+  if(d.jourFixeColumns&&d.jourFixeColumns.length)return d.jourFixeColumns;
+  // Auto-generate from project users
+  var cols=[{id:'_unassigned',label:'Nicht zugewiesen'}];
+  (d.users||[]).forEach(function(uname){
+    var u=findUser(uname);
+    cols.push({id:uname,label:u?getUserDisplayName(u):uname});
+  });
+  return cols;
+}
+function _saveJfCols(pid,cols){
+  var d=sGet('p_'+pid,{});
+  d.jourFixeColumns=cols;
+  sSet('p_'+pid,d);
+}
+
 function renderProjectPendenzenView(){
   var c=$('projektPendenzenView');
   if(!S.pid){
@@ -3499,17 +3526,15 @@ function renderProjectPendenzenView(){
   var d=sGet('p_'+S.pid,{});
   var plist=d.pendenzen||[];
   var pOpen=plist.filter(function(p){return!p.done;}).length;
-  var projectName=_getProjectName(S.pid);
-  var projectUsers=d.users||[];
+  var cols=_getJfCols(S.pid);
 
-  // Group by assignee
+  // Group by column id
   var groups={};
-  groups['']=[];
-  projectUsers.forEach(function(u){groups[u]=[];});
+  cols.forEach(function(col){groups[col.id]=[];});
   plist.forEach(function(p){
-    var a=p.assignee||'';
-    if(!groups[a])groups[a]=[];
-    groups[a].push(p);
+    var a=p.assignee||'_unassigned';
+    if(!groups[a])groups['_unassigned'].push(p);
+    else groups[a].push(p);
   });
 
   var html='<div class="pend-jour-fixe-title">Jour Fixe <span class="pend-badge" style="font-size:12px;vertical-align:middle;">'+pOpen+' offen</span></div>';
@@ -3517,11 +3542,9 @@ function renderProjectPendenzenView(){
   html+='<div class="pend-add-row" style="margin-bottom:20px;">';
   html+='<input type="text" id="pendProjInput" placeholder="Neue Pendenz..." onkeydown="if(event.key===\'Enter\')addProjectPendenz()">';
   html+='<input type="date" id="pendProjDue" title="F\u00e4lligkeitsdatum">';
-  html+='<select id="pendProjAssignee"><option value="">Nicht zugewiesen</option>';
-  projectUsers.forEach(function(uname){
-    var u=findUser(uname);
-    var dn=u?getUserDisplayName(u):uname;
-    html+='<option value="'+esc(uname)+'">'+esc(dn)+'</option>';
+  html+='<select id="pendProjAssignee">';
+  cols.forEach(function(col){
+    html+='<option value="'+esc(col.id)+'">'+esc(col.label)+'</option>';
   });
   html+='</select>';
   html+='<button onclick="addProjectPendenz()">Hinzuf\u00fcgen</button>';
@@ -3529,25 +3552,26 @@ function renderProjectPendenzenView(){
 
   // Kanban columns
   html+='<div class="pend-kanban">';
-  // Unassigned column first
-  var colOrder=[''].concat(projectUsers);
-  colOrder.forEach(function(uname){
-    var items=groups[uname]||[];
-    var u=uname?findUser(uname):null;
-    var colName=u?getUserDisplayName(u):'Nicht zugewiesen';
-    var ini=u?getUserInitials(u):'?';
+  cols.forEach(function(col,ci){
+    var items=groups[col.id]||[];
+    var u=findUser(col.id);
+    var ini=u?getUserInitials(u):col.label.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2)||'?';
     var openCount=items.filter(function(p){return!p.done;}).length;
-    html+='<div class="pend-column" data-assignee="'+esc(uname)+'">';
+    html+='<div class="pend-column" data-col-idx="'+ci+'" data-col-id="'+esc(col.id)+'" draggable="true">';
     html+='<div class="pend-column-header">';
     if(u&&u.avatar){
       html+='<div class="pend-col-avatar" style="overflow:hidden;"><img src="'+esc(u.avatar)+'" style="width:100%;height:100%;object-fit:cover;"></div>';
     }else{
       html+='<div class="pend-col-avatar">'+esc(ini)+'</div>';
     }
-    html+=esc(colName);
+    html+='<span class="pend-col-label" ondblclick="renameJfCol('+ci+')">'+esc(col.label)+'</span>';
+    html+='<div class="pend-col-actions">';
     html+='<span class="pend-col-count">'+openCount+'</span>';
+    html+='<button onclick="renameJfCol('+ci+')" title="Umbenennen">&#9998;</button>';
+    html+='<button class="col-del" onclick="deleteJfCol('+ci+')" title="L\u00f6schen">&times;</button>';
     html+='</div>';
-    html+='<div class="pend-column-body" data-assignee="'+esc(uname)+'">';
+    html+='</div>';
+    html+='<div class="pend-column-body" data-col-id="'+esc(col.id)+'">';
     items.forEach(function(p){
       html+='<div class="pend-card'+(p.done?' done':'')+'" draggable="true" data-id="'+p.id+'">';
       html+='<div class="pend-card-top">';
@@ -3562,29 +3586,109 @@ function renderProjectPendenzenView(){
     if(!items.length) html+='<div class="pend-empty" style="padding:8px;">Keine Pendenzen</div>';
     html+='</div></div>';
   });
+  html+='<div class="pend-add-col" onclick="addJfCol()">+ Spalte</div>';
   html+='</div>';
   c.innerHTML=html;
   _initPendDragDrop();
 }
 
+// --- Jour Fixe column management ---
+window.addJfCol=function(){
+  if(!S.pid)return;
+  var name=prompt('Name der neuen Spalte:');
+  if(!name||!name.trim())return;
+  var cols=_getJfCols(S.pid);
+  cols.push({id:'col_'+_pendId(),label:name.trim()});
+  _saveJfCols(S.pid,cols);
+  renderProjectPendenzenView();
+};
+window.renameJfCol=function(idx){
+  if(!S.pid)return;
+  var cols=_getJfCols(S.pid);
+  if(!cols[idx])return;
+  var name=prompt('Spalte umbenennen:',cols[idx].label);
+  if(!name||!name.trim())return;
+  cols[idx].label=name.trim();
+  _saveJfCols(S.pid,cols);
+  renderProjectPendenzenView();
+};
+window.deleteJfCol=function(idx){
+  if(!S.pid)return;
+  var cols=_getJfCols(S.pid);
+  if(!cols[idx])return;
+  var colId=cols[idx].id;
+  // Move pendenzen to first column
+  var list=getProjectPendenzen(S.pid);
+  var firstId=cols[0]&&cols[0].id!==colId?cols[0].id:(cols[1]?cols[1].id:'_unassigned');
+  list.forEach(function(p){if((p.assignee||'_unassigned')===colId)p.assignee=firstId;});
+  saveProjectPendenzen(S.pid,list);
+  cols.splice(idx,1);
+  if(!cols.length)cols.push({id:'_unassigned',label:'Nicht zugewiesen'});
+  _saveJfCols(S.pid,cols);
+  renderProjectPendenzenView();
+};
+
 function _initPendDragDrop(){
-  var dragId=null;
+  var dragCardId=null;
+  var dragColIdx=null;
+  // Card drag
   document.querySelectorAll('.pend-card[draggable]').forEach(function(card){
     card.addEventListener('dragstart',function(e){
-      dragId=card.dataset.id;
+      dragCardId=card.dataset.id;dragColIdx=null;
       card.classList.add('dragging');
       e.dataTransfer.effectAllowed='move';
+      e.stopPropagation();
     });
     card.addEventListener('dragend',function(){
       card.classList.remove('dragging');
       document.querySelectorAll('.pend-column-body').forEach(function(b){b.classList.remove('drag-over');});
-      dragId=null;
+      dragCardId=null;
     });
   });
+  // Column drag
+  document.querySelectorAll('.pend-column[draggable]').forEach(function(col){
+    col.addEventListener('dragstart',function(e){
+      if(dragCardId)return;// card drag takes priority
+      dragColIdx=parseInt(col.dataset.colIdx);dragCardId=null;
+      col.classList.add('col-dragging');
+      e.dataTransfer.effectAllowed='move';
+    });
+    col.addEventListener('dragend',function(){
+      col.classList.remove('col-dragging');
+      document.querySelectorAll('.pend-column').forEach(function(c){c.classList.remove('col-drag-over');});
+      dragColIdx=null;
+    });
+    col.addEventListener('dragover',function(e){
+      e.preventDefault();
+      if(dragColIdx!==null){
+        col.classList.add('col-drag-over');
+      }
+    });
+    col.addEventListener('dragleave',function(e){
+      if(!col.contains(e.relatedTarget))col.classList.remove('col-drag-over');
+    });
+    col.addEventListener('drop',function(e){
+      e.preventDefault();
+      col.classList.remove('col-drag-over');
+      if(dragColIdx!==null&&S.pid){
+        var targetIdx=parseInt(col.dataset.colIdx);
+        if(dragColIdx!==targetIdx){
+          var cols=_getJfCols(S.pid);
+          var moved=cols.splice(dragColIdx,1)[0];
+          cols.splice(targetIdx,0,moved);
+          _saveJfCols(S.pid,cols);
+          renderProjectPendenzenView();
+        }
+        dragColIdx=null;
+        return;
+      }
+    });
+  });
+  // Card drop on column body
   document.querySelectorAll('.pend-column-body').forEach(function(body){
     body.addEventListener('dragover',function(e){
       e.preventDefault();e.dataTransfer.dropEffect='move';
-      body.classList.add('drag-over');
+      if(dragCardId)body.classList.add('drag-over');
     });
     body.addEventListener('dragleave',function(e){
       if(!body.contains(e.relatedTarget))body.classList.remove('drag-over');
@@ -3592,12 +3696,13 @@ function _initPendDragDrop(){
     body.addEventListener('drop',function(e){
       e.preventDefault();
       body.classList.remove('drag-over');
-      if(!dragId||!S.pid)return;
-      var newAssignee=body.dataset.assignee;
+      if(!dragCardId||!S.pid)return;
+      var newAssignee=body.dataset.colId;
       var list=getProjectPendenzen(S.pid);
-      list.forEach(function(p){if(p.id===dragId)p.assignee=newAssignee;});
+      list.forEach(function(p){if(p.id===dragCardId)p.assignee=newAssignee;});
       saveProjectPendenzen(S.pid,list);
       renderProjectPendenzenView();
+      dragCardId=null;
     });
   });
 }
@@ -3683,7 +3788,7 @@ window.addProjectPendenz=function(){
   var inp=$('pendProjInput');if(!inp)return;
   var text=inp.value.trim();if(!text)return;
   var due=($('pendProjDue')||{}).value||'';
-  var assignee=($('pendProjAssignee')||{}).value||'';
+  var assignee=($('pendProjAssignee')||{}).value||'_unassigned';
   var list=getProjectPendenzen(S.pid);
   list.unshift({id:_pendId(),text:text,done:false,due:due,assignee:assignee,created:new Date().toISOString(),createdBy:S.currentUser?S.currentUser.username:''});
   saveProjectPendenzen(S.pid,list);
