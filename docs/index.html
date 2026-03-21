@@ -4072,6 +4072,8 @@ function _initMyPendDrag(){
   // Pendenz item drag
   document.querySelectorAll('#pendenzenView .pend-item[draggable]').forEach(function(el){
     el.addEventListener('dragstart',function(e){
+      var tag=e.target.tagName.toLowerCase();
+      if(tag==='textarea'||tag==='input'||tag==='select'){e.preventDefault();return;}
       dragId=el.dataset.id;dragFolderIdx=null;
       el.style.opacity='.4';
       e.dataTransfer.effectAllowed='move';
@@ -4489,6 +4491,8 @@ function _initPendDragDrop(){
   // Card drag
   document.querySelectorAll('.pend-card[draggable]').forEach(function(card){
     card.addEventListener('dragstart',function(e){
+      var tag=e.target.tagName.toLowerCase();
+      if(tag==='textarea'||tag==='input'||tag==='select'){e.preventDefault();return;}
       dragCardId=card.dataset.id;dragColIdx=null;
       card.classList.add('dragging');
       e.dataTransfer.effectAllowed='move';
