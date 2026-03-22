@@ -691,9 +691,9 @@ body {
 .cl-confetti-piece { position: absolute; top: -10px; width: 6px; height: 12px; border-radius: 2px; animation: clConfettiFall linear both; }
 @keyframes clConfettiFall { 0% { transform: translateY(-10px) rotate(0deg); opacity: 1; } 100% { transform: translateY(500px) rotate(720deg); opacity: 0; } }
 .changelog-tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
-.changelog-bell { position: relative; background: none; border: none; cursor: pointer; font-size: 20px; padding: 4px 8px; color: var(--text3); transition: color .2s; }
+.changelog-bell { position: relative; background: none; border: none; cursor: pointer; font-size: 14px; padding: 2px 4px; color: var(--text3); transition: color .2s; }
 .changelog-bell:hover { color: var(--text); }
-.changelog-bell .bell-dot { display: none; position: absolute; top: 2px; right: 4px; width: 10px; height: 10px; background: var(--primary); border-radius: 50%; border: 2px solid var(--bg); }
+.changelog-bell .bell-dot { display: none; position: absolute; top: 0px; right: 2px; width: 7px; height: 7px; background: var(--primary); border-radius: 50%; border: 2px solid var(--bg); }
 .changelog-bell.has-new .bell-dot { display: block; animation: bellPulse 2s infinite; }
 .changelog-bell.has-new { color: var(--primary); }
 .changelog-bell.has-entries { animation: bellRing 4s ease infinite; transform-origin: top center; }
@@ -1018,15 +1018,15 @@ body {
   white-space: nowrap;
 }
 .icon-btn:hover { border-color: var(--border2); color: var(--text); }
-.theme-btn { font-size: 14px; }
+.theme-btn { font-size: 12px; }
 .bug-btn {
-  padding: 8px 16px;
+  padding: 4px 10px;
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: var(--radius-xs);
   color: var(--text2);
   font-family: var(--font);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: var(--transition);
@@ -1034,9 +1034,9 @@ body {
 .bug-btn:hover { background: var(--red-light); color: var(--red); border-color: var(--red); transform: translateY(-1px); }
 
 /* --- JOKE BAR --- */
-.joke-bar { display: flex; align-items: center; justify-content: center; gap: 10px; flex: 1 1 0; min-width: 0; overflow: hidden; }
-.joke-text { font-size: 13px; color: var(--text3); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.joke-btn { flex-shrink: 0; padding: 5px 14px; border-radius: 20px; border: 1px solid var(--orange); background: none; color: var(--orange); font-family: var(--font); font-size: 12px; font-weight: 600; cursor: pointer; transition: var(--transition); white-space: nowrap; }
+.joke-bar { display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1 1 0; min-width: 0; overflow: hidden; }
+.joke-text { font-size: 11px; color: var(--text3); font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.joke-btn { flex-shrink: 0; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--orange); background: none; color: var(--orange); font-family: var(--font); font-size: 10px; font-weight: 600; cursor: pointer; transition: var(--transition); white-space: nowrap; }
 .joke-btn:hover { background: var(--orange); color: #fff; transform: translateY(-1px); }
 
 /* Joke popup */
