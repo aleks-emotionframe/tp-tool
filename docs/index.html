@@ -9423,7 +9423,6 @@ function _renderAdressTable(){
       +'<th style="'+thStyle+'">Telefon / Direktwahl</th>'
       +'<th style="'+thStyle+'">Natel</th>'
       +'<th style="'+thStyle+'">Email</th>'
-      +'<th style="'+thStyle+'width:50px;text-align:center;">Aktion</th>'
       +'</tr></thead><tbody>';
     filtered.forEach(function(entry,fi){
       var u=entry.u,i=entry.i;
@@ -9439,10 +9438,7 @@ function _renderAdressTable(){
         +'<td style="'+tdStyle+'white-space:nowrap;">'+esc(u.telefon||'')+'</td>'
         +'<td style="'+tdStyle+'white-space:nowrap;">'+esc(u.natel||'')+'</td>'
         +'<td style="'+tdStyle+'"><a href="mailto:'+esc(u.email||'')+'" style="color:var(--orange);text-decoration:none;">'+esc(u.email||'')+'</a></td>'
-        +'<td style="'+tdStyle+'text-align:center;white-space:nowrap;">'
-        +'<button class="admin-btn" onclick="editUnternehmer('+i+')" style="padding:2px 6px;font-size:10px;" title="Bearbeiten">&#9998;</button> '
-        +'<button class="admin-btn danger" onclick="deleteUnternehmer('+i+')" style="padding:2px 6px;font-size:10px;" title="L\u00f6schen">&#10005;</button>'
-        +'</td></tr>';
+        +'</tr>';
     });
     html+='</tbody></table>';
   }
