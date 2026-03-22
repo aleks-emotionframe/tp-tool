@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BAUTERM – V4: Compact Dense</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#eeeef0;--surface:#ffffff;--surface2:#f5f5f7;--surface3:#e8e8eb;
+  --orange:#e8600a;--orange-light:#fff3eb;--orange-glow:rgba(232,96,10,0.08);
+  --blue:#2563eb;--green:#16a34a;--red:#dc2626;
+  --text:#18181b;--text2:#52525b;--text3:#a1a1aa;
+  --border:#e4e4e7;--radius:10px;--radius-sm:7px;--radius-xs:5px;
+  --shadow:0 1px 3px rgba(0,0,0,0.06);
+  --font:'Inter',system-ui,sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;font-size:13px;}
+
+/* Narrow sidebar */
+.sidebar{width:232px;min-width:232px;background:var(--surface);display:flex;flex-direction:column;border-right:1px solid var(--border);}
+.sidebar-brand{padding:14px 14px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);}
+.brand-icon{width:28px;height:28px;background:var(--orange);border-radius:7px;display:flex;align-items:center;justify-content:center;}
+.brand-icon svg{width:16px;height:16px;fill:#fff;}
+.brand-name{font-size:15px;font-weight:800;color:var(--orange);}
+
+.sidebar-section{padding:10px 8px 6px;}
+.sidebar-tabs{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:2px;background:var(--surface2);border-radius:var(--radius-xs);padding:2px;}
+.sidebar-tab{padding:5px 2px;border:none;border-radius:4px;background:none;color:var(--text3);font-family:var(--font);font-size:10px;font-weight:600;cursor:pointer;transition:.15s;text-align:center;}
+.sidebar-tab:hover{color:var(--text2);}
+.sidebar-tab.active{background:var(--orange);color:#fff;}
+
+.sidebar-projects{flex:1;overflow-y:auto;padding:2px 6px;}
+.sidebar-projects::-webkit-scrollbar{width:2px;}
+.sidebar-projects::-webkit-scrollbar-thumb{background:#ddd;border-radius:1px;}
+
+.section-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);padding:10px 8px 4px;display:flex;align-items:center;gap:6px;}
+.section-label .count{background:var(--surface2);padding:1px 5px;border-radius:6px;font-size:9px;}
+
+.project-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--radius-xs);cursor:pointer;transition:.12s;color:var(--text2);font-size:12px;font-weight:500;margin-bottom:1px;}
+.project-item:hover{background:var(--surface2);}
+.project-item.active{background:var(--orange-light);color:var(--orange);}
+.project-item .dot{width:6px;height:6px;border-radius:50%;background:var(--text3);}
+.project-item.active .dot{background:var(--orange);}
+
+.sub-links{padding-left:16px;margin-left:14px;border-left:2px solid var(--orange-glow);margin-bottom:4px;}
+.sub-link{padding:4px 8px;border-radius:4px;font-size:11px;color:var(--text3);cursor:pointer;transition:.1s;display:flex;align-items:center;gap:5px;}
+.sub-link:hover{background:var(--surface2);color:var(--text2);}
+
+.sidebar-pend{padding:0 8px 6px;display:flex;flex-direction:column;gap:3px;border-top:1px solid var(--border);padding-top:8px;margin-top:auto;}
+.pend-btn{padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:11px;font-weight:600;cursor:pointer;background:none;color:var(--text2);font-family:var(--font);text-align:left;transition:.12s;}
+.pend-btn:hover{background:var(--surface2);}
+
+.sidebar-user{display:flex;align-items:center;gap:8px;padding:8px;margin:0 6px 4px;border-radius:var(--radius-sm);background:var(--surface2);}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;}
+.user-name{font-size:11px;font-weight:600;}
+.user-role{font-size:10px;color:var(--text3);}
+
+.sidebar-bottom{padding:8px;border-top:1px solid var(--border);}
+.btn-new{width:100%;padding:7px;background:var(--orange);border:none;border-radius:var(--radius-xs);color:#fff;font-family:var(--font);font-size:11px;font-weight:600;cursor:pointer;margin-bottom:4px;}
+.btn-sec{width:100%;padding:5px;background:none;border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text3);font-family:var(--font);font-size:10px;cursor:pointer;margin-bottom:2px;}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.topbar-title{font-size:16px;font-weight:700;flex:1;}
+.topbar-search{padding:6px 12px;width:180px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text);font-family:var(--font);font-size:12px;outline:none;transition:.2s;}
+.topbar-search:focus{border-color:var(--orange);width:260px;}
+.topbar-search::placeholder{color:var(--text3);}
+.topbar-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-xs);padding:6px 10px;font-size:12px;color:var(--text2);cursor:pointer;font-family:var(--font);transition:.12s;}
+.topbar-btn:hover{background:var(--surface3);}
+
+.content{flex:1;overflow-y:auto;padding:16px 20px;}
+
+/* KPI – horizontal compact */
+.kpi-strip{display:flex;gap:10px;margin-bottom:16px;}
+.kpi{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:14px;}
+.kpi-left{flex:1;}
+.kpi-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--text3);margin-bottom:3px;}
+.kpi-val{font-size:24px;font-weight:800;line-height:1;letter-spacing:-0.5px;}
+.kpi:nth-child(3) .kpi-val{color:var(--green);}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+.kpi-ring{width:38px;height:38px;position:relative;}
+.kpi-ring svg{transform:rotate(-90deg);}
+.kpi-ring circle{fill:none;stroke-width:4;}
+.kpi-ring .bg{stroke:var(--surface2);}
+.kpi-ring .fg{stroke-linecap:round;}
+
+/* Two-col layout */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:1100px){.two-col{grid-template-columns:1fr;}}
+
+.section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
+.section-header{padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);background:var(--surface2);}
+.section-header h3{font-size:12px;font-weight:700;flex:1;text-transform:uppercase;letter-spacing:0.5px;}
+.badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;}
+.badge-red{background:rgba(220,38,38,0.08);color:var(--red);}
+.badge-orange{background:rgba(232,96,10,0.08);color:var(--orange);}
+.task{display:flex;align-items:center;gap:8px;padding:7px 14px;border-bottom:1px solid var(--surface2);transition:.1s;font-size:12px;}
+.task:last-child{border-bottom:none;}
+.task:hover{background:var(--surface2);}
+.task-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dot-red{background:var(--red);}
+.dot-orange{background:var(--orange);}
+.task-name{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.delay{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;background:rgba(220,38,38,0.06);color:var(--red);white-space:nowrap;}
+.task-date{font-size:10px;color:var(--text3);white-space:nowrap;}
+.task-pct{font-size:10px;color:var(--text3);min-width:28px;text-align:right;}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-brand"><div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M3 21V7l9-4 9 4v14H3z"/></svg></div><div class="brand-name">BAUTERM</div></div>
+  <div class="sidebar-section"><div class="sidebar-tabs"><button class="sidebar-tab active">Dash</button><button class="sidebar-tab">Komp</button><button class="sidebar-tab">Liste</button><button class="sidebar-tab">Gantt</button></div></div>
+  <div class="sidebar-projects">
+    <div class="section-label">Projekte <span class="count">1</span></div>
+    <div class="project-item active"><div class="dot"></div><span>2402 - GOB, Zug</span></div>
+    <div class="sub-links"><div class="sub-link">&#128197; Jour Fixe</div><div class="sub-link">&#127970; Adressliste</div></div>
+  </div>
+  <div class="sidebar-pend"><button class="pend-btn">Meine Pendenzen</button><button class="pend-btn">Ferienkalender</button></div>
+  <div class="sidebar-user"><div class="user-avatar">AS</div><div><div class="user-name">Aleks Skobic</div><div class="user-role">Administrator</div></div></div>
+  <div class="sidebar-bottom"><button class="btn-new">+ Neues Projekt</button><button class="btn-sec">Admin Center</button></div>
+</div>
+
+<div class="main">
+  <div class="topbar"><div class="topbar-title">2402 - GOB, Zug</div><input class="topbar-search" placeholder="Suchen..."><button class="topbar-btn">XML</button><button class="topbar-btn">&#128276;</button><button class="topbar-btn">&#127769;</button></div>
+  <div class="content">
+    <div class="kpi-strip">
+      <div class="kpi">
+        <div class="kpi-left"><div class="kpi-label">Vorgänge</div><div class="kpi-val">876</div><div class="kpi-sub">81 Sammelvorgänge</div></div>
+        <div class="kpi-ring"><svg width="38" height="38"><circle class="bg" cx="19" cy="19" r="15"/><circle class="fg" cx="19" cy="19" r="15" style="stroke:var(--blue);stroke-dasharray:94;stroke-dashoffset:0;"/></svg></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-left"><div class="kpi-label">Krit. Pfad</div><div class="kpi-val" style="color:var(--red);">5</div></div>
+        <div class="kpi-ring"><svg width="38" height="38"><circle class="bg" cx="19" cy="19" r="15"/><circle class="fg" cx="19" cy="19" r="15" style="stroke:var(--red);stroke-dasharray:94;stroke-dashoffset:80;"/></svg></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-left"><div class="kpi-label">Fortschritt</div><div class="kpi-val">45%</div></div>
+        <div class="kpi-ring"><svg width="38" height="38"><circle class="bg" cx="19" cy="19" r="15"/><circle class="fg" cx="19" cy="19" r="15" style="stroke:var(--green);stroke-dasharray:94;stroke-dashoffset:52;"/></svg></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-left"><div class="kpi-label">Laufzeit</div><div class="kpi-val">1512</div><div class="kpi-sub">10.03.23 – 30.04.27</div></div>
+        <div class="kpi-ring"><svg width="38" height="38"><circle class="bg" cx="19" cy="19" r="15"/><circle class="fg" cx="19" cy="19" r="15" style="stroke:var(--orange);stroke-dasharray:94;stroke-dashoffset:33;"/></svg></div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="section">
+        <div class="section-header"><span style="font-size:13px;">&#9888;</span><h3>Verzögerungen</h3><span class="badge badge-red">94</span></div>
+        <div class="task"><div class="task-dot dot-red"></div><div class="task-name">UV-MMV montiert, Kabeleinzug</div><div class="delay">68d</div><div class="task-date">13.01.26</div><div class="task-pct">90%</div></div>
+        <div class="task"><div class="task-dot dot-red"></div><div class="task-name">Vorwände beplanken</div><div class="delay">58d</div><div class="task-date">23.01.26</div><div class="task-pct">90%</div></div>
+        <div class="task"><div class="task-dot dot-red"></div><div class="task-name">Schlitzarbeiten E abgeschl.</div><div class="delay">54d</div><div class="task-date">27.01.26</div><div class="task-pct">90%</div></div>
+        <div class="task"><div class="task-dot dot-red"></div><div class="task-name">Montage Vorwände Nasszellen</div><div class="delay">54d</div><div class="task-date">27.01.26</div><div class="task-pct">90%</div></div>
+        <div class="task"><div class="task-dot dot-red"></div><div class="task-name">HLKS-Leitungen abdrücken</div><div class="delay">52d</div><div class="task-date">29.01.26</div><div class="task-pct">0%</div></div>
+        <div class="task"><div class="task-dot dot-red"></div><div class="task-name">Abschluss Spenglerarbeiten</div><div class="delay">51d</div><div class="task-date">30.01.26</div><div class="task-pct">0%</div></div>
+      </div>
+      <div class="section">
+        <div class="section-header"><span style="font-size:13px;">&#9888;</span><h3>Kritischer Pfad</h3><span class="badge badge-orange">5</span></div>
+        <div class="task"><div class="task-dot dot-orange"></div><div class="task-name">Inbetriebnahmen / Reserve</div><div class="task-date">07.09 – 05.10.26</div><div class="task-pct">0%</div></div>
+        <div class="task"><div class="task-dot dot-orange"></div><div class="task-name">Schlussreinigung</div><div class="task-date">05.10 – 19.10.26</div><div class="task-pct">0%</div></div>
+        <div class="task"><div class="task-dot dot-orange"></div><div class="task-name">Möblierung / Umzug</div><div class="task-date">19.10 – 02.11.26</div><div class="task-pct">0%</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BAUTERM – V1: Refined Elevation</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f7f7f8;--surface:#ffffff;--surface2:#f1f1f3;--surface3:#e8e8ec;
+  --orange:#e8600a;--orange-light:#fff5ee;--orange-glow:rgba(232,96,10,0.08);
+  --blue:#2563eb;--green:#16a34a;--red:#dc2626;--yellow:#ca8a04;
+  --text:#1a1a1a;--text2:#52525b;--text3:#a1a1aa;
+  --border:#ebebef;--radius:14px;--radius-sm:10px;--radius-xs:7px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.04);
+  --shadow:0 2px 8px rgba(0,0,0,0.05),0 1px 2px rgba(0,0,0,0.04);
+  --shadow-lg:0 8px 24px rgba(0,0,0,0.08);
+  --font:'Inter',system-ui,sans-serif;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;}
+
+/* ─── SIDEBAR ─── */
+.sidebar{width:264px;min-width:264px;background:var(--surface);display:flex;flex-direction:column;border-right:1px solid var(--border);box-shadow:1px 0 8px rgba(0,0,0,0.03);}
+.sidebar-brand{padding:22px 20px 18px;display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--border);}
+.brand-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--orange),#f59e0b);border-radius:10px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(232,96,10,0.2);}
+.brand-icon svg{width:20px;height:20px;fill:#fff;}
+.brand-name{font-size:19px;font-weight:800;background:linear-gradient(135deg,var(--orange),#c2410c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+
+.sidebar-section{padding:14px 12px 8px;}
+.sidebar-tabs{display:grid;grid-template-columns:1fr 1fr;gap:3px;background:var(--surface2);border-radius:var(--radius-xs);padding:3px;}
+.sidebar-tab{padding:7px 6px;border:none;border-radius:6px;background:none;color:var(--text3);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer;transition:.15s;text-align:center;}
+.sidebar-tab:hover{color:var(--text2);background:var(--surface);}
+.sidebar-tab.active{background:var(--orange);color:#fff;box-shadow:0 2px 6px rgba(232,96,10,0.25);}
+
+.sidebar-projects{flex:1;overflow-y:auto;padding:4px 10px;}
+.sidebar-projects::-webkit-scrollbar{width:3px;}
+.sidebar-projects::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px;}
+
+.folder-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);padding:12px 10px 6px;display:flex;align-items:center;gap:6px;}
+.folder-label span{font-size:9px;background:var(--surface2);padding:1px 6px;border-radius:8px;font-weight:600;}
+.folder-bar{width:100%;height:2px;background:var(--green);border-radius:1px;margin-top:2px;}
+
+.project-item{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:var(--radius-xs);cursor:pointer;transition:.15s;color:var(--text2);font-size:13px;font-weight:500;margin-bottom:1px;border:1px solid transparent;}
+.project-item:hover{background:var(--surface2);color:var(--text);}
+.project-item.active{background:var(--orange-light);color:var(--orange);border-color:var(--orange-glow);box-shadow:var(--shadow-sm);}
+.project-item .dot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;}
+.project-item.active .dot{background:var(--orange);}
+
+.sub-links{padding-left:20px;margin-left:18px;border-left:2px solid var(--orange-glow);margin-bottom:6px;}
+.sub-link{display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:5px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;transition:.12s;}
+.sub-link:hover{background:var(--surface2);color:var(--text2);}
+.sub-link.active{color:var(--orange);background:var(--orange-light);font-weight:600;}
+
+.sidebar-pend{padding:0 14px 8px;display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--border);padding-top:12px;margin-top:auto;}
+.pend-btn{padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-xs);font-size:12px;font-weight:600;cursor:pointer;transition:.15s;text-align:left;background:none;color:var(--text2);font-family:var(--font);}
+.pend-btn:hover{background:var(--surface2);border-color:var(--border);}
+
+.sidebar-user{display:flex;align-items:center;gap:10px;padding:11px 12px;margin:0 10px 6px;border-radius:var(--radius-sm);background:var(--surface2);}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#c2410c);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+.user-name{font-size:13px;font-weight:600;}
+.user-role{font-size:11px;color:var(--text3);}
+
+.sidebar-bottom{padding:10px 12px;border-top:1px solid var(--border);}
+.btn-new{width:100%;padding:10px;background:linear-gradient(135deg,var(--orange),#c2410c);border:none;border-radius:var(--radius-xs);color:#fff;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:.15s;margin-bottom:6px;}
+.btn-new:hover{box-shadow:0 4px 14px rgba(232,96,10,0.25);}
+.btn-admin{width:100%;padding:8px;background:none;border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text2);font-family:var(--font);font-size:12px;font-weight:500;cursor:pointer;transition:.15s;}
+.btn-admin:hover{background:var(--surface2);}
+
+/* ─── MAIN ─── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{display:flex;align-items:center;gap:14px;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+.topbar-title{font-size:19px;font-weight:700;flex-shrink:0;}
+.topbar-spacer{flex:1;}
+.topbar-search{padding:8px 14px;width:200px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:.2s;}
+.topbar-search:focus{border-color:var(--orange);width:280px;box-shadow:0 0 0 3px var(--orange-glow);}
+.topbar-search::placeholder{color:var(--text3);}
+.topbar-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px 14px;font-size:13px;color:var(--text2);cursor:pointer;font-family:var(--font);font-weight:500;transition:.12s;}
+.topbar-btn:hover{background:var(--surface3);color:var(--text);}
+
+.content{flex:1;overflow-y:auto;padding:24px;}
+.content::-webkit-scrollbar{width:5px;}
+.content::-webkit-scrollbar-thumb{background:#ddd;border-radius:3px;}
+
+/* ─── KPI ─── */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;transition:.15s;}
+.kpi:hover{box-shadow:var(--shadow);transform:translateY(-1px);}
+.kpi-top-bar{height:3px;border-radius:2px;margin-bottom:14px;}
+.kpi:nth-child(1) .kpi-top-bar{background:linear-gradient(90deg,var(--blue),#60a5fa);}
+.kpi:nth-child(2) .kpi-top-bar{background:linear-gradient(90deg,var(--red),#f87171);}
+.kpi:nth-child(3) .kpi-top-bar{background:linear-gradient(90deg,var(--green),#4ade80);}
+.kpi:nth-child(4) .kpi-top-bar{background:linear-gradient(90deg,var(--orange),#fb923c);}
+.kpi-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:6px;}
+.kpi-val{font-size:30px;font-weight:800;line-height:1;letter-spacing:-1px;}
+.kpi:nth-child(3) .kpi-val{color:var(--green);}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:5px;}
+.kpi-progress{height:5px;background:var(--surface2);border-radius:3px;margin-top:12px;overflow:hidden;}
+.kpi-progress-fill{height:100%;border-radius:3px;}
+
+/* ─── SECTIONS ─── */
+.section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden;box-shadow:var(--shadow-sm);}
+.section-header{padding:14px 18px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
+.section-icon{font-size:16px;}
+.section-title{font-size:14px;font-weight:700;flex:1;}
+.badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.badge-red{background:rgba(220,38,38,0.08);color:var(--red);}
+.badge-orange{background:rgba(232,96,10,0.08);color:var(--orange);}
+.task{display:flex;align-items:center;gap:10px;padding:11px 18px;border-bottom:1px solid var(--surface2);transition:.1s;font-size:13px;}
+.task:last-child{border-bottom:none;}
+.task:hover{background:rgba(0,0,0,0.015);}
+.task-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot-red{background:var(--red);}
+.dot-orange{background:var(--orange);}
+.task-name{flex:1;font-weight:500;}
+.task-delay{font-size:10px;font-weight:600;padding:3px 8px;border-radius:5px;background:rgba(220,38,38,0.06);color:var(--red);white-space:nowrap;}
+.task-date{font-size:11px;color:var(--text3);min-width:100px;text-align:right;}
+.task-pct{font-size:11px;color:var(--text3);min-width:32px;text-align:right;}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon"><svg viewBox="0 0 24 24"><path d="M3 21V7l9-4 9 4v14H3z"/></svg></div>
+    <div class="brand-name">BAUTERM</div>
+  </div>
+  <div class="sidebar-section">
+    <div class="sidebar-tabs">
+      <button class="sidebar-tab active">Dashboard</button>
+      <button class="sidebar-tab">Kompakt</button>
+      <button class="sidebar-tab">Liste</button>
+      <button class="sidebar-tab">Gantt</button>
+    </div>
+  </div>
+  <div class="sidebar-projects">
+    <div class="folder-label">Aktuelle Projekte <span>1</span></div>
+    <div class="folder-bar"></div>
+    <div style="padding-left:6px;border-left:2px solid var(--green);margin-left:4px;margin-top:6px;">
+      <div class="project-item active">
+        <div class="dot"></div>
+        <span>2402 - GOB, Zug</span>
+      </div>
+      <div class="sub-links">
+        <div class="sub-link">&#128197; Jour Fixe</div>
+        <div class="sub-link">&#127970; Adressliste</div>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-pend">
+    <button class="pend-btn">Meine Pendenzen</button>
+    <button class="pend-btn">Ferienkalender</button>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar">AS</div>
+    <div><div class="user-name">Aleks Skobic</div><div class="user-role">Administrator</div></div>
+  </div>
+  <div class="sidebar-bottom">
+    <button class="btn-new">+ Neues Projekt</button>
+    <button class="btn-admin">Admin Center</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">2402 - GOB, Zug</div>
+    <div class="topbar-spacer"></div>
+    <input class="topbar-search" placeholder="Vorgang suchen...">
+    <button class="topbar-btn">&#8593;&#8595; XML</button>
+    <button class="topbar-btn">&#128276;</button>
+    <button class="topbar-btn">&#127769;</button>
+    <button class="topbar-btn">&#128172; Feedback</button>
+  </div>
+  <div class="content">
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-top-bar"></div>
+        <div class="kpi-label">Vorgänge</div>
+        <div class="kpi-val">876</div>
+        <div class="kpi-sub">81 Sammelvorgänge</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top-bar"></div>
+        <div class="kpi-label">Kritischer Pfad</div>
+        <div class="kpi-val" style="color:var(--red);">5</div>
+        <div class="kpi-sub">Kritische Vorgänge</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top-bar"></div>
+        <div class="kpi-label">Fortschritt</div>
+        <div class="kpi-val">45%</div>
+        <div class="kpi-progress"><div class="kpi-progress-fill" style="width:45%;background:var(--green);"></div></div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top-bar"></div>
+        <div class="kpi-label">Laufzeit</div>
+        <div class="kpi-val">1512 <span style="font-size:13px;font-weight:600;color:var(--text3);">Tage</span></div>
+        <div class="kpi-sub">10.03.2023 – 30.04.2027</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-header"><span class="section-icon">&#9888;</span><span class="section-title">Verzögerungen</span><span class="badge badge-red">94</span></div>
+      <div class="task"><div class="task-dot dot-red"></div><div class="task-name">UV-MMV montiert, Kabeleinzug abgeschlossen</div><div class="task-delay">68 Tage überfällig</div><div class="task-date">Frist: 13.01.2026</div><div class="task-pct">90%</div></div>
+      <div class="task"><div class="task-dot dot-red"></div><div class="task-name">Vorwände beplanken</div><div class="task-delay">58 Tage überfällig</div><div class="task-date">Frist: 23.01.2026</div><div class="task-pct">90%</div></div>
+      <div class="task"><div class="task-dot dot-red"></div><div class="task-name">Schlitzarbeiten E abgeschlossen</div><div class="task-delay">54 Tage überfällig</div><div class="task-date">Frist: 27.01.2026</div><div class="task-pct">90%</div></div>
+      <div class="task"><div class="task-dot dot-red"></div><div class="task-name">Montage Vorwände Nasszellen abgeschlossen</div><div class="task-delay">54 Tage überfällig</div><div class="task-date">Frist: 27.01.2026</div><div class="task-pct">90%</div></div>
+      <div class="task"><div class="task-dot dot-red"></div><div class="task-name">HLKS-Leitungen abdrücken, Deckendurchbrüche dämmen</div><div class="task-delay">52 Tage überfällig</div><div class="task-date">Frist: 29.01.2026</div><div class="task-pct">0%</div></div>
+      <div class="task"><div class="task-dot dot-red"></div><div class="task-name">Abschluss Spenglerarbeiten</div><div class="task-delay">51 Tage überfällig</div><div class="task-date">Frist: 30.01.2026</div><div class="task-pct">0%</div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-header"><span class="section-icon">&#9888;</span><span class="section-title">Kritischer Pfad</span><span class="badge badge-orange">5</span></div>
+      <div class="task"><div class="task-dot dot-orange"></div><div class="task-name">Inbetriebnahmen / Reserve</div><div class="task-date">07.09.2026 – 05.10.2026</div><div class="task-pct">0%</div></div>
+      <div class="task"><div class="task-dot dot-orange"></div><div class="task-name">Schlussreinigung</div><div class="task-date">05.10.2026 – 19.10.2026</div><div class="task-pct">0%</div></div>
+      <div class="task"><div class="task-dot dot-orange"></div><div class="task-name">Möblierung / Umzug</div><div class="task-date">19.10.2026 – 02.11.2026</div><div class="task-pct">0%</div></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
