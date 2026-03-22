@@ -2174,7 +2174,6 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <div id="pendenzenView" style="display:none;overflow:auto;padding:20px 24px;"></div>
       <div id="projektPendenzenView" style="display:none;overflow:auto;padding:20px 24px;"></div>
       <div id="ferienView" style="display:none;overflow:auto;padding:20px 24px;"></div>
-      <div id="projektinfoView" style="display:none;overflow:auto;padding:20px 24px;"></div>
       <div id="unternehmerView" style="display:none;overflow:auto;padding:20px 24px;"></div>
     </div>
   </div>
@@ -3582,7 +3581,6 @@ function renderProjectItem(p,container){
     sub.className='project-sublinks';
     var subPages=[
       {id:'jourFixe',icon:'&#128197;',label:'Jour Fixe'},
-      {id:'projektinfo',icon:'&#128196;',label:'Projektinformationen'},
       {id:'unternehmer',icon:'&#127970;',label:'Adressliste'}
     ];
     subPages.forEach(function(sp){
@@ -4197,7 +4195,6 @@ function renderView(){
   $('pendenzenView').style.display='none';
   $('projektPendenzenView').style.display='none';
   $('ferienView').style.display='none';
-  $('projektinfoView').style.display='none';
   $('unternehmerView').style.display='none';
   $('filterBar').style.display='none';
   $('contentArea').style.overflow='auto';
@@ -9101,10 +9098,8 @@ window.openSubPage=function(pageId){
   $('pendenzenView').style.display='none';
   $('projektPendenzenView').style.display='none';
   $('ferienView').style.display='none';
-  $('projektinfoView').style.display='none';
   $('unternehmerView').style.display='none';
   // Show the relevant view
-  if(pageId==='projektinfo'){$('projektinfoView').style.display='block';renderProjektinfo();}
   if(pageId==='unternehmer'){$('unternehmerView').style.display='block';renderUnternehmer();}
   _updatePendBtnActive();
   loadProjects();
@@ -9121,60 +9116,6 @@ function _saveSubPageData(key,list){
   d[key]=list;
   sSet('p_'+S.pid,d);
 }
-
-/* ── Projektinformationen ── */
-function renderProjektinfo(){
-  var c=$('projektinfoView');
-  if(!S.pid){c.innerHTML='';return;}
-  var d=sGet('p_'+S.pid,{});
-  var info=d.projektinfo||{};
-  var idx=getIdx(),p=idx.find(function(x){return x.id==S.pid;});
-  var pName=p?p.name:'Projekt';
-
-  var html='<div style="max-width:800px;">';
-  html+='<h2 style="margin:0 0 20px;font-size:20px;font-weight:700;color:var(--text);">Projektinformationen</h2>';
-
-  var fields=[
-    {key:'bauherr',label:'Bauherr / Auftraggeber'},
-    {key:'projektleiter',label:'Projektleiter'},
-    {key:'bauleiter',label:'Bauleiter'},
-    {key:'adresse',label:'Projektadresse'},
-    {key:'baunummer',label:'Baunummer / Projektnummer'},
-    {key:'baustart',label:'Baustart',type:'date'},
-    {key:'bauende',label:'Geplantes Bauende',type:'date'},
-    {key:'status',label:'Projektstatus',type:'select',options:['In Planung','In Ausf\u00fchrung','Bauabnahme','Abgeschlossen','Sistiert']},
-    {key:'notizen',label:'Notizen / Bemerkungen',type:'textarea'}
-  ];
-
-  fields.forEach(function(f){
-    var val=info[f.key]||'';
-    html+='<div style="margin-bottom:14px;">';
-    html+='<label style="display:block;font-size:12px;font-weight:600;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.3px;">'+f.label+'</label>';
-    if(f.type==='textarea'){
-      html+='<textarea style="width:100%;min-height:80px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:13px;background:var(--surface);color:var(--text);resize:vertical;font-family:inherit;" onchange="saveProjektinfoField(\''+f.key+'\',this.value)">'+esc(val)+'</textarea>';
-    } else if(f.type==='select'){
-      html+='<select style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:13px;background:var(--surface);color:var(--text);" onchange="saveProjektinfoField(\''+f.key+'\',this.value)">';
-      html+='<option value="">– Bitte w\u00e4hlen –</option>';
-      f.options.forEach(function(o){html+='<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(o)+'</option>';});
-      html+='</select>';
-    } else if(f.type==='date'){
-      html+='<input type="date" value="'+esc(val)+'" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:13px;background:var(--surface);color:var(--text);" onchange="saveProjektinfoField(\''+f.key+'\',this.value)">';
-    } else {
-      html+='<input type="text" value="'+esc(val)+'" placeholder="'+f.label+'" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:13px;background:var(--surface);color:var(--text);" onchange="saveProjektinfoField(\''+f.key+'\',this.value)">';
-    }
-    html+='</div>';
-  });
-
-  html+='</div>';
-  c.innerHTML=html;
-}
-window.saveProjektinfoField=function(key,val){
-  if(!S.pid)return;
-  var d=sGet('p_'+S.pid,{});
-  if(!d.projektinfo)d.projektinfo={};
-  d.projektinfo[key]=val;
-  sSet('p_'+S.pid,d);
-};
 
 /* ── Adressliste ── */
 function renderUnternehmer(){
