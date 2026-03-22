@@ -1699,6 +1699,57 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 }
 .modal-btns .btn-danger:hover { box-shadow: 0 4px 16px var(--red-glow); }
 
+/* Multi-field modal (Adressliste etc.) */
+.mf-modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); width: 520px; max-width: 92vw;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.04);
+  display: flex; flex-direction: column; max-height: 85vh;
+  animation: mfSlideIn .2s ease;
+}
+@keyframes mfSlideIn { from { opacity:0; transform:translateY(12px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+.mf-header {
+  display: flex; align-items: center; padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.mf-header h3 { font-size: 16px; font-weight: 700; flex: 1; margin: 0; color: var(--text); }
+.mf-close {
+  width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text3); font-size: 18px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: .15s;
+}
+.mf-close:hover { background: var(--red-light); color: var(--red); border-color: var(--red); }
+.mf-body { padding: 18px 22px; overflow-y: auto; flex: 1; }
+.mf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 16px; }
+.mf-label {
+  display: block; font-size: 10px; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+}
+.mf-input {
+  width: 100%; padding: 9px 12px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius-xs); color: var(--text); font-family: var(--font);
+  font-size: 13px; outline: none; transition: .15s; box-sizing: border-box;
+}
+.mf-input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-glow); }
+.mf-input::placeholder { color: var(--text3); }
+.mf-footer {
+  display: flex; gap: 8px; justify-content: flex-end; padding: 14px 22px;
+  border-top: 1px solid var(--border); background: var(--surface2);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+.mf-btn {
+  padding: 8px 20px; border-radius: var(--radius-xs); font-family: var(--font);
+  font-size: 13px; font-weight: 600; cursor: pointer; transition: .15s;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text2);
+}
+.mf-btn:hover { border-color: var(--border2); color: var(--text); }
+.mf-btn-primary {
+  background: linear-gradient(135deg, var(--orange), var(--orange-dim));
+  border: none; color: #fff;
+}
+.mf-btn-primary:hover { box-shadow: 0 4px 14px rgba(232,96,10,0.25); transform: translateY(-1px); }
+
 /* Project Picker */
 .picker-project {
   display: flex; align-items: center; gap: 12px;
@@ -9565,17 +9616,27 @@ function _openMultiFieldModal(title,fields,callback){
   var bg=document.createElement('div');
   bg.className='modal-bg show';
   bg.style.zIndex='10001';
-  var box='<div class="confirm-box" style="max-width:440px;"><h3 style="margin:0 0 16px;">'+esc(title)+'</h3>';
-  fields.forEach(function(f){
-    box+='<div style="margin-bottom:10px;">'
-      +'<label style="display:block;font-size:11px;font-weight:600;color:var(--text3);margin-bottom:3px;text-transform:uppercase;">'+esc(f.label)+'</label>'
-      +'<input type="text" id="_mf_'+f.key+'" value="'+esc(f.val)+'" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:13px;background:var(--surface);color:var(--text);box-sizing:border-box;">'
+
+  // Build two-column layout for fields
+  var fieldHtml='';
+  fields.forEach(function(f,i){
+    var isWide=fields.length<=4||(f.key==='bereich'||f.key==='firma');
+    var span=isWide?'grid-column:1/-1;':'';
+    fieldHtml+='<div style="'+span+'">'
+      +'<label class="mf-label">'+esc(f.label)+'</label>'
+      +'<input type="text" id="_mf_'+f.key+'" value="'+esc(f.val)+'" placeholder="'+esc(f.label)+'" class="mf-input">'
       +'</div>';
   });
-  box+='<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">'
-    +'<button class="admin-btn" onclick="this.closest(\'.modal-bg\').remove()">Abbrechen</button>'
-    +'<button class="admin-btn primary" id="_mfSave">Speichern</button>'
+
+  var box='<div class="mf-modal">'
+    +'<div class="mf-header"><h3>'+esc(title)+'</h3>'
+    +'<button class="mf-close" onclick="this.closest(\'.modal-bg\').remove()">&times;</button></div>'
+    +'<div class="mf-body"><div class="mf-grid">'+fieldHtml+'</div></div>'
+    +'<div class="mf-footer">'
+    +'<button class="mf-btn" onclick="this.closest(\'.modal-bg\').remove()">Abbrechen</button>'
+    +'<button class="mf-btn mf-btn-primary" id="_mfSave">Speichern</button>'
     +'</div></div>';
+
   bg.innerHTML=box;
   document.body.appendChild(bg);
   bg.onclick=function(e){if(e.target===bg)bg.remove();};
@@ -9585,6 +9646,9 @@ function _openMultiFieldModal(title,fields,callback){
     bg.remove();
     callback(vals);
   };
+  // Focus first input
+  var first=bg.querySelector('.mf-input');
+  if(first)setTimeout(function(){first.focus();},50);
 }
 
 /* ─── XML UPLOAD (topbar + drag & drop) ─── */
