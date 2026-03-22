@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BAUTERM – Design-Varianten</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:system-ui,sans-serif;background:#1a1a2e;color:#fff;min-height:100vh;padding:40px;}
+h1{font-size:28px;font-weight:800;text-align:center;margin-bottom:8px;}
+.sub{text-align:center;color:rgba(255,255,255,0.5);font-size:14px;margin-bottom:40px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;max-width:1200px;margin:0 auto;}
+.card{background:#22223a;border-radius:16px;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer;text-decoration:none;color:#fff;}
+.card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.4);}
+.card iframe{width:100%;height:280px;border:none;pointer-events:none;transform:scale(0.5);transform-origin:0 0;width:200%;height:560px;}
+.card-body{padding:16px 20px;}
+.card-title{font-size:16px;font-weight:700;margin-bottom:4px;}
+.card-desc{font-size:13px;color:rgba(255,255,255,0.5);}
+.card-link{display:inline-block;margin-top:10px;font-size:12px;font-weight:600;color:#f97316;text-decoration:none;}
+</style>
+</head>
+<body>
+
+<h1>BAUTERM Design-Varianten</h1>
+<p class="sub">Klicke auf eine Karte, um das Design in voller Grösse zu sehen.</p>
+
+<div class="grid">
+  <a class="card" href="design1-dark-minimal.html" target="_blank">
+    <iframe src="design1-dark-minimal.html" loading="lazy"></iframe>
+    <div class="card-body">
+      <div class="card-title">1 – Dark Minimal</div>
+      <div class="card-desc">Dunkles Theme, Icon-Sidebar links, violette Akzente, schlankes Layout</div>
+      <span class="card-link">Vollansicht &rarr;</span>
+    </div>
+  </a>
+  <a class="card" href="design2-glassmorphism.html" target="_blank">
+    <iframe src="design2-glassmorphism.html" loading="lazy"></iframe>
+    <div class="card-body">
+      <div class="card-title">2 – Glassmorphism</div>
+      <div class="card-desc">Transparente Glass-Panels, Blur-Effekte, Farbverlauf-Hintergrund</div>
+      <span class="card-link">Vollansicht &rarr;</span>
+    </div>
+  </a>
+  <a class="card" href="design3-notion-clean.html" target="_blank">
+    <iframe src="design3-notion-clean.html" loading="lazy"></iframe>
+    <div class="card-body">
+      <div class="card-title">3 – Notion-Style Clean</div>
+      <div class="card-desc">Heller Notion-Look, grosse Typografie, Breadcrumbs, Toggle-Sektionen</div>
+      <span class="card-link">Vollansicht &rarr;</span>
+    </div>
+  </a>
+  <a class="card" href="design4-topnav-cards.html" target="_blank">
+    <iframe src="design4-topnav-cards.html" loading="lazy"></iframe>
+    <div class="card-body">
+      <div class="card-title">4 – Top-Nav mit Cards</div>
+      <div class="card-desc">Keine Sidebar, horizontale Navigation, Sub-Tabs, 2-Spalten-Cards</div>
+      <span class="card-link">Vollansicht &rarr;</span>
+    </div>
+  </a>
+  <a class="card" href="design5-bauhaus-bold.html" target="_blank">
+    <iframe src="design5-bauhaus-bold.html" loading="lazy"></iframe>
+    <div class="card-body">
+      <div class="card-title">5 – Bauhaus Bold</div>
+      <div class="card-desc">Geometrisch-kantiger Bauhaus-Stil, kräftige Farbblöcke, schwarze Sidebar</div>
+      <span class="card-link">Vollansicht &rarr;</span>
+    </div>
+  </a>
+</div>
+
+</body>
+</html>
