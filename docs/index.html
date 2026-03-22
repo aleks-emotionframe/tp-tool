@@ -3177,7 +3177,7 @@ function showApp(){
   var lastPid=sGet('lastPid_'+S.currentUser.username,null);
   if(lastPid){
     var d=sGet('p_'+lastPid,null);
-    if(d){loadProject(lastPid);if(S.view.indexOf('pendenzen')===0||S.view==='ferien'){$('emptyState').style.display='none';renderView();}return;}
+    if(d){loadProject(lastPid);if(S.view.indexOf('subpage_')===0){var sp=S.view.replace('subpage_','');$('emptyState').style.display='none';openSubPage(sp);return;}if(S.view.indexOf('pendenzen')===0||S.view==='ferien'){$('emptyState').style.display='none';renderView();}return;}
   }
   if(S.view.indexOf('pendenzen')===0||S.view==='ferien'){$('emptyState').style.display='none';renderView();return;}
   // No saved project — check if daily project picker should show
@@ -9087,6 +9087,7 @@ window.openSubPage=function(pageId){
   // Hide all main views
   document.querySelectorAll('.sidebar-tab').forEach(function(x){x.classList.remove('active');});
   S.view='subpage_'+pageId;
+  sSet('lastView_'+(S.currentUser?S.currentUser.username:''),S.view);
   $('kpiStrip').style.display='none';
   $('kiAnalyseStrip').style.display='none';
   $('filterBar').style.display='none';
