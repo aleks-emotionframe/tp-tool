@@ -224,46 +224,50 @@
 }
 /* Compact KPI strip */
 [data-theme="compact"] .kpi-strip {
-  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
 }
 [data-theme="compact"] .kpi-card {
   padding: 14px 16px;
 }
-[data-theme="compact"] .kpi-card .kpi-label {
+[data-theme="compact"] .kpi-label {
   font-size: 10px;
 }
-[data-theme="compact"] .kpi-card .kpi-value {
+[data-theme="compact"] .kpi-value {
   font-size: 24px;
 }
-[data-theme="compact"] .kpi-card .kpi-sub {
+[data-theme="compact"] .kpi-sub {
   font-size: 10px;
 }
-/* Compact dashboard sections */
-[data-theme="compact"] .dash-section-header {
+/* Compact dashboard panels */
+[data-theme="compact"] .dash-panel-header {
   padding: 10px 14px;
 }
-[data-theme="compact"] .dash-section-header h3 {
+[data-theme="compact"] .dash-panel-title {
   font-size: 12px;
 }
-[data-theme="compact"] .dash-task {
+[data-theme="compact"] .dash-panel-count {
+  font-size: 10px;
+  padding: 2px 8px;
+}
+[data-theme="compact"] .dash-item {
   padding: 7px 14px;
   font-size: 12px;
+  gap: 8px;
 }
-[data-theme="compact"] .dash-task .dash-delay {
+[data-theme="compact"] .dash-item-dot {
+  width: 6px;
+  height: 6px;
+}
+[data-theme="compact"] .dash-item-badge {
   font-size: 9px;
   padding: 2px 6px;
 }
-[data-theme="compact"] .dash-task .dash-date {
+[data-theme="compact"] .dash-item-meta {
   font-size: 10px;
 }
-[data-theme="compact"] .dash-task .dash-pct {
-  font-size: 10px;
-}
-/* Compact section badge */
-[data-theme="compact"] .section-count {
-  font-size: 10px;
-  padding: 2px 8px;
+/* Compact content area */
+[data-theme="compact"] .content-area {
+  padding: 16px 20px;
 }
 
 html, body { height: 100%; }
@@ -7706,6 +7710,7 @@ function getAllUsersWithProjects(){
 
 window.openAdmin=function(){
   trackUsage('action','action:admin_open');
+  _pendingSettings=null;
   $('adminOverlay').classList.add('show');
   // Reset to projects tab
   switchAdminTab('projects',document.querySelector('.admin-tab'));
@@ -8464,7 +8469,7 @@ function getAppSettings(){
 function saveAppSettings(s){sSet('app_settings',s);addLog('settings','Einstellungen ge\u00e4ndert');}
 
 function renderAdminSettings(){
-  var s=getAppSettings();
+  var s=_pendingSettings?_getPending():getAppSettings();
   var c=$('adminTabSettings');
   var html='<div class="settings-grid">';
 
@@ -8531,10 +8536,10 @@ function renderAdminSettings(){
     +'<div class="settings-row-label">Farbschema</div>'
     +'<div class="settings-row-desc">Hell oder Dunkel</div>'
     +'</div><div class="settings-row-control">'
-    +'<select class="settings-select" onchange="adminUpdateSetting(\'theme\',this.value);applyTheme(this.value);">'
-    +'<option value="light"'+(sGet('theme','light')==='light'?' selected':'')+'>Hell (Light)</option>'
-    +'<option value="dark"'+(sGet('theme','light')==='dark'?' selected':'')+'>Dunkel (Dark)</option>'
-    +'<option value="compact"'+(sGet('theme','light')==='compact'?' selected':'')+'>Kompakt (Compact)</option>'
+    +'<select class="settings-select" onchange="adminUpdateSetting(\'theme\',this.value);">'
+    +'<option value="light"'+((s.theme||sGet('theme','light'))==='light'?' selected':'')+'>Hell (Light)</option>'
+    +'<option value="dark"'+((s.theme||sGet('theme','light'))==='dark'?' selected':'')+'>Dunkel (Dark)</option>'
+    +'<option value="compact"'+((s.theme||sGet('theme','light'))==='compact'?' selected':'')+'>Kompakt (Compact)</option>'
     +'</select></div></div>';
 
   // Accent color
@@ -8566,7 +8571,7 @@ function renderAdminSettings(){
     +'<div class="settings-row-label">Schriftgr\u00f6\u00dfe</div>'
     +'<div class="settings-row-desc">Globale Schriftgr\u00f6\u00dfe der Anwendung</div>'
     +'</div><div class="settings-row-control">'
-    +'<select class="settings-select" onchange="adminUpdateSetting(\'fontSize\',this.value);applyFontSize(this.value);">'
+    +'<select class="settings-select" onchange="adminUpdateSetting(\'fontSize\',this.value);">'
     +'<option value="small"'+(s.fontSize==='small'?' selected':'')+'>Klein (13px)</option>'
     +'<option value="normal"'+(!s.fontSize||s.fontSize==='normal'?' selected':'')+'>Normal (14px)</option>'
     +'<option value="large"'+(s.fontSize==='large'?' selected':'')+'>Gross (16px)</option>'
@@ -8578,7 +8583,7 @@ function renderAdminSettings(){
     +'<div class="settings-row-label">Kompakter Modus</div>'
     +'<div class="settings-row-desc">Reduziert Abst\u00e4nde f\u00fcr mehr Inhalte auf dem Bildschirm</div>'
     +'</div><div class="settings-row-control">'
-    +'<label class="settings-toggle"><input type="checkbox"'+(s.compactMode?' checked':'')+' onchange="adminUpdateSetting(\'compactMode\',this.checked);applyCompactMode(this.checked);">'
+    +'<label class="settings-toggle"><input type="checkbox"'+(s.compactMode?' checked':'')+' onchange="adminUpdateSetting(\'compactMode\',this.checked);">'
     +'<span class="toggle-slider"></span></label></div></div>';
 
   // Animations
@@ -8586,7 +8591,7 @@ function renderAdminSettings(){
     +'<div class="settings-row-label">Animationen</div>'
     +'<div class="settings-row-desc">Aktiviert oder deaktiviert \u00dcbergangsanimationen</div>'
     +'</div><div class="settings-row-control">'
-    +'<label class="settings-toggle"><input type="checkbox"'+(s.animationsEnabled!==false?' checked':'')+' onchange="adminUpdateSetting(\'animationsEnabled\',this.checked);applyAnimations(this.checked);">'
+    +'<label class="settings-toggle"><input type="checkbox"'+(s.animationsEnabled!==false?' checked':'')+' onchange="adminUpdateSetting(\'animationsEnabled\',this.checked);">'
     +'<span class="toggle-slider"></span></label></div></div>';
 
   html+='</div>';
@@ -8789,28 +8794,49 @@ function renderAdminSettings(){
 
   html+='</div>';
 
+  // Save button bar
+  html+='<div style="position:sticky;bottom:0;background:var(--surface);border-top:2px solid var(--orange);padding:16px 20px;display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:20px;border-radius:0 0 var(--radius) var(--radius);box-shadow:0 -4px 16px rgba(0,0,0,0.06);">'
+    +'<span style="flex:1;font-size:13px;color:var(--text3);">Einstellungen werden beim Speichern \u00fcbernommen.</span>'
+    +'<button class="admin-btn primary" onclick="adminSaveAllSettings()" style="padding:10px 28px;font-size:14px;font-weight:700;">Einstellungen speichern</button>'
+    +'</div>';
+
   html+='</div>';
   c.innerHTML=html;
 }
 
+var _pendingSettings=null;
+function _getPending(){
+  if(!_pendingSettings) _pendingSettings=JSON.parse(JSON.stringify(getAppSettings()));
+  return _pendingSettings;
+}
 window.adminUpdateSetting=function(key,val){
-  var s=getAppSettings();
+  var s=_getPending();
   s[key]=val;
+};
+
+window.adminSaveAllSettings=function(){
+  var s=_getPending();
   saveAppSettings(s);
-  // Live feedback
-  if(key==='appName'){
-    var h=$('topTitle');
-    // Update login screen title if visible
-    var lt=document.querySelector('.login-title');
-    if(lt)lt.textContent=val||'BAUTERM';
+  // Apply visual changes
+  applyTheme(s.theme||'light');
+  if(s.accentColor&&s.accentColor!=='#e8600a') applyAccentColor(s.accentColor);
+  if(s.fontSize) applyFontSize(s.fontSize);
+  if(typeof s.compactMode!=='undefined') applyCompactMode(s.compactMode);
+  if(typeof s.animationsEnabled!=='undefined') applyAnimations(s.animationsEnabled);
+  _pendingSettings=null;
+  // Show confirmation
+  var bar=document.querySelector('[onclick="adminSaveAllSettings()"]');
+  if(bar){
+    var orig=bar.textContent;
+    bar.textContent='\u2713 Gespeichert!';
+    bar.style.background='var(--green)';
+    setTimeout(function(){bar.textContent=orig;bar.style.background='';},1500);
   }
 };
 
 window.adminUpdateAccentColor=function(hex){
-  var s=getAppSettings();
+  var s=_getPending();
   s.accentColor=hex;
-  saveAppSettings(s);
-  applyAccentColor(hex);
   renderAdminSettings();
 };
 
