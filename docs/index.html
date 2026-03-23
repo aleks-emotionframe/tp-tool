@@ -1160,10 +1160,11 @@ body {
 .ki-insight-tag:hover { background: var(--orange-light); color: var(--orange); }
 
 /* --- DASHBOARD PANELS --- */
-.dash-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.dash-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex: 1; min-height: 0; }
 .dash-panel {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius); overflow: hidden;
+  display: flex; flex-direction: column;
 }
 .dash-panel.full { grid-column: 1 / -1; }
 .dash-panel-header {
@@ -1184,7 +1185,7 @@ body {
   font-size: 11px; font-weight: 600; padding: 2px 8px;
   border-radius: 20px; background: var(--surface2); color: var(--text2);
 }
-.dash-panel-body { max-height: 320px; overflow-y: auto; }
+.dash-panel-body { flex: 1; overflow-y: auto; min-height: 0; }
 .dash-panel-body::-webkit-scrollbar { width: 4px; }
 .dash-panel-body::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
 .dash-item {
@@ -1347,6 +1348,7 @@ body {
 /* --- CONTENT --- */
 .content-area { flex: 1; overflow: auto; background: var(--bg); display: flex; flex-direction: column; }
 .content-area > div { flex-shrink: 0; }
+.content-area > #dashboardView { flex: 1; display: flex; flex-direction: column; }
 .content-area > #kompaktView { flex: 1; flex-shrink: 1; }
 
 /* --- EMPTY STATE --- */
@@ -2384,7 +2386,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
           <div style="font-size:13px;color:var(--text3);margin-top:8px;">MS Project XML wird automatisch importiert</div>
         </div>
       </div>
-      <div id="dashboardView" style="display:none;overflow:auto;padding:20px 24px;"></div>
+      <div id="dashboardView" style="display:none;overflow:hidden;padding:20px 24px;box-sizing:border-box;min-height:0;flex-direction:column;"></div>
       <div id="kompaktView" style="display:none;overflow:hidden;padding:20px 24px;box-sizing:border-box;min-height:0;"></div>
       <div id="listView" style="display:none;height:100%;overflow:auto;"></div>
       <div id="ganttView" style="display:none;height:100%;overflow:hidden;"></div>
@@ -4440,7 +4442,8 @@ function renderView(){
   }else{
     if(S.pid){$('kpiStrip').style.display='grid';$('kiAnalyseStrip').style.display='block';}
     if(S.view==='dashboard'){
-      $('dashboardView').style.display='block';
+      $('dashboardView').style.display='flex';
+      $('contentArea').style.overflow='hidden';
       renderDashboard();
     }else if(S.view==='kompakt'){
       $('kompaktView').style.display='flex';
