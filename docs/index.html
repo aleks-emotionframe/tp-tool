@@ -1220,12 +1220,12 @@ body {
 /* --- COMPACT VIEW --- */
 .kompakt-layout {
   display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-  height: 100%; min-height: 0;
+  height: 100%; min-height: 0; align-items: stretch;
 }
-.kompakt-left { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.kompakt-left { min-height: 0; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
 .kompakt-left .dash-panel { display: flex; flex-direction: column; overflow: hidden; flex: 1; min-height: 0; }
 .kompakt-left .dash-panel-body { flex: 1; overflow-y: auto; min-height: 0; }
-.kompakt-right { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.kompakt-right { display: flex; flex-direction: column; gap: 10px; min-height: 0; height: 100%; }
 .kompakt-summary {
   display: flex; align-items: center; gap: 12px; padding: 18px 18px;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
