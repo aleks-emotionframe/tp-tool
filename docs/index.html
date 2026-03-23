@@ -2601,6 +2601,17 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
   </div>
 </div>
 
+<!-- FEEDBACK REPLY POPUP (shown to user on login) -->
+<div class="modal-bg" id="feedbackReplyModal">
+  <div class="modal" style="max-width:480px;">
+    <h3 style="display:flex;align-items:center;gap:10px;">&#9993; R&uuml;ckmeldung zu deinem Feedback</h3>
+    <div id="feedbackReplyContent"></div>
+    <div class="modal-btns">
+      <button class="btn-primary" onclick="closeFeedbackReplyModal()">Verstanden</button>
+    </div>
+  </div>
+</div>
+
 <!-- CHANGELOG MODAL -->
 <div class="modal-bg" id="changelogModal">
   <div class="modal cl-modal">
@@ -3420,6 +3431,7 @@ function showApp(){
   _updatePendBtnActive();
   loadProjects();
   checkChangelog();
+  checkFeedbackReplies();
   // Restore last project
   var lastPid=sGet('lastPid_'+S.currentUser.username,null);
   if(lastPid){
@@ -7528,7 +7540,14 @@ window.renderAdminTestaufgaben=function(){
       html+='<div class="ta-task-header">';
       html+='<span class="admin-badge '+(typeCss[fb.type]||'orange')+'">'+(typeIcons[fb.type]||'')+' '+(fb.typeLabel||fb.type)+'</span>';
       html+='<div class="ta-task-title">'+esc(fb.subject)+'</div>';
+      html+='<div style="display:flex;gap:6px;align-items:center;">';
+      if(fb.reply){
+        html+='<span style="font-size:11px;color:var(--green);font-weight:600;">&#10003; Beantwortet</span>';
+      } else {
+        html+='<button class="admin-btn" style="font-size:12px;" onclick="adminToggleReply(\''+esc(fb.id)+'\')">Antworten</button>';
+      }
       html+='<button class="admin-btn danger" onclick="adminDeleteFeedback(\''+esc(fb.id)+'\')">L\u00f6schen</button>';
+      html+='</div>';
       html+='</div>';
       html+='<div class="ta-task-desc">'+esc(fb.description)+'</div>';
       html+='<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text3);">';
@@ -7539,6 +7558,25 @@ window.renderAdminTestaufgaben=function(){
       if(fb.screenshot){
         html+='<div style="margin-top:10px;"><img src="'+esc(fb.screenshot)+'" style="max-width:100%;max-height:300px;border-radius:var(--radius-xs);border:1px solid var(--border);cursor:pointer;" onclick="window.open(this.src,\'_blank\')"></div>';
       }
+      // Show existing reply
+      if(fb.reply){
+        html+='<div style="margin-top:12px;padding:10px 14px;background:var(--surface2);border-left:3px solid var(--green);border-radius:var(--radius-xs);font-size:13px;">';
+        html+='<div style="font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;">Deine R\u00fcckmeldung:</div>';
+        html+='<div style="color:var(--text);">'+esc(fb.reply)+'</div>';
+        html+='<div style="display:flex;gap:8px;margin-top:8px;">';
+        html+='<button class="admin-btn" style="font-size:11px;" onclick="adminToggleReply(\''+esc(fb.id)+'\')">Bearbeiten</button>';
+        html+='<button class="admin-btn danger" style="font-size:11px;" onclick="adminDeleteReply(\''+esc(fb.id)+'\')">R\u00fcckmeldung l\u00f6schen</button>';
+        html+='</div>';
+        html+='</div>';
+      }
+      // Reply textarea (toggle)
+      html+='<div id="fbReply_'+esc(fb.id)+'" style="display:none;margin-top:10px;">';
+      html+='<textarea id="fbReplyText_'+esc(fb.id)+'" rows="3" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-family:var(--font);font-size:13px;background:var(--surface2);color:var(--text);resize:vertical;" placeholder="R\u00fcckmeldung an den Benutzer schreiben...">'+(fb.reply?esc(fb.reply):'')+'</textarea>';
+      html+='<div style="display:flex;gap:6px;margin-top:6px;">';
+      html+='<button class="admin-btn" style="background:var(--green);color:#fff;border-color:var(--green);font-size:12px;" onclick="adminSendReply(\''+esc(fb.id)+'\')">Senden</button>';
+      html+='<button class="admin-btn" style="font-size:12px;" onclick="$(\'fbReply_'+esc(fb.id)+'\').style.display=\'none\'">Abbrechen</button>';
+      html+='</div>';
+      html+='</div>';
       html+='</div>';
     });
   }
@@ -7552,6 +7590,76 @@ window.adminDeleteFeedback=function(id){
   var feedbacks=sGet('feedbacks',[]).filter(function(f){return f.id!==id;});
   sSet('feedbacks',feedbacks);
   renderAdminTestaufgaben();
+};
+
+window.adminToggleReply=function(id){
+  var el=$('fbReply_'+id);
+  if(el)el.style.display=el.style.display==='none'?'block':'none';
+};
+
+window.adminSendReply=function(id){
+  var txt=($('fbReplyText_'+id)||{}).value;
+  if(!txt||!txt.trim()){alert('Bitte eine R\u00fcckmeldung eingeben.');return;}
+  var feedbacks=sGet('feedbacks',[]);
+  for(var i=0;i<feedbacks.length;i++){
+    if(feedbacks[i].id===id){
+      feedbacks[i].reply=txt.trim();
+      feedbacks[i].replyTimestamp=new Date().toISOString();
+      feedbacks[i].replyRead=false;
+      break;
+    }
+  }
+  sSet('feedbacks',feedbacks);
+  renderAdminTestaufgaben();
+};
+
+window.adminDeleteReply=function(id){
+  if(!confirm('R\u00fcckmeldung wirklich l\u00f6schen?'))return;
+  var feedbacks=sGet('feedbacks',[]);
+  for(var i=0;i<feedbacks.length;i++){
+    if(feedbacks[i].id===id){
+      delete feedbacks[i].reply;
+      delete feedbacks[i].replyTimestamp;
+      delete feedbacks[i].replyRead;
+      break;
+    }
+  }
+  sSet('feedbacks',feedbacks);
+  renderAdminTestaufgaben();
+};
+
+/* ─── Feedback Reply Popup for Users on Login ─── */
+function checkFeedbackReplies(){
+  if(!S.currentUser)return;
+  var username=S.currentUser.username;
+  var feedbacks=sGet('feedbacks',[]);
+  var unread=feedbacks.filter(function(fb){
+    return fb.username===username && fb.reply && fb.replyRead===false;
+  });
+  if(unread.length===0)return;
+  var html='';
+  unread.forEach(function(fb){
+    var typeIcons={bug:'\ud83d\udc1b',idea:'\ud83d\udca1',other:'\ud83d\udcac'};
+    html+='<div style="padding:14px;background:var(--surface2);border-radius:var(--radius-sm);margin-bottom:12px;border-left:3px solid var(--orange);">';
+    html+='<div style="font-size:12px;color:var(--text3);margin-bottom:6px;">'+(typeIcons[fb.type]||'')+' Dein Feedback: <strong style="color:var(--text);">'+esc(fb.subject)+'</strong></div>';
+    html+='<div style="font-size:14px;color:var(--text);line-height:1.5;">'+esc(fb.reply)+'</div>';
+    html+='</div>';
+  });
+  $('feedbackReplyContent').innerHTML=html;
+  $('feedbackReplyModal').classList.add('show');
+}
+
+window.closeFeedbackReplyModal=function(){
+  // Mark all as read
+  var username=S.currentUser?S.currentUser.username:'';
+  var feedbacks=sGet('feedbacks',[]);
+  for(var i=0;i<feedbacks.length;i++){
+    if(feedbacks[i].username===username && feedbacks[i].reply && feedbacks[i].replyRead===false){
+      feedbacks[i].replyRead=true;
+    }
+  }
+  sSet('feedbacks',feedbacks);
+  $('feedbackReplyModal').classList.remove('show');
 };
 
 window.adminCreateTestaufgabe=function(){
