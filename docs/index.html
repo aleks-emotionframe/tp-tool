@@ -5327,7 +5327,7 @@ window.closeConfirmModal=function(){$('confirmModal').classList.remove('show');v
 window.doConfirmModal=function(){var cb=_confirmCb;_confirmCancelCb=null;closeConfirmModal();if(cb)cb();};
 
 window.deleteMyPendenz=function(id){
-  openConfirmModal('M\u00f6chten Sie diese Pendenz wirklich l\u00f6schen?',function(){
+  openConfirmModal('M\u00f6chtest du diese Pendenz wirklich l\u00f6schen?',function(){
     var list=getMyPendenzen().filter(function(p){return p.id!==id;});
     saveMyPendenzen(list);
     renderMyPendenzen();
@@ -5446,7 +5446,7 @@ window.toggleProjectPendenz=function(id){
 };
 window.deleteProjectPendenz=function(id){
   if(!S.pid)return;
-  openConfirmModal('M\u00f6chten Sie diese Pendenz wirklich l\u00f6schen?',function(){
+  openConfirmModal('M\u00f6chtest du diese Pendenz wirklich l\u00f6schen?',function(){
     var list=getProjectPendenzen(S.pid).filter(function(p){return p.id!==id;});
     saveProjectPendenzen(S.pid,list);
     renderProjectPendenzenView();
@@ -6683,7 +6683,7 @@ window.addTaskToPendenzen=function(uid){
   var list=getMyPendenzen();
   // Check if already added
   if(list.some(function(p){return p.taskUid===uid&&p.taskPid===S.pid;})){
-    alert('Diese Arbeit ist bereits in Ihren Pendenzen.');return;
+    alert('Diese Arbeit ist bereits in deinen Pendenzen.');return;
   }
   var projectName=_getProjectName(S.pid);
   list.unshift({
@@ -7628,7 +7628,7 @@ function _renderBugModalContent(){
   } else {
     // Free feedback mode (original)
     bodyHtml+='<div class="bug-field">'
-      +'<label>Was m\u00f6chten Sie melden?</label>'
+      +'<label>Was m\u00f6chtest du melden?</label>'
       +'<select id="bugType" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg);color:var(--text);font-family:inherit;">'
       +'<option value="bug">&#128027; Es funktioniert etwas nicht (Fehler)</option>'
       +'<option value="idea">&#128161; Ich habe eine Idee / einen Wunsch</option>'
@@ -7637,16 +7637,16 @@ function _renderBugModalContent(){
       +'<div class="bug-field"><label>Betreff</label>'
       +'<input type="text" id="bugSubject" placeholder="Worum geht es?"></div>'
       +'<div class="bug-field"><label>Beschreibung</label>'
-      +'<textarea id="bugDesc" placeholder="Beschreiben Sie m\u00f6glichst genau, was passiert ist oder was Sie sich w\u00fcnschen..."></textarea></div>'
+      +'<textarea id="bugDesc" placeholder="Beschreibe m\u00f6glichst genau, was passiert ist oder was du dir w\u00fcnschst..."></textarea></div>'
       +'<div class="bug-field"><label>Bildschirmfoto (optional)</label>'
       +'<div class="bug-screenshot-area" id="bugScreenshotArea">'
       +'<div class="bug-screenshot-empty" id="bugScreenshotEmpty">'
       +'<div style="font-size:32px;margin-bottom:8px;">&#128444;</div>'
       +'<div style="font-size:13px;font-weight:600;color:var(--text2);">Bild vom Bildschirm hinzuf\u00fcgen</div>'
       +'<div style="font-size:12px;color:var(--text3);margin-top:6px;">So geht\u2019s:</div>'
-      +'<div style="font-size:12px;color:var(--text3);margin-top:2px;">1. Klicken Sie unten auf <strong>\u00abBildschirmfoto aufnehmen\u00bb</strong></div>'
-      +'<div style="font-size:12px;color:var(--text3);">2. Das Fenster wird klein \u2014 machen Sie Ihr Foto</div>'
-      +'<div style="font-size:12px;color:var(--text3);">3. Dr\u00fccken Sie <strong>Ctrl+V</strong> zum Einf\u00fcgen</div>'
+      +'<div style="font-size:12px;color:var(--text3);margin-top:2px;">1. Klick unten auf <strong>\u00abBildschirmfoto aufnehmen\u00bb</strong></div>'
+      +'<div style="font-size:12px;color:var(--text3);">2. Das Fenster wird klein \u2014 mach dein Foto</div>'
+      +'<div style="font-size:12px;color:var(--text3);">3. Dr\u00fcck <strong>Ctrl+V</strong> zum Einf\u00fcgen</div>'
       +'<div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">'
       +'<label class="bug-screenshot-upload">&#128193; Datei vom Computer<input type="file" accept="image/*" style="display:none;" onchange="bugUploadScreenshot(this)"></label>'
       +'</div></div>'
