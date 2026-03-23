@@ -1479,7 +1479,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 /* --- BUG REPORT MODAL --- */
 .bug-overlay { position: fixed; inset: 0; z-index: 1100; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; }
 .bug-overlay.show { display: flex; }
-.bug-modal { background: var(--surface); border-radius: 16px; box-shadow: 0 24px 64px rgba(0,0,0,0.25); width: 440px; max-width: 92vw; max-height: 90vh; overflow-y: auto; }
+.bug-modal { background: var(--surface); border-radius: 16px; box-shadow: 0 24px 64px rgba(0,0,0,0.25); width: 540px; max-width: 92vw; max-height: 90vh; overflow-y: auto; }
 .bug-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 16px 12px 20px; border-bottom: 1px solid var(--border); }
 .bug-modal-header h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text); }
 .bug-modal-body { padding: 20px; }
@@ -1507,6 +1507,60 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 .bug-send-btn { background: var(--red); border: none; color: #fff; }
 .bug-send-btn:hover { opacity: 0.9; transform: translateY(-1px); }
 .bug-sent-msg { text-align: center; padding: 30px 20px; color: var(--green); font-weight: 600; font-size: 15px; }
+
+/* ═══════════════════════════════════════════
+   TESTAUFGABEN (Feedback Tasks)
+   ═══════════════════════════════════════════ */
+.testaufgaben-create { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+.testaufgaben-create input, .testaufgaben-create textarea { flex: 1; min-width: 200px; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-xs); font-family: var(--font); font-size: 14px; background: var(--surface2); color: var(--text); }
+.testaufgaben-create input:focus, .testaufgaben-create textarea:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-glow); }
+.ta-task-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 10px; transition: var(--transition); }
+.ta-task-card:hover { border-color: var(--border2); box-shadow: var(--shadow); }
+.ta-task-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.ta-task-title { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+.ta-task-desc { font-size: 13px; color: var(--text2); margin-bottom: 10px; line-height: 1.5; white-space: pre-wrap; }
+.ta-task-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ta-cat-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.ta-cat-badge.bug { background: var(--red-light); color: var(--red); }
+.ta-cat-badge.feature { background: var(--blue-light); color: var(--blue); }
+.ta-cat-badge.usability { background: var(--yellow-light); color: var(--yellow); }
+.ta-prio-badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.ta-prio-badge.hoch { background: var(--red-light); color: var(--red); }
+.ta-prio-badge.mittel { background: var(--yellow-light); color: var(--yellow); }
+.ta-prio-badge.niedrig { background: var(--green-light); color: var(--green); }
+.ta-assign-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.ta-assign-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; background: var(--orange-light); color: var(--orange); }
+.ta-assign-chip .chip-remove { cursor: pointer; margin-left: 2px; opacity: 0.6; }
+.ta-assign-chip .chip-remove:hover { opacity: 1; color: var(--red); }
+.ta-progress-bar { height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+.ta-progress-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.3s ease; }
+.ta-user-progress { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-xs); margin-bottom: 6px; }
+.ta-user-progress .user-info { flex: 1; font-size: 13px; font-weight: 600; color: var(--text); }
+.ta-user-progress .progress-text { font-size: 12px; color: var(--text3); min-width: 60px; text-align: right; }
+/* Feedback modal: task list view */
+.ta-feedback-list { max-height: 60vh; overflow-y: auto; }
+.ta-feedback-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 10px; transition: var(--transition); }
+.ta-feedback-item.done { opacity: 0.55; }
+.ta-feedback-item .ta-fb-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.ta-feedback-item .ta-fb-desc { font-size: 13px; color: var(--text2); margin-bottom: 10px; line-height: 1.5; white-space: pre-wrap; }
+.ta-feedback-item .ta-fb-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.ta-fb-btn { padding: 6px 14px; border-radius: var(--radius-xs); font-family: var(--font); font-size: 12px; font-weight: 600; cursor: pointer; transition: var(--transition); border: 1px solid var(--border); background: var(--surface); color: var(--text2); }
+.ta-fb-btn:hover { border-color: var(--border2); }
+.ta-fb-btn.ok { background: var(--green); border-color: var(--green); color: #fff; }
+.ta-fb-btn.ok:hover { opacity: 0.9; }
+.ta-fb-btn.problem { background: var(--red); border-color: var(--red); color: #fff; }
+.ta-fb-btn.problem:hover { opacity: 0.9; }
+.ta-fb-btn.selected { box-shadow: 0 0 0 2px var(--text); }
+.ta-fb-comment { width: 100%; margin-top: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-xs); font-family: var(--font); font-size: 13px; background: var(--surface); color: var(--text); resize: vertical; min-height: 60px; }
+.ta-fb-comment:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-glow); }
+.ta-fb-status { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+.ta-fb-status.ok { background: var(--green-light); color: var(--green); }
+.ta-fb-status.problem { background: var(--red-light); color: var(--red); }
+.ta-fb-status.offen { background: var(--surface3); color: var(--text3); }
+.bug-tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.bug-tab { padding: 8px 16px; font-size: 13px; font-weight: 600; color: var(--text3); cursor: pointer; border: none; background: none; font-family: var(--font); border-bottom: 2px solid transparent; transition: var(--transition); }
+.bug-tab:hover { color: var(--text); }
+.bug-tab.active { color: var(--orange); border-bottom-color: var(--orange); }
 
 /* --- GANTT --- */
 .gantt-left {
@@ -2434,44 +2488,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <h3>&#128172; Feedback geben</h3>
       <button class="pred-popover-close" onclick="closeBugReport()">&times;</button>
     </div>
-    <div class="bug-modal-body" id="bugBody">
-      <div class="bug-field">
-        <label>Was m&ouml;chten Sie melden?</label>
-        <select id="bugType" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg);color:var(--text);font-family:inherit;">
-          <option value="bug">&#128027; Es funktioniert etwas nicht (Fehler)</option>
-          <option value="idea">&#128161; Ich habe eine Idee / einen Wunsch</option>
-          <option value="other">&#128172; Sonstige R&uuml;ckmeldung</option>
-        </select>
-      </div>
-      <div class="bug-field">
-        <label>Betreff</label>
-        <input type="text" id="bugSubject" placeholder="Worum geht es? (z.B. &laquo;Kalender l&auml;dt nicht&raquo;)">
-      </div>
-      <div class="bug-field">
-        <label>Beschreibung</label>
-        <textarea id="bugDesc" placeholder="Beschreiben Sie m&ouml;glichst genau, was passiert ist oder was Sie sich w&uuml;nschen..."></textarea>
-      </div>
-      <div class="bug-field">
-        <label>Bildschirmfoto (optional)</label>
-        <div class="bug-screenshot-area" id="bugScreenshotArea">
-          <div class="bug-screenshot-empty" id="bugScreenshotEmpty">
-            <div style="font-size:32px;margin-bottom:8px;">&#128444;</div>
-            <div style="font-size:13px;font-weight:600;color:var(--text2);">Bild vom Bildschirm hinzuf&uuml;gen</div>
-            <div style="font-size:12px;color:var(--text3);margin-top:6px;">So geht&rsquo;s:</div>
-            <div style="font-size:12px;color:var(--text3);margin-top:2px;">1. Klicken Sie unten auf <strong>&laquo;&#128247; Bildschirmfoto aufnehmen&raquo;</strong></div>
-            <div style="font-size:12px;color:var(--text3);">2. Das Fenster wird klein &mdash; machen Sie Ihr Foto</div>
-            <div style="font-size:12px;color:var(--text3);">3. Dr&uuml;cken Sie <strong>Ctrl+V</strong> zum Einf&uuml;gen</div>
-            <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">
-              <label class="bug-screenshot-upload">&#128193; Datei vom Computer<input type="file" accept="image/*" style="display:none;" onchange="bugUploadScreenshot(this)"></label>
-            </div>
-          </div>
-          <div id="bugScreenshotPreview" style="display:none;position:relative;">
-            <img id="bugScreenshotImg" style="max-width:100%;border-radius:6px;border:1px solid var(--border);">
-            <button onclick="removeBugScreenshot()" style="position:absolute;top:6px;right:6px;padding:4px 10px;border-radius:6px;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:12px;">Entfernen</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div class="bug-modal-body" id="bugBody"></div>
     <div class="bug-modal-footer" id="bugFooter">
       <button class="bug-minimize-btn" onclick="toggleBugMinimize()">&#128247; Bildschirmfoto aufnehmen</button>
       <div style="margin-left:auto;display:flex;gap:8px;">
@@ -2500,6 +2517,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <button class="admin-tab" onclick="switchAdminTab('logs',this)">Aktivit&auml;tslog</button>
       <button class="admin-tab" onclick="switchAdminTab('analytics',this)">Nutzungsanalyse</button>
       <button class="admin-tab" onclick="switchAdminTab('changelog',this)">Changelog</button>
+      <button class="admin-tab" onclick="switchAdminTab('testaufgaben',this)">Testaufgaben</button>
     </div>
 
     <!-- TAB: Projekte -->
@@ -2528,6 +2546,9 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 
     <!-- TAB: Changelog -->
     <div class="admin-tab-content" id="adminTabChangelog" style="display:none"></div>
+
+    <!-- TAB: Testaufgaben -->
+    <div class="admin-tab-content" id="adminTabTestaufgaben" style="display:none"></div>
   </div>
 </div>
 
@@ -7217,12 +7238,6 @@ function launchConfetti(){
 initJoke();
 
 /* ─── BUG REPORT ─── */
-window.openBugReport=function(){
-  $('bugSubject').value='';$('bugDesc').value='';
-  $('bugBody').style.display='';$('bugFooter').style.display='';
-  $('bugOverlay').classList.add('show');
-  setTimeout(function(){$('bugSubject').focus();},100);
-};
 window.closeBugReport=function(){
   $('bugOverlay').classList.remove('show');
   $('bugOverlay').classList.remove('minimized');
@@ -7308,6 +7323,328 @@ window.sendBugReport=function(){
   $('bugFooter').style.display='none';
   _bugScreenshotData=null;
   setTimeout(closeBugReport,4000);
+};
+
+/* ─── TESTAUFGABEN SYSTEM ─── */
+function getTestaufgaben(){return sGet('testaufgaben',[]);}
+function saveTestaufgaben(t){sSet('testaufgaben',t);}
+function getTestresults(){return sGet('testresults',[]);}
+function saveTestresults(r){sSet('testresults',r);}
+function _taId(){return 'ta_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);}
+
+/* Get tasks assigned to a specific user */
+function getUserTestaufgaben(username){
+  var tasks=getTestaufgaben();
+  return tasks.filter(function(t){return t.assignedTo&&t.assignedTo.indexOf(username)>-1;});
+}
+/* Get result for a task+user combo */
+function getTestresult(taskId,username){
+  var results=getTestresults();
+  return results.find(function(r){return r.taskId===taskId&&r.username===username;})||null;
+}
+
+/* ─── ADMIN: Testaufgaben Tab ─── */
+window.renderAdminTestaufgaben=function(){
+  var c=$('adminTabTestaufgaben');
+  var tasks=getTestaufgaben();
+  var users=getUsers().filter(function(u){return u.username!=='admin';});
+  var results=getTestresults();
+
+  var html='<div class="admin-section">';
+  html+='<div class="admin-section-title">Neue Testaufgabe erstellen</div>';
+  html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;">';
+  html+='<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">';
+  html+='<input type="text" id="taNewTitle" placeholder="Titel der Aufgabe" style="flex:2;min-width:200px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-family:var(--font);font-size:14px;background:var(--surface2);color:var(--text);">';
+  html+='<select id="taNewCat" style="padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-family:var(--font);font-size:14px;background:var(--surface2);color:var(--text);">';
+  html+='<option value="bug">Bug-Test</option><option value="feature">Feature-Test</option><option value="usability">Usability</option></select>';
+  html+='<select id="taNewPrio" style="padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-family:var(--font);font-size:14px;background:var(--surface2);color:var(--text);">';
+  html+='<option value="hoch">Hoch</option><option value="mittel" selected>Mittel</option><option value="niedrig">Niedrig</option></select>';
+  html+='</div>';
+  html+='<textarea id="taNewDesc" placeholder="Beschreibung / Anleitung f\u00fcr den Tester..." style="width:100%;min-height:80px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-family:var(--font);font-size:14px;background:var(--surface2);color:var(--text);resize:vertical;margin-bottom:10px;"></textarea>';
+  html+='<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">';
+  html+='<span style="font-size:12px;font-weight:600;color:var(--text3);">Zuweisen an:</span>';
+  users.forEach(function(u){
+    html+='<label style="display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--text);cursor:pointer;">'
+      +'<input type="checkbox" class="taNewUser" value="'+esc(u.username)+'" style="accent-color:var(--orange);"> '+esc(getUserDisplayName(u))+'</label>';
+  });
+  html+='</div>';
+  html+='<button class="admin-btn primary" onclick="adminCreateTestaufgabe()">+ Aufgabe erstellen</button>';
+  html+='</div></div>';
+
+  // Overview: progress per user
+  html+='<div class="admin-section">';
+  html+='<div class="admin-section-title">Fortschritt pro Benutzer</div>';
+  if(users.length===0){
+    html+='<div class="admin-empty-msg">Keine Benutzer vorhanden.</div>';
+  } else {
+    users.forEach(function(u){
+      var uTasks=getUserTestaufgaben(u.username);
+      var done=0;
+      uTasks.forEach(function(t){
+        var r=getTestresult(t.id,u.username);
+        if(r&&r.status)done++;
+      });
+      var total=uTasks.length;
+      var pct=total>0?Math.round(done/total*100):0;
+      html+='<div class="ta-user-progress">';
+      html+=renderAvatar(u,28);
+      html+='<div class="user-info">'+esc(getUserDisplayName(u))+'</div>';
+      html+='<div style="flex:1;max-width:200px;">';
+      html+='<div class="ta-progress-bar"><div class="ta-progress-fill" style="width:'+pct+'%"></div></div>';
+      html+='</div>';
+      html+='<div class="progress-text">'+done+'/'+total+'</div>';
+      html+='</div>';
+    });
+  }
+  html+='</div>';
+
+  // All tasks list
+  html+='<div class="admin-section">';
+  html+='<div class="admin-section-title">Alle Testaufgaben ('+tasks.length+')</div>';
+  if(tasks.length===0){
+    html+='<div class="admin-empty-msg">Noch keine Testaufgaben erstellt.</div>';
+  }
+  tasks.forEach(function(t){
+    var catLabels={bug:'Bug-Test',feature:'Feature-Test',usability:'Usability'};
+    var prioLabels={hoch:'Hoch',mittel:'Mittel',niedrig:'Niedrig'};
+    html+='<div class="ta-task-card">';
+    html+='<div class="ta-task-header">';
+    html+='<div class="ta-task-title">'+esc(t.title)+'</div>';
+    html+='<span class="ta-cat-badge '+esc(t.category)+'">'+(catLabels[t.category]||t.category)+'</span>';
+    html+='<span class="ta-prio-badge '+esc(t.priority)+'">'+(prioLabels[t.priority]||t.priority)+'</span>';
+    html+='<button class="admin-btn danger" onclick="adminDeleteTestaufgabe(\''+esc(t.id)+'\')">L\u00f6schen</button>';
+    html+='</div>';
+    if(t.description){html+='<div class="ta-task-desc">'+esc(t.description)+'</div>';}
+    // Assigned users
+    html+='<div class="ta-task-meta">';
+    html+='<span style="font-size:12px;color:var(--text3);font-weight:600;">Zugewiesen:</span>';
+    if(!t.assignedTo||t.assignedTo.length===0){
+      html+='<span style="font-size:12px;color:var(--text3);">Niemand</span>';
+    } else {
+      html+='<div class="ta-assign-row">';
+      t.assignedTo.forEach(function(uname){
+        var u=findUser(uname);
+        var dname=u?getUserDisplayName(u):uname;
+        // Show result status
+        var res=getTestresult(t.id,uname);
+        var statusHtml='';
+        if(res&&res.status==='ok') statusHtml=' <span class="ta-fb-status ok">OK</span>';
+        else if(res&&res.status==='problem') statusHtml=' <span class="ta-fb-status problem">Problem</span>';
+        else statusHtml=' <span class="ta-fb-status offen">Offen</span>';
+        html+='<span class="ta-assign-chip">'+esc(dname)+statusHtml
+          +' <span class="chip-remove" onclick="adminUnassignTestaufgabe(\''+esc(t.id)+'\',\''+esc(uname)+'\')">&times;</span></span>';
+      });
+      html+='</div>';
+    }
+    html+='</div>';
+    // Show results/comments for each assigned user
+    if(t.assignedTo&&t.assignedTo.length>0){
+      var hasResults=false;
+      t.assignedTo.forEach(function(uname){
+        var res=getTestresult(t.id,uname);
+        if(res&&res.status){
+          if(!hasResults){html+='<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">';html+='<div style="font-size:12px;font-weight:600;color:var(--text3);margin-bottom:6px;">Ergebnisse:</div>';hasResults=true;}
+          var u=findUser(uname);
+          var dname=u?getUserDisplayName(u):uname;
+          html+='<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;font-size:13px;">';
+          html+='<strong>'+esc(dname)+':</strong>';
+          html+='<span class="ta-fb-status '+(res.status==='ok'?'ok':'problem')+'">'+(res.status==='ok'?'Alles OK':'Problem')+'</span>';
+          if(res.comment)html+='<span style="color:var(--text2);">&mdash; '+esc(res.comment)+'</span>';
+          html+='</div>';
+        }
+      });
+      if(hasResults)html+='</div>';
+    }
+    // Assign more users
+    html+='<div style="margin-top:8px;">';
+    html+='<select id="taAssign_'+t.id+'" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:12px;font-family:var(--font);background:var(--surface2);color:var(--text);">';
+    html+='<option value="">+ Benutzer zuweisen...</option>';
+    users.forEach(function(u){
+      if(!t.assignedTo||t.assignedTo.indexOf(u.username)===-1){
+        html+='<option value="'+esc(u.username)+'">'+esc(getUserDisplayName(u))+'</option>';
+      }
+    });
+    html+='</select>';
+    html+=' <button class="admin-btn" onclick="adminAssignTestaufgabe(\''+esc(t.id)+'\')">Zuweisen</button>';
+    html+='</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  c.innerHTML=html;
+};
+
+window.adminCreateTestaufgabe=function(){
+  var title=($('taNewTitle')||{}).value;
+  if(!title||!title.trim()){alert('Bitte Titel eingeben.');return;}
+  var desc=($('taNewDesc')||{}).value||'';
+  var cat=($('taNewCat')||{}).value||'bug';
+  var prio=($('taNewPrio')||{}).value||'mittel';
+  var checks=document.querySelectorAll('.taNewUser:checked');
+  var assigned=[];
+  checks.forEach(function(cb){assigned.push(cb.value);});
+  var tasks=getTestaufgaben();
+  tasks.push({id:_taId(),title:title.trim(),description:desc.trim(),category:cat,priority:prio,assignedTo:assigned,createdAt:new Date().toISOString()});
+  saveTestaufgaben(tasks);
+  renderAdminTestaufgaben();
+};
+
+window.adminDeleteTestaufgabe=function(id){
+  if(!confirm('Testaufgabe wirklich l\u00f6schen?'))return;
+  var tasks=getTestaufgaben().filter(function(t){return t.id!==id;});
+  saveTestaufgaben(tasks);
+  // Also remove related results
+  var results=getTestresults().filter(function(r){return r.taskId!==id;});
+  saveTestresults(results);
+  renderAdminTestaufgaben();
+};
+
+window.adminAssignTestaufgabe=function(taskId){
+  var sel=$('taAssign_'+taskId);
+  if(!sel||!sel.value)return;
+  var username=sel.value;
+  var tasks=getTestaufgaben();
+  var task=tasks.find(function(t){return t.id===taskId;});
+  if(!task)return;
+  if(!task.assignedTo)task.assignedTo=[];
+  if(task.assignedTo.indexOf(username)===-1){task.assignedTo.push(username);}
+  saveTestaufgaben(tasks);
+  renderAdminTestaufgaben();
+};
+
+window.adminUnassignTestaufgabe=function(taskId,username){
+  var tasks=getTestaufgaben();
+  var task=tasks.find(function(t){return t.id===taskId;});
+  if(!task||!task.assignedTo)return;
+  task.assignedTo=task.assignedTo.filter(function(u){return u!==username;});
+  saveTestaufgaben(tasks);
+  // Remove result too
+  var results=getTestresults().filter(function(r){return !(r.taskId===taskId&&r.username===username);});
+  saveTestresults(results);
+  renderAdminTestaufgaben();
+};
+
+/* ─── FEEDBACK MODAL: Testaufgaben View ─── */
+var _bugActiveTab='tasks';
+window.openBugReport=function(){
+  var username=S.currentUser?(typeof S.currentUser==='object'?S.currentUser.username:S.currentUser):null;
+  var userTasks=username?getUserTestaufgaben(username):[];
+  _bugActiveTab=userTasks.length>0?'tasks':'free';
+  _renderBugModalContent();
+  $('bugOverlay').classList.add('show');
+};
+function _renderBugModalContent(){
+  var username=S.currentUser?(typeof S.currentUser==='object'?S.currentUser.username:S.currentUser):null;
+  var userTasks=username?getUserTestaufgaben(username):[];
+  var hasTasks=userTasks.length>0;
+
+  // Build tabs + content
+  var bodyHtml='';
+  if(hasTasks){
+    bodyHtml+='<div class="bug-tabs">';
+    bodyHtml+='<button class="bug-tab'+(_bugActiveTab==='tasks'?' active':'')+'" onclick="_bugActiveTab=\'tasks\';_renderBugModalContent();">Meine Testaufgaben ('+userTasks.length+')</button>';
+    bodyHtml+='<button class="bug-tab'+(_bugActiveTab==='free'?' active':'')+'" onclick="_bugActiveTab=\'free\';_renderBugModalContent();">Freies Feedback</button>';
+    bodyHtml+='</div>';
+  }
+
+  if(_bugActiveTab==='tasks'&&hasTasks){
+    bodyHtml+='<div class="ta-feedback-list">';
+    userTasks.forEach(function(t){
+      var res=getTestresult(t.id,username);
+      var isDone=res&&res.status;
+      var catLabels={bug:'Bug-Test',feature:'Feature-Test',usability:'Usability'};
+      var prioLabels={hoch:'Hoch',mittel:'Mittel',niedrig:'Niedrig'};
+      bodyHtml+='<div class="ta-feedback-item'+(isDone?' done':'')+'">';
+      bodyHtml+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+      bodyHtml+='<div class="ta-fb-title" style="flex:1;">'+esc(t.title)+'</div>';
+      bodyHtml+='<span class="ta-cat-badge '+esc(t.category)+'">'+(catLabels[t.category]||t.category)+'</span>';
+      bodyHtml+='<span class="ta-prio-badge '+esc(t.priority)+'">'+(prioLabels[t.priority]||t.priority)+'</span>';
+      if(isDone){bodyHtml+='<span class="ta-fb-status '+(res.status==='ok'?'ok':'problem')+'">'+(res.status==='ok'?'Alles OK':'Problem')+'</span>';}
+      bodyHtml+='</div>';
+      if(t.description){bodyHtml+='<div class="ta-fb-desc">'+esc(t.description)+'</div>';}
+      if(!isDone){
+        bodyHtml+='<div class="ta-fb-actions">';
+        bodyHtml+='<button class="ta-fb-btn ok" onclick="submitTestResult(\''+esc(t.id)+'\',\'ok\')">&#10003; Alles OK</button>';
+        bodyHtml+='<button class="ta-fb-btn problem" onclick="_showTestProblem(\''+esc(t.id)+'\')">&#9888; Problem gefunden</button>';
+        bodyHtml+='</div>';
+        bodyHtml+='<div id="taProblem_'+t.id+'" style="display:none;margin-top:8px;">';
+        bodyHtml+='<textarea class="ta-fb-comment" id="taComment_'+t.id+'" placeholder="Beschreibe das Problem..."></textarea>';
+        bodyHtml+='<div style="margin-top:6px;display:flex;gap:8px;">';
+        bodyHtml+='<button class="ta-fb-btn problem" onclick="submitTestResult(\''+esc(t.id)+'\',\'problem\')">Problem melden</button>';
+        bodyHtml+='<button class="ta-fb-btn" onclick="$(\'taProblem_'+t.id+'\').style.display=\'none\'">Abbrechen</button>';
+        bodyHtml+='</div></div>';
+      } else {
+        if(res.comment){bodyHtml+='<div style="margin-top:6px;font-size:13px;color:var(--text2);"><strong>Kommentar:</strong> '+esc(res.comment)+'</div>';}
+        bodyHtml+='<button class="ta-fb-btn" style="margin-top:6px;" onclick="resetTestResult(\''+esc(t.id)+'\')">Erneut testen</button>';
+      }
+      bodyHtml+='</div>';
+    });
+    bodyHtml+='</div>';
+    $('bugBody').innerHTML=bodyHtml;
+    $('bugFooter').style.display='none';
+  } else {
+    // Free feedback mode (original)
+    bodyHtml+='<div class="bug-field">'
+      +'<label>Was m\u00f6chten Sie melden?</label>'
+      +'<select id="bugType" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg);color:var(--text);font-family:inherit;">'
+      +'<option value="bug">&#128027; Es funktioniert etwas nicht (Fehler)</option>'
+      +'<option value="idea">&#128161; Ich habe eine Idee / einen Wunsch</option>'
+      +'<option value="other">&#128172; Sonstige R\u00fcckmeldung</option>'
+      +'</select></div>'
+      +'<div class="bug-field"><label>Betreff</label>'
+      +'<input type="text" id="bugSubject" placeholder="Worum geht es?"></div>'
+      +'<div class="bug-field"><label>Beschreibung</label>'
+      +'<textarea id="bugDesc" placeholder="Beschreiben Sie m\u00f6glichst genau, was passiert ist oder was Sie sich w\u00fcnschen..."></textarea></div>'
+      +'<div class="bug-field"><label>Bildschirmfoto (optional)</label>'
+      +'<div class="bug-screenshot-area" id="bugScreenshotArea">'
+      +'<div class="bug-screenshot-empty" id="bugScreenshotEmpty">'
+      +'<div style="font-size:32px;margin-bottom:8px;">&#128444;</div>'
+      +'<div style="font-size:13px;font-weight:600;color:var(--text2);">Bild vom Bildschirm hinzuf\u00fcgen</div>'
+      +'<div style="font-size:12px;color:var(--text3);margin-top:6px;">So geht\u2019s:</div>'
+      +'<div style="font-size:12px;color:var(--text3);margin-top:2px;">1. Klicken Sie unten auf <strong>\u00abBildschirmfoto aufnehmen\u00bb</strong></div>'
+      +'<div style="font-size:12px;color:var(--text3);">2. Das Fenster wird klein \u2014 machen Sie Ihr Foto</div>'
+      +'<div style="font-size:12px;color:var(--text3);">3. Dr\u00fccken Sie <strong>Ctrl+V</strong> zum Einf\u00fcgen</div>'
+      +'<div style="display:flex;gap:8px;justify-content:center;margin-top:12px;">'
+      +'<label class="bug-screenshot-upload">&#128193; Datei vom Computer<input type="file" accept="image/*" style="display:none;" onchange="bugUploadScreenshot(this)"></label>'
+      +'</div></div>'
+      +'<div id="bugScreenshotPreview" style="display:none;position:relative;">'
+      +'<img id="bugScreenshotImg" style="max-width:100%;border-radius:6px;border:1px solid var(--border);">'
+      +'<button onclick="removeBugScreenshot()" style="position:absolute;top:6px;right:6px;padding:4px 10px;border-radius:6px;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:12px;">Entfernen</button>'
+      +'</div></div></div>';
+    $('bugBody').innerHTML=bodyHtml;
+    $('bugFooter').style.display='';
+    _bugScreenshotData=null;
+    setTimeout(function(){if($('bugSubject'))$('bugSubject').focus();},100);
+  }
+}
+
+window._showTestProblem=function(taskId){
+  var el=$('taProblem_'+taskId);
+  if(el)el.style.display='block';
+};
+
+window.submitTestResult=function(taskId,status){
+  var username=S.currentUser?(typeof S.currentUser==='object'?S.currentUser.username:S.currentUser):null;
+  if(!username)return;
+  var comment='';
+  if(status==='problem'){
+    var ta=$('taComment_'+taskId);
+    comment=ta?ta.value.trim():'';
+    if(!comment){if(ta)ta.focus();return;}
+  }
+  var results=getTestresults();
+  // Remove existing result for this combo
+  results=results.filter(function(r){return !(r.taskId===taskId&&r.username===username);});
+  results.push({taskId:taskId,username:username,status:status,comment:comment,timestamp:new Date().toISOString()});
+  saveTestresults(results);
+  _renderBugModalContent();
+};
+
+window.resetTestResult=function(taskId){
+  var username=S.currentUser?(typeof S.currentUser==='object'?S.currentUser.username:S.currentUser):null;
+  if(!username)return;
+  var results=getTestresults().filter(function(r){return !(r.taskId===taskId&&r.username===username);});
+  saveTestresults(results);
+  _renderBugModalContent();
 };
 
 window.openDPEnd=function(ev,uid){
@@ -7784,12 +8121,12 @@ window.switchAdminTab=function(tab,btn){
   tabs.forEach(function(t){t.classList.remove('active');});
   if(btn)btn.classList.add('active');
   // Show/hide content
-  var allTabs=['Projects','Users','Roles','Permissions','Backup','Settings','Logs','Analytics','Changelog'];
+  var allTabs=['Projects','Users','Roles','Permissions','Backup','Settings','Logs','Analytics','Changelog','Testaufgaben'];
   allTabs.forEach(function(t){
     var el=$('adminTab'+t);
     if(el)el.style.display='none';
   });
-  var tabMap={projects:'Projects',users:'Users',roles:'Roles',permissions:'Permissions',backup:'Backup',settings:'Settings',logs:'Logs',analytics:'Analytics',changelog:'Changelog'};
+  var tabMap={projects:'Projects',users:'Users',roles:'Roles',permissions:'Permissions',backup:'Backup',settings:'Settings',logs:'Logs',analytics:'Analytics',changelog:'Changelog',testaufgaben:'Testaufgaben'};
   var el=$('adminTab'+(tabMap[tab]||'Projects'));
   if(el)el.style.display='block';
   // Render
@@ -7802,6 +8139,7 @@ window.switchAdminTab=function(tab,btn){
   if(tab==='logs')renderAdminLogs();
   if(tab==='analytics')renderAdminAnalytics();
   if(tab==='changelog')renderAdminChangelog();
+  if(tab==='testaufgaben')renderAdminTestaufgaben();
 };
 
 function renderAdminProjects(){
@@ -9966,7 +10304,7 @@ var BT_DATA_VERSION='2026-03-21-v2';
   var storedVer=localStorage.getItem('bt_data_version');
   if(storedVer!==BT_DATA_VERSION){
     // Only clear UI cache keys, NEVER delete user data (users, projects, pendenzen, etc.)
-    var protectedPatterns=['users','roles','p_','pendenzen_','pendFolders_','folders_','ferien_','idx','changelog','currentUser'];
+    var protectedPatterns=['users','roles','p_','pendenzen_','pendFolders_','folders_','ferien_','idx','changelog','currentUser','testaufgaben','testresults'];
     var toRemove=[];
     for(var i=0;i<localStorage.length;i++){
       var k=localStorage.key(i);
