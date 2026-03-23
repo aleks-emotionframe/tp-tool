@@ -4447,6 +4447,8 @@ document.querySelectorAll('.sidebar-tab').forEach(function(b){
 
 function renderView(){
   S.subPage=null;
+  // Clear subpage highlights in sidebar
+  document.querySelectorAll('.project-sublink').forEach(function(el){el.classList.remove('active');});
   $('dashboardView').style.display='none';
   $('kompaktView').style.display='none';
   $('listView').style.display='none';
