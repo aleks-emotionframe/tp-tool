@@ -1561,6 +1561,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 .bug-tab { padding: 8px 16px; font-size: 13px; font-weight: 600; color: var(--text3); cursor: pointer; border: none; background: none; font-family: var(--font); border-bottom: 2px solid transparent; transition: var(--transition); }
 .bug-tab:hover { color: var(--text); }
 .bug-tab.active { color: var(--orange); border-bottom-color: var(--orange); }
+.admin-tab-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--red); color: #fff; font-size: 10px; font-weight: 700; margin-left: 6px; line-height: 1; }
 
 /* --- GANTT --- */
 .gantt-left {
@@ -2517,7 +2518,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <button class="admin-tab" onclick="switchAdminTab('logs',this)">Aktivit&auml;tslog</button>
       <button class="admin-tab" onclick="switchAdminTab('analytics',this)">Nutzungsanalyse</button>
       <button class="admin-tab" onclick="switchAdminTab('changelog',this)">Changelog</button>
-      <button class="admin-tab" onclick="switchAdminTab('testaufgaben',this)">Testaufgaben</button>
+      <button class="admin-tab" onclick="switchAdminTab('testaufgaben',this)" id="adminTabBtnFeedback">Feedback</button>
     </div>
 
     <!-- TAB: Projekte -->
@@ -7346,8 +7347,44 @@ function getTestresult(taskId,username){
   return results.find(function(r){return r.taskId===taskId&&r.username===username;})||null;
 }
 
+/* ─── FEEDBACK BADGE (unread count) ─── */
+function _getUnreadFeedbackCount(){
+  var feedbacks=sGet('feedbacks',[]);
+  var results=getTestresults();
+  var lastSeen=sGet('feedbackLastSeen',0);
+  var count=0;
+  // Count unseen free feedbacks
+  feedbacks.forEach(function(fb){
+    if(new Date(fb.timestamp).getTime()>lastSeen)count++;
+  });
+  // Count unseen test results
+  results.forEach(function(r){
+    if(r.timestamp&&new Date(r.timestamp).getTime()>lastSeen)count++;
+  });
+  return count;
+}
+function _updateFeedbackBadge(){
+  var btn=$('adminTabBtnFeedback');
+  if(!btn)return;
+  var count=_getUnreadFeedbackCount();
+  // Remove existing badge
+  var old=btn.querySelector('.admin-tab-badge');
+  if(old)old.remove();
+  if(count>0){
+    var badge=document.createElement('span');
+    badge.className='admin-tab-badge';
+    badge.textContent=count;
+    btn.appendChild(badge);
+  }
+}
+function _markFeedbackSeen(){
+  sSet('feedbackLastSeen',Date.now());
+  _updateFeedbackBadge();
+}
+
 /* ─── ADMIN: Testaufgaben Tab ─── */
 window.renderAdminTestaufgaben=function(){
+  _markFeedbackSeen();
   var c=$('adminTabTestaufgaben');
   var tasks=getTestaufgaben();
   var users=getUsers().filter(function(u){return u.username!=='admin';});
@@ -8149,6 +8186,7 @@ window.openAdmin=function(){
   trackUsage('action','action:admin_open');
   _pendingSettings=null;
   $('adminOverlay').classList.add('show');
+  _updateFeedbackBadge();
   // Reset to projects tab
   switchAdminTab('projects',document.querySelector('.admin-tab'));
 };
