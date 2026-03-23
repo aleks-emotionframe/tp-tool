@@ -7303,26 +7303,29 @@ window.sendBugReport=function(){
   var desc=$('bugDesc').value.trim();
   if(!subj){$('bugSubject').focus();return;}
   if(!desc){$('bugDesc').focus();return;}
-  var user=S.currentUser||'Unbekannt';
+  var username=S.currentUser?(typeof S.currentUser==='object'?S.currentUser.username:S.currentUser):'Unbekannt';
+  var displayName=S.currentUser&&typeof S.currentUser==='object'?getUserDisplayName(S.currentUser):username;
   var proj='';
   if(S.pid){var p=getIdx().find(function(x){return x.id==S.pid;});if(p)proj=p.name;}
-  var body='Art: '+(typeLabels[type]||type)+'\n'
-    +'Gemeldet von: '+user+'\n'
-    +'Projekt: '+(proj||'Kein Projekt')+'\n'
-    +'Browser: '+navigator.userAgent+'\n'
-    +'Datum: '+new Date().toLocaleString('de-CH')+'\n\n'
-    +'Beschreibung:\n'+desc
-    +(_bugScreenshotData?'\n\n[Screenshot angeh\u00e4ngt \u2013 bitte Bild separat aus Zwischenablage einf\u00fcgen]':'');
-  var mailto='mailto:aleks@emotionframe.ch'
-    +'?subject='+encodeURIComponent('[BAUTERM '+(typeLabels[type]||'Feedback')+'] '+subj)
-    +'&body='+encodeURIComponent(body);
-  window.open(mailto,'_blank');
-  $('bugBody').innerHTML='<div class="bug-sent-msg">&#10003; Vielen Dank! Dein E-Mail-Programm wurde ge\u00f6ffnet.'
-    +(_bugScreenshotData?'<br><span style="font-size:12px;color:var(--text3);">Bitte f\u00fcge den Screenshot aus der Zwischenablage in die E-Mail ein.</span>':'')
-    +'</div>';
+  var feedbacks=sGet('feedbacks',[]);
+  feedbacks.push({
+    id:'fb_'+Date.now()+'_'+Math.random().toString(36).substr(2,5),
+    type:type,
+    typeLabel:typeLabels[type]||type,
+    subject:subj,
+    description:desc,
+    screenshot:_bugScreenshotData||null,
+    username:username,
+    displayName:displayName,
+    project:proj||'',
+    browser:navigator.userAgent,
+    timestamp:new Date().toISOString()
+  });
+  sSet('feedbacks',feedbacks);
+  $('bugBody').innerHTML='<div class="bug-sent-msg">&#10003; Vielen Dank f\u00fcr dein Feedback!</div>';
   $('bugFooter').style.display='none';
   _bugScreenshotData=null;
-  setTimeout(closeBugReport,4000);
+  setTimeout(closeBugReport,3000);
 };
 
 /* ─── TESTAUFGABEN SYSTEM ─── */
@@ -7470,7 +7473,48 @@ window.renderAdminTestaufgaben=function(){
     html+='</div>';
   });
   html+='</div>';
+
+  // Freie Feedbacks section
+  var feedbacks=sGet('feedbacks',[]);
+  html+='<div class="admin-section">';
+  html+='<div class="admin-section-title">Freie Feedbacks ('+feedbacks.length+')</div>';
+  if(feedbacks.length===0){
+    html+='<div class="admin-empty-msg">Noch keine Feedbacks eingegangen.</div>';
+  } else {
+    // Show newest first
+    var sortedFb=feedbacks.slice().reverse();
+    sortedFb.forEach(function(fb){
+      var typeIcons={bug:'\ud83d\udc1b',idea:'\ud83d\udca1',other:'\ud83d\udcac'};
+      var typeCss={bug:'red',idea:'blue',other:'orange'};
+      var date=fb.timestamp?new Date(fb.timestamp).toLocaleString('de-CH'):'';
+      html+='<div class="ta-task-card" style="position:relative;">';
+      html+='<div class="ta-task-header">';
+      html+='<span class="admin-badge '+(typeCss[fb.type]||'orange')+'">'+(typeIcons[fb.type]||'')+' '+(fb.typeLabel||fb.type)+'</span>';
+      html+='<div class="ta-task-title">'+esc(fb.subject)+'</div>';
+      html+='<button class="admin-btn danger" onclick="adminDeleteFeedback(\''+esc(fb.id)+'\')">L\u00f6schen</button>';
+      html+='</div>';
+      html+='<div class="ta-task-desc">'+esc(fb.description)+'</div>';
+      html+='<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text3);">';
+      html+='<span>Von: <strong style="color:var(--text);">'+esc(fb.displayName||fb.username||'Unbekannt')+'</strong></span>';
+      if(fb.project)html+='<span>Projekt: '+esc(fb.project)+'</span>';
+      html+='<span>'+esc(date)+'</span>';
+      html+='</div>';
+      if(fb.screenshot){
+        html+='<div style="margin-top:10px;"><img src="'+esc(fb.screenshot)+'" style="max-width:100%;max-height:300px;border-radius:var(--radius-xs);border:1px solid var(--border);cursor:pointer;" onclick="window.open(this.src,\'_blank\')"></div>';
+      }
+      html+='</div>';
+    });
+  }
+  html+='</div>';
+
   c.innerHTML=html;
+};
+
+window.adminDeleteFeedback=function(id){
+  if(!confirm('Feedback wirklich l\u00f6schen?'))return;
+  var feedbacks=sGet('feedbacks',[]).filter(function(f){return f.id!==id;});
+  sSet('feedbacks',feedbacks);
+  renderAdminTestaufgaben();
 };
 
 window.adminCreateTestaufgabe=function(){
@@ -10304,7 +10348,7 @@ var BT_DATA_VERSION='2026-03-21-v2';
   var storedVer=localStorage.getItem('bt_data_version');
   if(storedVer!==BT_DATA_VERSION){
     // Only clear UI cache keys, NEVER delete user data (users, projects, pendenzen, etc.)
-    var protectedPatterns=['users','roles','p_','pendenzen_','pendFolders_','folders_','ferien_','idx','changelog','currentUser','testaufgaben','testresults'];
+    var protectedPatterns=['users','roles','p_','pendenzen_','pendFolders_','folders_','ferien_','idx','changelog','currentUser','testaufgaben','testresults','feedbacks'];
     var toRemove=[];
     for(var i=0;i<localStorage.length;i++){
       var k=localStorage.key(i);
