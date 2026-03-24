@@ -1,0 +1,19 @@
+# TP-Tool .htaccess
+# Schützt das data-Verzeichnis und leitet auf index.php
+
+# Zugriff auf data-Verzeichnis verbieten
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^data/ - [F,L]
+</IfModule>
+
+# Direkten Zugriff auf Klassen und Templates verbieten
+<FilesMatch "\.(php)$">
+    # Nur index.php direkt aufrufen erlauben
+</FilesMatch>
+
+# PHP-Fehler in Produktion ausblenden
+# php_flag display_errors Off
+
+# Zeichensatz
+AddDefaultCharset UTF-8
