@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TP-Tool — Design 3: Glass Modern</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0F0F1A;
+  --bg-gradient: linear-gradient(135deg, #0F0F1A 0%, #1A1033 50%, #0D1B2A 100%);
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-strong: rgba(255, 255, 255, 0.07);
+  --glass-hover: rgba(255, 255, 255, 0.09);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-strong: rgba(255, 255, 255, 0.12);
+  --text: #F0F2F8;
+  --text-secondary: #9BA4B8;
+  --text-muted: #5E6880;
+  --primary: #8B5CF6;
+  --primary-light: rgba(139, 92, 246, 0.15);
+  --primary-glow: rgba(139, 92, 246, 0.4);
+  --secondary: #06B6D4;
+  --secondary-light: rgba(6, 182, 212, 0.12);
+  --accent-gradient: linear-gradient(135deg, #8B5CF6, #06B6D4);
+  --accent-gradient-warm: linear-gradient(135deg, #F472B6, #8B5CF6);
+  --success: #34D399;
+  --success-light: rgba(52, 211, 153, 0.12);
+  --warning: #FBBF24;
+  --warning-light: rgba(251, 191, 36, 0.12);
+  --danger: #FB7185;
+  --danger-light: rgba(251, 113, 133, 0.12);
+  --sidebar-width: 280px;
+  --header-height: 64px;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 6px;
+  --blur: blur(20px);
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text);
+  display: flex;
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ambient glow effects */
+body::before {
+  content: '';
+  position: fixed;
+  top: -200px;
+  right: -200px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  bottom: -200px;
+  left: -100px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border-right: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: var(--header-height);
+}
+
+.sidebar-logo {
+  width: 38px;
+  height: 38px;
+  background: var(--accent-gradient);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 800;
+  font-size: 15px;
+  box-shadow: 0 4px 16px var(--primary-glow);
+}
+
+.sidebar-brand {
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.5px;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sidebar-brand small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  -webkit-text-fill-color: var(--text-muted);
+  letter-spacing: 0;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 14px;
+  overflow-y: auto;
+}
+
+.nav-section { margin-bottom: 20px; }
+
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  padding: 0 12px;
+  margin-bottom: 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-size: 13.5px;
+  font-weight: 450;
+  position: relative;
+  border: 1px solid transparent;
+}
+
+.nav-item:hover {
+  background: var(--glass-hover);
+  color: var(--text);
+  border-color: var(--glass-border);
+}
+
+.nav-item.active {
+  background: var(--primary-light);
+  color: white;
+  font-weight: 500;
+  border-color: rgba(139, 92, 246, 0.2);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+}
+
+.nav-item .icon {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+}
+
+.nav-item .badge {
+  margin-left: auto;
+  background: var(--accent-gradient);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+  border: 1px solid transparent;
+}
+
+.user-card:hover {
+  background: var(--glass-hover);
+  border-color: var(--glass-border);
+}
+
+.user-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--accent-gradient-warm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(244, 114, 182, 0.3);
+}
+
+.user-info { flex: 1; }
+.user-name { font-size: 13px; font-weight: 600; }
+.user-role { font-size: 11px; color: var(--text-muted); }
+
+.user-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+}
+
+/* ===== MAIN ===== */
+.main {
+  margin-left: var(--sidebar-width);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== HEADER ===== */
+.header {
+  height: var(--header-height);
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.header-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.header-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: 12px;
+}
+
+.header-search {
+  margin-left: auto;
+  position: relative;
+}
+
+.header-search input {
+  width: 280px;
+  padding: 10px 14px 10px 40px;
+  border: 1px solid var(--glass-border-strong);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--glass);
+  backdrop-filter: var(--blur);
+  color: var(--text);
+  transition: all var(--transition);
+}
+
+.header-search input::placeholder { color: var(--text-muted); }
+
+.header-search input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light), 0 0 20px rgba(139, 92, 246, 0.15);
+}
+
+.header-search .si {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--glass-border-strong);
+  background: var(--glass);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all var(--transition);
+  font-size: 17px;
+  position: relative;
+}
+
+.icon-btn:hover {
+  background: var(--glass-hover);
+  color: var(--text);
+  border-color: var(--glass-border-strong);
+}
+
+.icon-btn .dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  background: var(--danger);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(251, 113, 133, 0.5);
+}
+
+.btn-gradient {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: var(--accent-gradient);
+  color: white;
+  box-shadow: 0 4px 16px var(--primary-glow);
+  transition: all var(--transition);
+  letter-spacing: -0.2px;
+}
+
+.btn-gradient:hover {
+  box-shadow: 0 8px 28px var(--primary-glow);
+  transform: translateY(-1px);
+}
+
+/* ===== CONTENT ===== */
+.content {
+  padding: 28px 32px;
+  flex: 1;
+}
+
+/* Welcome */
+.welcome-section {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding: 28px 32px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  backdrop-filter: var(--blur);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent-gradient);
+}
+
+.welcome-section h2 {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  margin-bottom: 4px;
+}
+
+.welcome-section p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.welcome-stats {
+  display: flex;
+  gap: 24px;
+}
+
+.welcome-stat {
+  text-align: center;
+}
+
+.welcome-stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.welcome-stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* KPI Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 22px;
+  backdrop-filter: var(--blur);
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  opacity: 0.04;
+  pointer-events: none;
+}
+
+.kpi-card.purple::after { background: linear-gradient(0deg, var(--primary), transparent); }
+.kpi-card.cyan::after { background: linear-gradient(0deg, var(--secondary), transparent); }
+.kpi-card.yellow::after { background: linear-gradient(0deg, var(--warning), transparent); }
+.kpi-card.pink::after { background: linear-gradient(0deg, var(--danger), transparent); }
+
+.kpi-card:hover {
+  border-color: var(--glass-border-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+.kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.kpi-label {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.kpi-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  border: 1px solid var(--glass-border);
+}
+
+.kpi-icon.purple { background: var(--primary-light); }
+.kpi-icon.cyan { background: var(--secondary-light); }
+.kpi-icon.yellow { background: var(--warning-light); }
+.kpi-icon.pink { background: var(--danger-light); }
+
+.kpi-value {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.kpi-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kpi-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.kpi-trend.up { background: var(--success-light); color: var(--success); }
+.kpi-trend.down { background: var(--danger-light); color: var(--danger); }
+
+/* Grids */
+.layout-main {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.layout-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* Glass cards */
+.glass-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  backdrop-filter: var(--blur);
+  overflow: hidden;
+}
+
+.glass-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.glass-card-head h3 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+.glass-link {
+  font-size: 12px;
+  color: var(--primary);
+  cursor: pointer;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  transition: all var(--transition);
+  border: 1px solid transparent;
+}
+
+.glass-link:hover {
+  background: var(--primary-light);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+/* Chart */
+.chart-wrap {
+  padding: 20px 22px;
+  height: 280px;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.bar {
+  width: 100%;
+  border-radius: 6px 6px 0 0;
+  background: var(--accent-gradient);
+  opacity: 0.7;
+  transition: all var(--transition);
+  position: relative;
+}
+
+.bar:hover {
+  opacity: 1;
+  box-shadow: 0 -4px 16px var(--primary-glow);
+}
+
+.bar-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Right Panel */
+.right-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Quick actions */
+.qa-list {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qa-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: inherit;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 450;
+}
+
+.qa-item:hover {
+  background: var(--glass-hover);
+  color: var(--text);
+  border-color: var(--glass-border-strong);
+  transform: translateX(4px);
+}
+
+.qa-item .qi {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border);
+}
+
+/* Recurring */
+.rec-list { padding: 4px 0; }
+
+.rec-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--glass-border);
+  transition: all var(--transition);
+  cursor: pointer;
+}
+
+.rec-row:last-child { border-bottom: none; }
+.rec-row:hover { background: var(--glass-hover); }
+
+.rec-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.rec-dot.active { background: var(--success); color: var(--success); }
+.rec-dot.soon { background: var(--warning); color: var(--warning); }
+
+.rec-info { flex: 1; }
+.rec-name { font-size: 13px; font-weight: 500; }
+.rec-meta { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.rec-price { font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.rec-due { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 1px; }
+
+/* Invoice rows */
+.inv-row {
+  display: flex;
+  align-items: center;
+  padding: 13px 22px;
+  gap: 12px;
+  border-bottom: 1px solid var(--glass-border);
+  transition: all var(--transition);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.inv-row:last-child { border-bottom: none; }
+.inv-row:hover { background: var(--glass-hover); }
+
+.inv-id {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  width: 85px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.inv-name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inv-client { color: var(--text-secondary); width: 120px; flex-shrink: 0; font-size: 12px; }
+.inv-amount { font-weight: 700; text-align: right; width: 100px; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+/* Status */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+}
+
+.pill.paid { background: var(--success-light); color: var(--success); border-color: rgba(52, 211, 153, 0.2); }
+.pill.sent { background: var(--primary-light); color: var(--primary); border-color: rgba(139, 92, 246, 0.2); }
+.pill.overdue { background: var(--danger-light); color: var(--danger); border-color: rgba(251, 113, 133, 0.2); }
+.pill.open { background: var(--warning-light); color: var(--warning); border-color: rgba(251, 191, 36, 0.2); }
+.pill.draft { background: var(--glass-strong); color: var(--text-muted); border-color: var(--glass-border); }
+
+/* Activity */
+.act-item {
+  display: flex;
+  gap: 14px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--glass-border);
+  transition: background var(--transition);
+}
+
+.act-item:last-child { border-bottom: none; }
+.act-item:hover { background: var(--glass-hover); }
+
+.act-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  border: 1px solid var(--glass-border);
+}
+
+.act-icon.pay { background: var(--success-light); }
+.act-icon.send { background: var(--primary-light); }
+.act-icon.warn { background: var(--warning-light); }
+.act-icon.bank { background: var(--secondary-light); }
+
+.act-body { flex: 1; }
+.act-text { font-size: 13px; color: var(--text-secondary); line-height: 1.4; }
+.act-text strong { color: var(--text); font-weight: 500; }
+.act-time { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+/* Responsive */
+@media (max-width: 1300px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .layout-main { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">TP</div>
+    <div class="sidebar-brand">
+      TP-Tool
+      <small>Agentur Management</small>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Übersicht</div>
+      <div class="nav-item active">
+        <span class="icon">📊</span> Dashboard
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Verkauf</div>
+      <div class="nav-item">
+        <span class="icon">📋</span> Offerten
+        <span class="badge">3</span>
+      </div>
+      <div class="nav-item">
+        <span class="icon">📄</span> Aufträge
+      </div>
+      <div class="nav-item">
+        <span class="icon">🧾</span> Rechnungen
+        <span class="badge">5</span>
+      </div>
+      <div class="nav-item">
+        <span class="icon">🔄</span> Wiederkehrend
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Kontakte</div>
+      <div class="nav-item">
+        <span class="icon">👥</span> Kunden
+      </div>
+      <div class="nav-item">
+        <span class="icon">🏢</span> Firmen
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Finanzen</div>
+      <div class="nav-item">
+        <span class="icon">💰</span> Buchhaltung
+      </div>
+      <div class="nav-item">
+        <span class="icon">🏦</span> E-Banking
+      </div>
+      <div class="nav-item">
+        <span class="icon">📊</span> MwSt.
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">System</div>
+      <div class="nav-item">
+        <span class="icon">🎨</span> Vorlagen
+      </div>
+      <div class="nav-item">
+        <span class="icon">👤</span> Benutzer & Rollen
+      </div>
+      <div class="nav-item">
+        <span class="icon">⚙️</span> Einstellungen
+      </div>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar">AK</div>
+      <div class="user-info">
+        <div class="user-name">Aleks K.</div>
+        <div class="user-role">Administrator</div>
+      </div>
+      <div class="user-status"></div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="header">
+    <span class="header-title">Dashboard</span>
+    <span class="header-subtitle">Deine Agentur auf einen Blick</span>
+    <div class="header-search">
+      <span class="si">🔍</span>
+      <input type="text" placeholder="Suchen... (⌘K)">
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn">🔔<span class="dot"></span></button>
+      <button class="icon-btn">⚙️</button>
+      <button class="btn-gradient">+ Neu erstellen</button>
+    </div>
+  </header>
+
+  <div class="content">
+    <!-- Welcome Banner -->
+    <div class="welcome-section">
+      <div>
+        <h2>Guten Tag, Aleks</h2>
+        <p>Montag, 24. März 2026 — Hier ist dein Tagesüberblick</p>
+      </div>
+      <div class="welcome-stats">
+        <div class="welcome-stat">
+          <div class="welcome-stat-value">42</div>
+          <div class="welcome-stat-label">Aktive Kunden</div>
+        </div>
+        <div class="welcome-stat">
+          <div class="welcome-stat-value">156</div>
+          <div class="welcome-stat-label">Rechnungen 2026</div>
+        </div>
+        <div class="welcome-stat">
+          <div class="welcome-stat-value">94%</div>
+          <div class="welcome-stat-label">Zahlungsquote</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi-card purple">
+        <div class="kpi-top">
+          <span class="kpi-label">Offene Rechnungen</span>
+          <div class="kpi-icon purple">🧾</div>
+        </div>
+        <div class="kpi-value">CHF 24'580</div>
+        <div class="kpi-sub"><span class="kpi-trend up">↑ 12%</span> vs. Vormonat</div>
+      </div>
+      <div class="kpi-card cyan">
+        <div class="kpi-top">
+          <span class="kpi-label">Umsatz März</span>
+          <div class="kpi-icon cyan">💰</div>
+        </div>
+        <div class="kpi-value">CHF 18'350</div>
+        <div class="kpi-sub"><span class="kpi-trend up">↑ 8%</span> vs. Vormonat</div>
+      </div>
+      <div class="kpi-card yellow">
+        <div class="kpi-top">
+          <span class="kpi-label">Offene Offerten</span>
+          <div class="kpi-icon yellow">📋</div>
+        </div>
+        <div class="kpi-value">7</div>
+        <div class="kpi-sub"><span class="kpi-trend down">↓ 2</span> vs. Vormonat</div>
+      </div>
+      <div class="kpi-card pink">
+        <div class="kpi-top">
+          <span class="kpi-label">Überfällige</span>
+          <div class="kpi-icon pink">⚠️</div>
+        </div>
+        <div class="kpi-value">3</div>
+        <div class="kpi-sub">CHF 4'200 ausstehend</div>
+      </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="layout-main">
+      <!-- Chart -->
+      <div class="glass-card">
+        <div class="glass-card-head">
+          <h3>Umsatzentwicklung 2026</h3>
+          <span class="glass-link">Details →</span>
+        </div>
+        <div class="chart-wrap">
+          <div class="bar-col"><div class="bar" style="height:40%"></div><span class="bar-label">Jan</span></div>
+          <div class="bar-col"><div class="bar" style="height:55%"></div><span class="bar-label">Feb</span></div>
+          <div class="bar-col"><div class="bar" style="height:70%"></div><span class="bar-label">Mär</span></div>
+          <div class="bar-col"><div class="bar" style="height:48%"></div><span class="bar-label">Apr</span></div>
+          <div class="bar-col"><div class="bar" style="height:63%"></div><span class="bar-label">Mai</span></div>
+          <div class="bar-col"><div class="bar" style="height:80%"></div><span class="bar-label">Jun</span></div>
+          <div class="bar-col"><div class="bar" style="height:58%"></div><span class="bar-label">Jul</span></div>
+          <div class="bar-col"><div class="bar" style="height:67%"></div><span class="bar-label">Aug</span></div>
+          <div class="bar-col"><div class="bar" style="height:88%"></div><span class="bar-label">Sep</span></div>
+          <div class="bar-col"><div class="bar" style="height:74%"></div><span class="bar-label">Okt</span></div>
+          <div class="bar-col"><div class="bar" style="height:60%"></div><span class="bar-label">Nov</span></div>
+          <div class="bar-col"><div class="bar" style="height:95%"></div><span class="bar-label">Dez</span></div>
+        </div>
+      </div>
+
+      <!-- Right Stack -->
+      <div class="right-stack">
+        <!-- Quick Actions -->
+        <div class="glass-card">
+          <div class="glass-card-head">
+            <h3>Schnellaktionen</h3>
+          </div>
+          <div class="qa-list">
+            <button class="qa-item">
+              <span class="qi">📋</span> Neue Offerte erstellen
+            </button>
+            <button class="qa-item">
+              <span class="qi">🧾</span> Neue Rechnung erstellen
+            </button>
+            <button class="qa-item">
+              <span class="qi">👤</span> Neuen Kunden erfassen
+            </button>
+            <button class="qa-item">
+              <span class="qi">🏦</span> Zahlungen importieren
+            </button>
+          </div>
+        </div>
+
+        <!-- Recurring -->
+        <div class="glass-card">
+          <div class="glass-card-head">
+            <h3>Fällige Aufträge</h3>
+            <span class="glass-link">Alle →</span>
+          </div>
+          <div class="rec-list">
+            <div class="rec-row">
+              <div class="rec-dot active"></div>
+              <div class="rec-info">
+                <div class="rec-name">Hosting Premium</div>
+                <div class="rec-meta">Müller AG · Monatlich</div>
+              </div>
+              <div>
+                <div class="rec-price">CHF 89</div>
+                <div class="rec-due">01.04.2026</div>
+              </div>
+            </div>
+            <div class="rec-row">
+              <div class="rec-dot soon"></div>
+              <div class="rec-info">
+                <div class="rec-name">Wartungsvertrag</div>
+                <div class="rec-meta">TechCorp · Quartal</div>
+              </div>
+              <div>
+                <div class="rec-price">CHF 600</div>
+                <div class="rec-due">01.04.2026</div>
+              </div>
+            </div>
+            <div class="rec-row">
+              <div class="rec-dot active"></div>
+              <div class="rec-info">
+                <div class="rec-name">SEO Monat</div>
+                <div class="rec-meta">Berg Hotel · Monatlich</div>
+              </div>
+              <div>
+                <div class="rec-price">CHF 450</div>
+                <div class="rec-due">01.04.2026</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invoices + Activity -->
+    <div class="layout-2col">
+      <div class="glass-card">
+        <div class="glass-card-head">
+          <h3>Letzte Rechnungen</h3>
+          <span class="glass-link">Alle anzeigen →</span>
+        </div>
+        <div>
+          <div class="inv-row">
+            <span class="inv-id">RE-2026-042</span>
+            <span class="inv-name">Webdesign Relaunch</span>
+            <span class="inv-client">Müller AG</span>
+            <span class="inv-amount">CHF 8'400</span>
+            <span class="pill paid">Bezahlt</span>
+          </div>
+          <div class="inv-row">
+            <span class="inv-id">RE-2026-041</span>
+            <span class="inv-name">Hosting Q1/2026</span>
+            <span class="inv-client">Swiss Media</span>
+            <span class="inv-amount">CHF 1'200</span>
+            <span class="pill sent">Gesendet</span>
+          </div>
+          <div class="inv-row">
+            <span class="inv-id">RE-2026-040</span>
+            <span class="inv-name">SEO-Paket Premium</span>
+            <span class="inv-client">Berg Hotel</span>
+            <span class="inv-amount">CHF 3'600</span>
+            <span class="pill overdue">Überfällig</span>
+          </div>
+          <div class="inv-row">
+            <span class="inv-id">RE-2026-039</span>
+            <span class="inv-name">Wartungsvertrag</span>
+            <span class="inv-client">TechCorp</span>
+            <span class="inv-amount">CHF 2'400</span>
+            <span class="pill open">Offen</span>
+          </div>
+          <div class="inv-row">
+            <span class="inv-id">RE-2026-038</span>
+            <span class="inv-name">Logo & CI Paket</span>
+            <span class="inv-client">StartupXY</span>
+            <span class="inv-amount">CHF 5'800</span>
+            <span class="pill draft">Entwurf</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="glass-card-head">
+          <h3>Letzte Aktivitäten</h3>
+          <span class="glass-link">Alle →</span>
+        </div>
+        <div>
+          <div class="act-item">
+            <div class="act-icon pay">💰</div>
+            <div class="act-body">
+              <div class="act-text"><strong>Müller AG</strong> hat RE-2026-042 bezahlt</div>
+              <div class="act-time">vor 2 Stunden</div>
+            </div>
+          </div>
+          <div class="act-item">
+            <div class="act-icon send">📧</div>
+            <div class="act-body">
+              <div class="act-text">Offerte OF-018 an <strong>Swiss Media</strong> gesendet</div>
+              <div class="act-time">vor 4 Stunden</div>
+            </div>
+          </div>
+          <div class="act-item">
+            <div class="act-icon warn">⚠️</div>
+            <div class="act-body">
+              <div class="act-text">Mahnung für RE-040 an <strong>Berg Hotel</strong></div>
+              <div class="act-time">gestern</div>
+            </div>
+          </div>
+          <div class="act-item">
+            <div class="act-icon send">👤</div>
+            <div class="act-body">
+              <div class="act-text">Neuer Kunde <strong>StartupXY</strong> erfasst</div>
+              <div class="act-time">gestern</div>
+            </div>
+          </div>
+          <div class="act-item">
+            <div class="act-icon bank">🏦</div>
+            <div class="act-body">
+              <div class="act-text">Raiffeisen Import: <strong>4 Zahlungen</strong> abgeglichen</div>
+              <div class="act-time">22.03.2026</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
