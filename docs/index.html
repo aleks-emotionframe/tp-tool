@@ -4907,7 +4907,8 @@ function renderMyPendenzen(){
   html+='</div>';
   c.innerHTML=html;
   _initMyPendDrag();
-  setTimeout(function(){var i=$('pendMyInput');if(i)i.value='';},50);
+  var _clr=function(){var i=$('pendMyInput');if(i&&i.value&&i!==document.activeElement)i.value='';};
+  setTimeout(_clr,0);setTimeout(_clr,50);setTimeout(_clr,150);setTimeout(_clr,300);setTimeout(_clr,600);setTimeout(_clr,1000);
 }
 
 function _initMyPendDrag(){
@@ -5176,7 +5177,8 @@ function renderProjectPendenzenView(){
   html+='</div>';
   c.innerHTML=html;
   _initPendDragDrop();
-  setTimeout(function(){var i=$('pendProjInput');if(i)i.value='';},50);
+  var _clr=function(){var i=$('pendProjInput');if(i&&i.value&&i!==document.activeElement)i.value='';};
+  setTimeout(_clr,0);setTimeout(_clr,50);setTimeout(_clr,150);setTimeout(_clr,300);setTimeout(_clr,600);setTimeout(_clr,1000);
 }
 
 function _renderPendCard(p,isDone){
