@@ -9074,8 +9074,7 @@ function renderAdminBackup(){
     +'<span class="admin-badge" style="background:var(--red-light);color:var(--red);">Vorsicht</span></div>'
     +'<div class="admin-card-body">'
     +'<p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Stellt alle Daten aus einer Backup-Datei wieder her. <strong>Alle aktuellen Daten werden überschrieben!</strong></p>'
-    +'<input type="file" id="backupFileInput" accept=".json" style="display:none" onchange="adminHandleBackupFile(this)">'
-    +'<button class="admin-btn danger" onclick="$(\'backupFileInput\').click()">Backup-Datei hochladen</button>'
+    +'<label class="admin-btn danger" style="cursor:pointer;display:inline-block;">Backup-Datei hochladen<input type="file" id="backupFileInput" accept=".json" style="display:none;" onchange="adminHandleBackupFile(this)"></label>'
     +'<div id="backupPreview" style="display:none;margin-top:16px;"></div>'
     +'</div></div>';
 
