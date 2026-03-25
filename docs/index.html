@@ -3047,6 +3047,46 @@ function _loadFromServer(cb){
   .catch(function(){if(cb)cb(false);});
 }
 
+/* ─── REALTIME SYNC (Polling) ─── */
+var _syncInterval=null,_lastSyncTime=null;
+function _startRealtimeSync(){
+  if(_syncInterval)return;
+  _lastSyncTime=new Date().toISOString().replace('T',' ').substring(0,19);
+  _syncInterval=setInterval(_pollSync,10000); // every 10 seconds
+}
+function _stopRealtimeSync(){
+  if(_syncInterval){clearInterval(_syncInterval);_syncInterval=null;}
+}
+function _pollSync(){
+  if(!S.currentUser||!_lastSyncTime)return;
+  fetch('api/data.php?action=sync&since='+encodeURIComponent(_lastSyncTime),{credentials:'same-origin'})
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(!res.changes||!res.changes.length)return;
+    var needsRefresh=false;
+    res.changes.forEach(function(c){
+      var oldVal=localStorage.getItem(c.data_key);
+      if(oldVal!==c.data_value){
+        try{localStorage.setItem(c.data_key,c.data_value);}catch(e){}
+        needsRefresh=true;
+      }
+    });
+    if(res.serverTime)_lastSyncTime=res.serverTime;
+    if(needsRefresh){
+      // Reload current project data
+      if(S.pid){
+        var d=sGet('p_'+S.pid,null);
+        if(d)S.tasks=d.tasks||[];
+      }
+      // Refresh visible view
+      updateKPI();
+      applyFilters();
+      if(S.view==='dashboard')renderDashboard();
+    }
+  })
+  .catch(function(){});
+}
+
 /* Seed IndexedDB with existing localStorage data (once) */
 function _seedIDB(){
   _openIDB(function(db){
@@ -3637,6 +3677,7 @@ function showApp(){
   }
   $('appScreen').classList.remove('hidden');
   updateUserDisplay();
+  _startRealtimeSync();
   // Restore last view
   var _defView=getAppSettings().defaultView||'dashboard';
   var savedView=sGet('lastView_'+S.currentUser.username,_defView);
@@ -3899,6 +3940,7 @@ $('registerForm').addEventListener('submit',function(e){
 });
 
 window.doLogout=function(){
+  _stopRealtimeSync();
   addLog('login','hat sich abgemeldet');
   sSet('auth',false);sDel('currentUser');S.currentUser=null;
   fetch('api/auth.php?action=logout',{credentials:'same-origin'}).catch(function(){});
