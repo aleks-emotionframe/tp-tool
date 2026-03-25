@@ -3078,10 +3078,14 @@ function _pollSync(){
         var d=sGet('p_'+S.pid,null);
         if(d)S.tasks=d.tasks||[];
       }
+      // Refresh sidebar project list
+      loadProjects();
       // Refresh visible view
       updateKPI();
-      applyFilters();
-      if(S.view==='dashboard')renderDashboard();
+      if(S.view==='dashboard'){renderDashboard();}
+      else if(S.view==='pendenzen_my'){renderMyPendenzen();}
+      else if(S.view==='pendenzen_project'){renderProjectPendenzenView();}
+      else{applyFilters();}
     }
   })
   .catch(function(){});
