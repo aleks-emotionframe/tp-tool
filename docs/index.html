@@ -3870,70 +3870,31 @@ $('registerForm').addEventListener('submit',function(e){
   if(pw!==pw2){showErr('Passw\u00f6rter stimmen nicht \u00fcberein.');return;}
   if(!code){showErr('Bitte Lizenzcode eingeben.');return;}
 
-  // Check if user already exists
-  var users=getUsers();
-  if(users.some(function(u){return u.username.toLowerCase()===email.toLowerCase();})){
-    showErr('Ein Konto mit dieser E-Mail existiert bereits.');return;
-  }
-  // Validate license code
-  var result=_validateLicenseCode(code);
-  if(!result.ok){showErr(result.msg);return;}
+  var btn=$('registerForm').querySelector('.login-btn');
+  btn.textContent='Konto wird erstellt...';btn.disabled=true;
 
-  // Create user
-  var nameParts=name.split(' ');
-  var firstName=nameParts[0]||'';
-  var lastName=nameParts.slice(1).join(' ')||'';
-  var newUser={
-    username:email.toLowerCase(),
-    password:pw,
-    firstName:firstName,
-    lastName:lastName,
-    displayName:name,
-    role:'user',
-    firma:'',phone:'',email:email,avatar:null,locked:false
-  };
-  users.push(newUser);
-  saveUsers(users);
-
-  // Add user to license
-  var licenses=getLicenses();
-  var lic=licenses[result.index];
-  if(!lic.users)lic.users=[];
-  if(lic.users.indexOf(email.toLowerCase())===-1)lic.users.push(email.toLowerCase());
-  saveLicenses(licenses);
-
-  addLog('create','Benutzer registriert',email);
-
-  // Auto-login via server
-  fetch('api/auth.php?action=login',{
+  // Register via server API
+  fetch('api/register.php',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({username:email.toLowerCase(),password:pw}),
+    body:JSON.stringify({action:'register',name:name,email:email,password:pw,code:code}),
     credentials:'same-origin'
   })
-  .then(function(r){return r.json();})
+  .then(function(r){return r.json().then(function(data){return{ok:r.ok,data:data};});})
   .then(function(res){
-    if(res.success){
-      _loadFromServer(function(){
-        S.currentUser=findUser(email.toLowerCase())||newUser;
-        sSet('auth',true);sSet('currentUser',email.toLowerCase());
-        // Clean URL
-        window.history.replaceState({},'',window.location.pathname);
-        showApp();
-      });
-    } else {
-      // Fallback local login
-      S.currentUser=newUser;
+    btn.textContent='Konto erstellen';btn.disabled=false;
+    if(!res.ok){showErr(res.data.error||'Registrierung fehlgeschlagen.');return;}
+    // Registration OK — load data and show app
+    _loadFromServer(function(){
+      S.currentUser=findUser(email.toLowerCase())||res.data.user;
       sSet('auth',true);sSet('currentUser',email.toLowerCase());
       window.history.replaceState({},'',window.location.pathname);
       showApp();
-    }
+    });
   })
   .catch(function(){
-    S.currentUser=newUser;
-    sSet('auth',true);sSet('currentUser',email.toLowerCase());
-    window.history.replaceState({},'',window.location.pathname);
-    showApp();
+    btn.textContent='Konto erstellen';btn.disabled=false;
+    showErr('Verbindung zum Server fehlgeschlagen. Bitte versuche es erneut.');
   });
 });
 
