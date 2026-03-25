@@ -338,8 +338,13 @@ body {
 .login-hero h2 span { background: linear-gradient(135deg, #fb923c, #e8600a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .login-hero p { font-size: 17px; color: rgba(255,255,255,0.8); line-height: 1.7; max-width: 440px; }
 .login-hero-features { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 44px; }
-.login-hero-feat { display: flex; align-items: flex-start; gap: 14px; padding: 16px; border-radius: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(4px); transition: all 0.3s; }
+.login-hero-feat { display: flex; align-items: flex-start; gap: 14px; padding: 16px; border-radius: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(4px); transition: all 0.3s; position: relative; cursor: default; }
 .login-hero-feat:hover { background: rgba(255,255,255,0.1); border-color: rgba(232,96,10,0.3); transform: translateY(-2px); }
+.login-hero-feat-popup { position: absolute; bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%) translateY(8px); width: 300px; padding: 20px; border-radius: 16px; background: rgba(15,20,40,0.95); border: 1px solid rgba(232,96,10,0.25); backdrop-filter: blur(20px); box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 30px rgba(232,96,10,0.1); opacity: 0; visibility: hidden; transition: all 0.3s ease; pointer-events: none; z-index: 10; }
+.login-hero-feat-popup::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 8px solid transparent; border-top-color: rgba(232,96,10,0.25); }
+.login-hero-feat:hover .login-hero-feat-popup { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+.login-hero-feat-popup-title { font-size: 15px; font-weight: 700; color: #fb923c; margin-bottom: 8px; }
+.login-hero-feat-popup-text { font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.6; }
 .login-hero-feat-icon { width: 40px; height: 40px; background: linear-gradient(135deg, rgba(232,96,10,0.3), rgba(232,96,10,0.1)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
 .login-hero-feat-text { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9); line-height: 1.3; }
 .login-hero-feat-desc { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 3px; font-weight: 400; }
@@ -2382,18 +2387,34 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         <div class="login-hero-feat">
           <div class="login-hero-feat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg></div>
           <div><div class="login-hero-feat-text">Terminprogramm</div><div class="login-hero-feat-desc">MS Project hochladen &amp; visuell verwalten</div></div>
+          <div class="login-hero-feat-popup">
+            <div class="login-hero-feat-popup-title">Terminprogramm</div>
+            <div class="login-hero-feat-popup-text">Lade dein Terminprogramm direkt aus MS Project hoch. BAUTERM stellt alle Vorg&auml;nge, Meilensteine und Abh&auml;ngigkeiten &uuml;bersichtlich dar. Behalte Fristen im Blick und erkenne Verz&ouml;gerungen sofort.</div>
+          </div>
         </div>
         <div class="login-hero-feat">
           <div class="login-hero-feat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
           <div><div class="login-hero-feat-text">Team-Pendenzen</div><div class="login-hero-feat-desc">Jour Fixe &amp; Aufgaben koordinieren</div></div>
+          <div class="login-hero-feat-popup">
+            <div class="login-hero-feat-popup-title">Team-Pendenzen</div>
+            <div class="login-hero-feat-popup-text">Verwalte pers&ouml;nliche und projektbezogene Pendenzen. Weise Aufgaben deinem Team zu, tracke den Status im Jour Fixe Board und vergiss nie wieder eine offene Aufgabe.</div>
+          </div>
         </div>
         <div class="login-hero-feat">
           <div class="login-hero-feat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="1.8"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></div>
           <div><div class="login-hero-feat-text">Live-Dashboard</div><div class="login-hero-feat-desc">Fortschritt &amp; Verz&ouml;gerungen auf einen Blick</div></div>
+          <div class="login-hero-feat-popup">
+            <div class="login-hero-feat-popup-title">Live-Dashboard</div>
+            <div class="login-hero-feat-popup-text">Dein Projekt auf einen Blick: Gesamtfortschritt, &uuml;berf&auml;llige Vorg&auml;nge, startbereite Arbeiten und Wettervorhersage. Alles live und immer aktuell, ohne manuelles Nachf&uuml;hren.</div>
+          </div>
         </div>
         <div class="login-hero-feat">
           <div class="login-hero-feat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fb923c" stroke-width="1.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
           <div><div class="login-hero-feat-text">KI-Analyse</div><div class="login-hero-feat-desc">Intelligente Projekt-Auswertung</div></div>
+          <div class="login-hero-feat-popup">
+            <div class="login-hero-feat-popup-title">KI-Analyse</div>
+            <div class="login-hero-feat-popup-text">Unsere KI analysiert dein Terminprogramm automatisch und erkennt Risiken, Engp&auml;sse und Optimierungspotenzial. Du erh&auml;ltst konkrete Handlungsempfehlungen f&uuml;r dein Projekt.</div>
+          </div>
         </div>
       </div>
       <div class="login-hero-stats">
