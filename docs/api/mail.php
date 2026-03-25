@@ -92,11 +92,13 @@ function buildInviteEmail($company, $code, $expiry, $registerUrl) {
     return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;background:#f5f5f7;">
 <div style="max-width:520px;margin:40px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
   <div style="background:linear-gradient(135deg,#e8600a,#c2410c);padding:32px 40px;text-align:center;">
-    <div style="width:56px;height:56px;background:rgba(255,255,255,0.15);border-radius:14px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;">
-      <span style="font-size:28px;color:#fff;">&#127968;</span>
+    <div style="width:48px;height:48px;background:rgba(255,255,255,0.2);border-radius:12px;margin:0 auto 16px;position:relative;">
+      <div style="position:absolute;top:10px;left:9px;width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-bottom:14px solid #fff;"></div>
+      <div style="position:absolute;top:22px;left:12px;width:24px;height:16px;background:#fff;border-radius:0 0 2px 2px;"></div>
+      <div style="position:absolute;top:26px;left:18px;width:12px;height:12px;background:#e8600a;border-radius:2px;"></div>
     </div>
-    <h1 style="color:#fff;font-size:24px;font-weight:800;margin:0;">BAUTERM</h1>
-    <p style="color:rgba(255,255,255,0.8);font-size:14px;margin:8px 0 0;">Terminprogramm f&uuml;r Bauleiter</p>
+    <h1 style="color:#fff;font-size:26px;font-weight:800;margin:0;letter-spacing:-0.5px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;">BAUTERM</h1>
+    <p style="color:rgba(255,255,255,0.8);font-size:13px;margin:6px 0 0;letter-spacing:0.3px;">Terminprogramm f&uuml;r Bauleiter</p>
   </div>
   <div style="padding:32px 40px;">
     <h2 style="font-size:20px;font-weight:700;color:#1a1a2e;margin:0 0 12px;">Du wurdest eingeladen!</h2>
