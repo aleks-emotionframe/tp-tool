@@ -4609,12 +4609,12 @@ function _updatePendBtnActive(){
 function _renderMyPendItem(p){
   var isFromTP=p.source==='terminplan';
   var html='<li class="pend-item'+(p.done?' done':'')+(isFromTP?' pend-from-tp':'')+'" draggable="true" data-id="'+p.id+'" style="flex-wrap:wrap;">';
+  if(p.created)html+='<div style="width:100%;padding-left:28px;margin-bottom:2px;">'+_pendCreatedLabel(p.created)+'</div>';
   html+='<div class="pend-check" onclick="toggleMyPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
   if(isFromTP) html+='<span class="pend-tp-badge" title="Aus Terminplan: '+esc(p.taskProject||'')+'">TP</span>';
   html+='<span class="pend-text"'+(isFromTP?'':' ondblclick="editMyPendenz(\''+p.id+'\')"')+'>'+esc(p.text)+'</span>';
   html+=_pendStartLabel(p.startDate);
   html+=_pendDueLabel(p.due);
-  html+=_pendCreatedLabel(p.created);
   if(S.pid){
     html+='<div class="pend-move-wrap">';
     html+='<button class="pend-move-btn" onclick="toggleMoveMenu(\''+p.id+'\')" title="Zum Jour Fixe verschieben">&#10140;</button>';
@@ -4994,6 +4994,7 @@ function renderProjectPendenzenView(){
 
 function _renderPendCard(p,isDone){
   var html='<div class="pend-card'+(isDone?' done':'')+'" draggable="true" data-id="'+p.id+'">';
+  if(p.created)html+='<div style="margin-bottom:4px;">'+_pendCreatedLabel(p.created)+'</div>';
   html+='<div class="pend-card-top">';
   html+='<div class="pend-check" onclick="toggleProjectPendenz(\''+p.id+'\')" title="Als erledigt markieren">'+(p.done?'&#10003;':'')+'</div>';
   html+='<span class="pend-card-text" ondblclick="editProjectPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
@@ -5001,12 +5002,10 @@ function _renderPendCard(p,isDone){
   html+='</div>';
   var startLbl=_pendStartLabel(p.startDate);
   var dueLbl=_pendDueLabel(p.due);
-  var createdLbl=_pendCreatedLabel(p.created);
-  if(startLbl||dueLbl||createdLbl||(p.images&&p.images.length)){
+  if(startLbl||dueLbl||(p.images&&p.images.length)){
     html+='<div class="pend-card-meta">';
     if(startLbl) html+=startLbl;
     if(dueLbl) html+=dueLbl;
-    if(createdLbl) html+=createdLbl;
     if(p.images&&p.images.length){
       p.images.forEach(function(img){
         html+='<img src="'+esc(img)+'" class="pend-thumb" onclick="event.stopPropagation();openLightbox(this.src)">';
