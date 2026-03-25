@@ -4851,7 +4851,7 @@ function renderMyPendenzen(){
   html+='<div class="pend-section-title">Meine Pendenzen <span class="pend-badge">'+myOpen+' offen</span>'
     +'<button class="ferien-fullscreen-btn" style="margin-left:auto;font-size:11px;" onclick="exportMyPendenzenPDF()">&#128438; PDF</button></div>';
   html+='<div class="pend-add-row" style="flex-wrap:wrap;">';
-  html+='<input type="text" id="pendMyInput" placeholder="Neue Pendenz..." onkeydown="if(event.key===\'Enter\')addMyPendenz()">';
+  html+='<input type="text" id="pendMyInput" placeholder="Neue Pendenz..." autocomplete="off" onkeydown="if(event.key===\'Enter\')addMyPendenz()">';
   html+='<input type="date" id="pendMyStart" title="Startdatum" placeholder="Start">';
   html+='<input type="date" id="pendMyDue" title="F\u00e4lligkeitsdatum">';
   html+='<label class="pend-add-img-btn" title="Bilder hinzuf\u00fcgen">&#128247; Bilder <input type="file" accept="image/*" multiple style="display:none;" onchange="previewAddMyImages(this)"></label>';
@@ -5110,7 +5110,7 @@ function renderProjectPendenzenView(){
   var html='<div class="pend-jour-fixe-title">Jour Fixe <span class="pend-badge" style="font-size:12px;vertical-align:middle;">'+pOpen+' offen</span></div>';
   // Add row
   html+='<div class="pend-add-row" style="margin-bottom:20px;flex-wrap:wrap;">';
-  html+='<input type="text" id="pendProjInput" placeholder="Neue Pendenz..." onkeydown="if(event.key===\'Enter\')addProjectPendenz()">';
+  html+='<input type="text" id="pendProjInput" placeholder="Neue Pendenz..." autocomplete="off" onkeydown="if(event.key===\'Enter\')addProjectPendenz()">';
   html+='<input type="date" id="pendProjStart" title="Startdatum">';
   html+='<input type="date" id="pendProjDue" title="F\u00e4lligkeitsdatum">';
   html+='<select id="pendProjAssignee">';
