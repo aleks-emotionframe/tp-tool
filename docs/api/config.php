@@ -1,9 +1,12 @@
 <?php
 // BAUTERM Database Configuration
+// Auto-detect environment: dev.bauterm.ch = Test, bauterm.ch = Live
+$_isDev = (strpos($_SERVER['HTTP_HOST'] ?? '', 'dev.') === 0);
 define('DB_HOST', 'bifitudo.mysql.db.internal');
-define('DB_NAME', 'bifitudo_bauterm');
+define('DB_NAME', $_isDev ? 'bifitudo_devbauterm' : 'bifitudo_bauterm');
 define('DB_USER', 'bifitudo_skoba');
 define('DB_PASS', 'Novitr@vnik1');
+define('IS_DEV', $_isDev);
 
 function getDB() {
     static $pdo = null;
