@@ -4102,14 +4102,13 @@ function loadProject(id){
   sSet('lastPid_'+(S.currentUser?S.currentUser.username:''),id);
   var idx=getIdx(),p=idx.find(function(x){return x.id==id;});
   $('topTitle').textContent=p?p.name:'Projekt';
-  showEmpty(false);
+  $('emptyState').style.display='none';
+  $('kpiStrip').style.display='grid';
   loadProjects();
   updateKPI();
   applyFilters();
   updateXmlUploadBtn();
   updateProjektPendBtn();
-  // Reset views that depend on project data
-  if(S.view==='dashboard')renderDashboard();
 }
 
 function userHasPerm(key){
@@ -4676,7 +4675,7 @@ document.querySelectorAll('.sidebar-tab').forEach(function(b){
     sSet('lastView_'+(S.currentUser?S.currentUser.username:''),S.view);
     trackUsage('view','view:'+S.view);
     _updatePendBtnActive();
-    if(S.pid)showEmpty(false);
+    if(S.pid){showEmpty(false);}else{renderView();}
     loadProjects();
   });
 });
@@ -7044,6 +7043,7 @@ window.editProgressInline=function(ev,uid){
     t.percentComplete=val;
     autoSave();
     updateKPI();
+    if(S.view==='dashboard')renderDashboard();
     applyFilters();
   }
   inp.addEventListener('keydown',function(e){
