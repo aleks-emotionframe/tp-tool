@@ -286,42 +286,62 @@ body {
 .login-screen {
   height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
   background: var(--login-bg);
   position: relative;
   overflow: hidden;
 }
-.login-screen::before {
+.login-hero {
+  flex: 1;
+  background: linear-gradient(135deg, #e8600a 0%, #c2410c 40%, #7c2d12 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  padding: 60px;
+}
+.login-hero::before {
   content: '';
   position: absolute;
-  top: -40%; left: -20%;
+  top: -20%; right: -20%;
   width: 600px; height: 600px;
-  background: radial-gradient(circle, var(--login-glow1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
   animation: float1 8s ease-in-out infinite;
-  pointer-events: none;
 }
-.login-screen::after {
+.login-hero::after {
   content: '';
   position: absolute;
-  bottom: -30%; right: -10%;
+  bottom: -15%; left: -10%;
   width: 500px; height: 500px;
-  background: radial-gradient(circle, var(--login-glow2) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%);
   animation: float2 10s ease-in-out infinite;
-  pointer-events: none;
 }
-@keyframes float1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(60px,40px)} }
-@keyframes float2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-40px,-60px)} }
-
+.login-hero-content { position: relative; z-index: 1; text-align: center; max-width: 420px; }
+.login-hero-icon { width: 80px; height: 80px; background: rgba(255,255,255,0.15); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 28px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+.login-hero h2 { font-size: 36px; font-weight: 800; color: #fff; letter-spacing: -0.5px; margin-bottom: 12px; line-height: 1.1; }
+.login-hero p { font-size: 15px; color: rgba(255,255,255,0.75); line-height: 1.6; }
+.login-hero-features { display: flex; flex-direction: column; gap: 12px; margin-top: 36px; text-align: left; }
+.login-hero-feat { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.85); font-size: 13px; font-weight: 500; }
+.login-hero-feat-icon { width: 32px; height: 32px; background: rgba(255,255,255,0.12); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.login-side {
+  width: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  position: relative;
+}
+@media(max-width:900px){
+  .login-hero { display: none; }
+  .login-side { width: 100%; }
+}
 .login-card {
   position: relative; z-index: 1;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
   padding: 48px;
-  width: 400px;
-  max-width: 90vw;
-  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 380px;
 }
 .login-brand {
   display: flex;
@@ -343,7 +363,6 @@ body {
   color: var(--text3);
   font-size: 14px;
   margin-bottom: 32px;
-  padding-left: 48px;
 }
 .login-input {
   width: 100%;
@@ -386,6 +405,8 @@ body {
   display: none;
   animation: shake 0.4s ease;
 }
+@keyframes float1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(60px,40px)} }
+@keyframes float2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-40px,-60px)} }
 @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
 @keyframes rowPulse { 0%,100%{background:rgba(232,96,10,0.18);} 50%{background:rgba(232,96,10,0.35);} }
 tr.task-highlight td { animation: rowPulse 1s ease-in-out 3; box-shadow: inset 3px 0 0 var(--orange); }
@@ -2311,23 +2332,44 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 
 <!-- LOGIN -->
 <div class="login-screen" id="loginScreen">
-  <div class="login-card">
-    <div class="login-brand">
-      <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-        <rect width="36" height="36" rx="8" fill="url(#g1)"/>
-        <path d="M10 24V14l8-6 8 6v10H10z" fill="#fff" fill-opacity="0.9"/>
-        <rect x="15" y="18" width="6" height="6" rx="1" fill="url(#g1)"/>
-        <defs><linearGradient id="g1" x1="0" y1="0" x2="36" y2="36"><stop stop-color="#e8600a"/><stop offset="1" stop-color="#c2410c"/></linearGradient></defs>
-      </svg>
-      <h1>BAUTERM</h1>
+  <div class="login-hero">
+    <div class="login-hero-content">
+      <div class="login-hero-icon">
+        <svg width="40" height="40" viewBox="0 0 36 36" fill="none">
+          <path d="M10 24V14l8-6 8 6v10H10z" fill="#fff" fill-opacity="0.95"/>
+          <rect x="15" y="18" width="6" height="6" rx="1" fill="rgba(232,96,10,0.8)"/>
+        </svg>
+      </div>
+      <h2>Willkommen bei<br>BAUTERM</h2>
+      <p>Das intelligente Terminprogramm f&uuml;r Bauleiter. Projekte planen, Termine koordinieren, Teams organisieren.</p>
+      <div class="login-hero-features">
+        <div class="login-hero-feat"><div class="login-hero-feat-icon">&#128197;</div>Terminprogramme importieren &amp; verwalten</div>
+        <div class="login-hero-feat"><div class="login-hero-feat-icon">&#128101;</div>Teams koordinieren &amp; Pendenzen tracken</div>
+        <div class="login-hero-feat"><div class="login-hero-feat-icon">&#128200;</div>Dashboard mit Echtzeit-&Uuml;bersicht</div>
+        <div class="login-hero-feat"><div class="login-hero-feat-icon">&#9889;</div>KI-gest&uuml;tzte Projekt-Analyse</div>
+      </div>
     </div>
-    <p class="login-sub">Terminprogramm f&uuml;r Bauleiter</p>
-    <form id="loginForm">
-      <input class="login-input" type="text" id="loginUser" placeholder="E-Mail Adresse" autocomplete="username" autofocus>
-      <input class="login-input" type="password" id="loginPw" placeholder="Passwort" autocomplete="current-password" style="margin-top:8px;">
-      <button class="login-btn" type="submit">Einloggen</button>
-    </form>
-    <div class="login-error" id="loginErr">Falsches Passwort oder E-Mail</div>
+  </div>
+  <div class="login-side">
+    <div class="login-card">
+      <div class="login-brand">
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+          <rect width="36" height="36" rx="8" fill="url(#g1)"/>
+          <path d="M10 24V14l8-6 8 6v10H10z" fill="#fff" fill-opacity="0.9"/>
+          <rect x="15" y="18" width="6" height="6" rx="1" fill="url(#g1)"/>
+          <defs><linearGradient id="g1" x1="0" y1="0" x2="36" y2="36"><stop stop-color="#e8600a"/><stop offset="1" stop-color="#c2410c"/></linearGradient></defs>
+        </svg>
+        <h1>BAUTERM</h1>
+      </div>
+      <p class="login-sub">Melde dich an, um fortzufahren</p>
+      <form id="loginForm">
+        <input class="login-input" type="text" id="loginUser" placeholder="E-Mail Adresse" autocomplete="username" autofocus>
+        <input class="login-input" type="password" id="loginPw" placeholder="Passwort" autocomplete="current-password" style="margin-top:8px;">
+        <button class="login-btn" type="submit">Einloggen</button>
+      </form>
+      <div class="login-error" id="loginErr">Falsches Passwort oder E-Mail</div>
+      <div style="text-align:center;margin-top:32px;font-size:11px;color:var(--text3);">&copy; 2026 BAUTERM &middot; Alle Rechte vorbehalten</div>
+    </div>
   </div>
 </div>
 
