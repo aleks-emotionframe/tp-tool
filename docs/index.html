@@ -6384,10 +6384,24 @@ window.exportFerienPDF=function(){
 };
 
 /* ─── DASHBOARD PANELS ─── */
+function _getParentSummaryName(t){
+  var idx=S.tasks.indexOf(t);
+  if(idx<0)return '';
+  var ol=t.outlineLevel||0;
+  if(ol<=0)return '';
+  for(var i=idx-1;i>=0;i--){
+    var p=S.tasks[i];
+    if(p.summary&&(p.outlineLevel||0)<ol)return p.name;
+  }
+  return '';
+}
+
 function dashItem(t,dotColor,extras){
+  var parent=_getParentSummaryName(t);
   return '<div class="dash-item" data-uid="'+t.uid+'" onclick="openTaskDetail('+t.uid+')">'
     +'<div class="dash-item-dot '+dotColor+'"></div>'
-    +'<div class="dash-item-name">'+esc(t.name)+'</div>'
+    +'<div class="dash-item-name">'+(parent?'<span style="font-size:10px;color:var(--text3);font-weight:600;display:block;margin-bottom:1px;">'+esc(parent)+'</span>':'')
+    +esc(t.name)+'</div>'
     +(extras||'')
     +'</div>';
 }
