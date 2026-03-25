@@ -9,7 +9,7 @@ $action = $_GET['action'] ?? '';
 switch ($action) {
 
     case 'list':
-        $backupDir = __DIR__ . '/../backups';
+        $backupDir = __DIR__ . '/backups';
         $files = [];
         if (is_dir($backupDir)) {
             $all = glob($backupDir . '/backup-*.json');

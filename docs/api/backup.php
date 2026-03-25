@@ -13,9 +13,18 @@ if (!$isCliOrCron && !$hasSecret) {
     die('Access denied');
 }
 
-$backupDir = __DIR__ . '/../backups';
+// Error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
+$backupDir = __DIR__ . '/backups';
 if (!is_dir($backupDir)) {
-    mkdir($backupDir, 0755, true);
+    @mkdir($backupDir, 0755, true);
+    if (!is_dir($backupDir)) {
+        http_response_code(500);
+        header('Content-Type: application/json');
+        die(json_encode(['error' => 'Cannot create backup directory: ' . $backupDir]));
+    }
 }
 
 // Protect backups directory
