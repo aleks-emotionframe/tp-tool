@@ -3773,7 +3773,8 @@ function updateUserDisplay(){
     if(S.currentUser.role!=='admin'){
       var _uLic=_checkUserLicense(S.currentUser.username);
       if(_uLic){
-        var _expD=new Date(_uLic.expiry+'T23:59:59');
+        var _userExp=(_uLic.userExpiry&&_uLic.userExpiry[S.currentUser.username])||_uLic.expiry;
+        var _expD=new Date(_userExp+'T23:59:59');
         var _daysLeft=Math.ceil((_expD-new Date())/(1000*60*60*24));
         licBadge='<div style="font-size:9px;color:var(--orange);font-weight:600;margin-top:1px;">Testzugang \u00b7 noch '+_daysLeft+' Tag'+(_daysLeft!==1?'e':'')+'</div>';
       }
@@ -8198,9 +8199,13 @@ function _checkUserLicense(username){
   for(var i=0;i<licenses.length;i++){
     var lic=licenses[i];
     if(!lic.active)continue;
-    var expiry=new Date(lic.expiry+'T23:59:59');
-    if(now>expiry)continue;
-    if(lic.users&&lic.users.indexOf(username)!==-1)return lic;
+    if(lic.users&&lic.users.indexOf(username)!==-1){
+      // Check per-user expiry first, fallback to global expiry
+      var userExp=(lic.userExpiry&&lic.userExpiry[username])||lic.expiry;
+      var expiry=new Date(userExp+'T23:59:59');
+      if(now>expiry)continue;
+      return lic;
+    }
   }
   return null;
 }
@@ -8350,15 +8355,20 @@ window.renderAdminLizenzen=function(){
       // Show users
       if(lic.users&&lic.users.length>0){
         html+='<div style="margin-top:10px;padding:10px 14px;background:var(--surface2);border-radius:var(--radius-xs);">';
-        html+='<div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">Registrierte Benutzer:</div>';
+        html+='<div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:8px;">Registrierte Benutzer:</div>';
         var users=getUsers();
+        var userExpiry=lic.userExpiry||{};
         lic.users.forEach(function(uname){
           var user=users.find(function(u){return u.username===uname;});
           var displayName=user?(user.displayName||user.username):uname;
-          html+='<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;font-size:11px;margin:2px 4px 2px 0;color:var(--text);">';
-          html+=esc(displayName);
-          html+='<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px;line-height:1;" onclick="adminRemoveLicenseUser(\''+esc(lic.id)+'\',\''+esc(uname)+'\')" title="Entfernen">&times;</button>';
-          html+='</span>';
+          var uExp=userExpiry[uname]||lic.expiry;
+          var uExpired=new Date()>new Date(uExp+'T23:59:59');
+          html+='<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">';
+          html+='<span style="font-size:12px;font-weight:600;color:var(--text);flex:1;min-width:0;">'+esc(displayName)+'</span>';
+          html+='<span style="font-size:10px;color:var(--text3);">G\u00fcltig bis:</span>';
+          html+='<input type="date" value="'+esc(uExp)+'" style="padding:2px 6px;border:1px solid '+(uExpired?'var(--red)':'var(--border)')+';border-radius:4px;font-size:11px;font-weight:600;color:'+(uExpired?'var(--red)':'var(--text)')+';background:var(--surface);font-family:var(--font);" onchange="adminUpdateUserExpiry(\''+esc(lic.id)+'\',\''+esc(uname)+'\',this.value)">';
+          html+='<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0 4px;line-height:1;" onclick="adminRemoveLicenseUser(\''+esc(lic.id)+'\',\''+esc(uname)+'\')" title="Entfernen">&times;</button>';
+          html+='</div>';
         });
         html+='</div>';
       }
@@ -8445,6 +8455,19 @@ window.adminUpdateLicenseField=function(id,field,value){
   var licenses=getLicenses();
   for(var i=0;i<licenses.length;i++){
     if(licenses[i].id===id){licenses[i][field]=value;break;}
+  }
+  saveLicenses(licenses);
+  renderAdminLizenzen();
+};
+
+window.adminUpdateUserExpiry=function(licId,username,date){
+  var licenses=getLicenses();
+  for(var i=0;i<licenses.length;i++){
+    if(licenses[i].id===licId){
+      if(!licenses[i].userExpiry)licenses[i].userExpiry={};
+      licenses[i].userExpiry[username]=date;
+      break;
+    }
   }
   saveLicenses(licenses);
   renderAdminLizenzen();
