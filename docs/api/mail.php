@@ -98,7 +98,7 @@ function buildInviteEmail($company, $code, $expiry, $registerUrl) {
       <div style="position:absolute;top:26px;left:18px;width:12px;height:12px;background:#e8600a;border-radius:2px;"></div>
     </div>
     <h1 style="color:#fff;font-size:26px;font-weight:800;margin:0;letter-spacing:-0.5px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;">BAUTERM</h1>
-    <p style="color:rgba(255,255,255,0.8);font-size:13px;margin:6px 0 0;letter-spacing:0.3px;">Terminprogramm f&uuml;r Bauleiter</p>
+    <p style="color:rgba(255,255,255,0.8);font-size:13px;margin:6px 0 0;letter-spacing:0.3px;">Bauprojekte. Einfach organisiert.</p>
   </div>
   <div style="padding:32px 40px;">
     <h2 style="font-size:20px;font-weight:700;color:#1a1a2e;margin:0 0 12px;">Du wurdest eingeladen!</h2>
