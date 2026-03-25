@@ -9196,17 +9196,28 @@ window.adminDoRestore=function(){
   }
   keysToRemove.forEach(function(k){localStorage.removeItem(k);});
   // Restore all keys from backup
+  var batchItems=[];
   Object.keys(data).forEach(function(k){
     // Ensure key has prefix
     var storeKey=k.indexOf(PFX)===0?k:PFX+k;
-    try{
-      localStorage.setItem(storeKey,typeof data[k]==='string'?data[k]:JSON.stringify(data[k]));
-    }catch(e){}
+    var val=typeof data[k]==='string'?data[k]:JSON.stringify(data[k]);
+    try{localStorage.setItem(storeKey,val);}catch(e){}
+    batchItems.push({key:storeKey,value:val});
   });
   window._pendingRestore=null;
-  // Reload app
-  alert('Backup wurde erfolgreich wiederhergestellt. Die Seite wird neu geladen.');
-  location.reload();
+  // Sync all restored data to server
+  fetch('api/data.php?action=setBatch',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({items:batchItems}),
+    credentials:'same-origin'
+  }).then(function(){
+    alert('Backup wurde erfolgreich wiederhergestellt. Die Seite wird neu geladen.');
+    location.reload();
+  }).catch(function(){
+    alert('Backup lokal wiederhergestellt, aber Server-Sync fehlgeschlagen. Seite wird neu geladen.');
+    location.reload();
+  });
 };
 
 window.adminRenameProject=function(id,name){
