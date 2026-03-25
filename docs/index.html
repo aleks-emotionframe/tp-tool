@@ -2923,7 +2923,7 @@ var S={projects:[],pid:null,tasks:[],filtered:[],view:'dashboard',search:'',crit
 
 /* ─── HELPERS ─── */
 function $(id){return document.getElementById(id);}
-function esc(s){return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';}
+function esc(s){return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'):'';}
 function fmtDate(d){if(!d)return'\u2013';var p=d.split('-');return p.length===3?p[2]+'.'+p[1]+'.'+p[0]:d;}
 function fmtISO(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 function findTask(uid){for(var i=0;i<S.tasks.length;i++){if(S.tasks[i].uid===uid)return S.tasks[i];}return null;}
@@ -3006,14 +3006,14 @@ function _tryRestoreFromIDB(cb){
   // localStorage is empty — try IndexedDB
   _idbGetAll(function(data){
     if(!data||Object.keys(data).length===0){cb();return;}
-    console.log('Restoring '+Object.keys(data).length+' keys from IndexedDB backup...');
+    // Restoring from IndexedDB backup
     var restored=0;
     for(var key in data){
       if(key.indexOf(PFX)===0){
         try{localStorage.setItem(key,typeof data[key]==='string'?data[key]:JSON.stringify(data[key]));restored++;}catch(e){}
       }
     }
-    if(restored>0){console.log('Restored '+restored+' entries from IndexedDB backup.');}
+    // IndexedDB restore complete
     cb();
   });
 }
@@ -8770,6 +8770,7 @@ function getAllUsersWithProjects(){
 }
 
 window.openAdmin=function(){
+  if(!S.currentUser||S.currentUser.role!=='admin')return;
   trackUsage('action','action:admin_open');
   _pendingSettings=null;
   $('adminOverlay').classList.add('show');
@@ -9129,6 +9130,7 @@ window.adminHandleBackupFile=function(input){
 };
 
 window.adminDoRestore=function(){
+  if(!S.currentUser||S.currentUser.role!=='admin')return;
   if(!$('backupRestoreConfirm').checked){
     alert('Bitte bestätige mit dem Häkchen.');return;
   }
@@ -9956,6 +9958,7 @@ window.adminClearLogs=function(){
 };
 
 window.adminFactoryReset=function(){
+  if(!S.currentUser||S.currentUser.role!=='admin')return;
   var pw=prompt('Bitte Admin-Passwort eingeben um ALLE Daten zu l\u00f6schen:');
   if(!pw)return;
   var users=getUsers();
@@ -10708,8 +10711,6 @@ function _openMultiFieldModal(title,fields,callback){
 }
 
 /* ─── XML UPLOAD (topbar + drag & drop) ─── */
-var pendingXMLFile=null;
-
 function projectHasSchedule(){
   if(!S.pid)return false;
   var d=sGet('p_'+S.pid,{});
@@ -10757,7 +10758,6 @@ window.closeXmlReuploadModal=function(){
   $('xmlReuploadConfirm').checked=false;
   $('xmlReuploadPw').value='';
   $('xmlReuploadErr').style.display='none';
-  pendingXMLFile=null;
 };
 window.xmlReuploadStep2=function(){
   $('xmlReuploadStep1').style.display='none';
@@ -10977,7 +10977,7 @@ var BT_DATA_VERSION='2026-03-21-v2';
     }
     toRemove.forEach(function(k){localStorage.removeItem(k);});
     localStorage.setItem('bt_data_version',BT_DATA_VERSION);
-    console.log('UI cache cleared ('+toRemove.length+' keys) — data version '+BT_DATA_VERSION+'. User data preserved.');
+    // UI cache cleared
   }
 })();
 // Restore from IndexedDB if localStorage was wiped, then boot
