@@ -4620,6 +4620,9 @@ function _renderMyPendItem(p){
     if(!pu.length) html+='<div class="pend-move-option" style="color:var(--text3);cursor:default;">Keine Benutzer im Projekt</div>';
     html+='</div></div>';
   }
+  if(!isFromTP){
+    html+='<button class="pend-action-btn" onclick="editMyPendenz(\''+p.id+'\')" title="Bearbeiten"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>';
+  }
   if(!p.done&&(!(p.images)||p.images.length<2)){
     html+='<label class="pend-action-btn" title="Bild hinzuf\u00fcgen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><input type="file" accept="image/*" style="display:none;" onchange="uploadMyPendImage(\''+p.id+'\',this)"></label>';
   }
@@ -5010,6 +5013,7 @@ function _renderPendCard(p,isDone){
   if(!p.done){
     html+='<div class="pend-card-actions">';
     html+='<button class="pend-action-btn" onclick="toggleProjectPendenz(\''+p.id+'\')" title="Erledigt" style="width:auto;padding:3px 10px;gap:4px;font-size:11px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg> Erledigt</button>';
+    html+='<button class="pend-action-btn" onclick="editProjectPendenz(\''+p.id+'\')" title="Bearbeiten" style="width:auto;padding:3px 10px;gap:4px;font-size:11px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg> Bearbeiten</button>';
     if(!(p.images)||p.images.length<2){
       html+='<label class="pend-action-btn" title="Bild hinzuf\u00fcgen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg><input type="file" accept="image/*" style="display:none;" onchange="uploadPendImage(\''+p.id+'\',this)"></label>';
     }
@@ -5438,7 +5442,8 @@ window.editMyPendenz=function(id){
   if(!li)return;
   var textEl=li.querySelector('.pend-text');
   textEl.innerHTML='<input type="text" class="pend-edit-input" value="'+esc(item.text)+'">'
-    +'<input type="date" class="pend-edit-date" value="'+(item.due||'')+'">';
+    +'<input type="date" class="pend-edit-date" value="'+(item.startDate||'')+'" title="Startdatum">'
+    +'<input type="date" class="pend-edit-date" value="'+(item.due||'')+'" title="F\u00e4lligkeitsdatum">';
   var inp=textEl.querySelector('input[type=text]');
   inp.focus();
   var saved=false;
@@ -5446,7 +5451,9 @@ window.editMyPendenz=function(id){
     if(saved)return;saved=true;
     var nv=inp.value.trim();if(!nv)nv=item.text;
     item.text=nv;
-    item.due=textEl.querySelector('.pend-edit-date').value||'';
+    var dates=textEl.querySelectorAll('.pend-edit-date');
+    item.startDate=dates[0].value||'';
+    item.due=dates[1].value||'';
     saveMyPendenzen(list);renderMyPendenzen();
   };
   textEl.querySelectorAll('input').forEach(function(el){
@@ -5531,7 +5538,8 @@ window.editProjectPendenz=function(id){
   if(!card)return;
   var textEl=card.querySelector('.pend-card-text');
   textEl.innerHTML='<input type="text" class="pend-edit-input" value="'+esc(item.text)+'" style="width:100%;">'
-    +'<input type="date" class="pend-edit-date" value="'+(item.due||'')+'">';
+    +'<input type="date" class="pend-edit-date" value="'+(item.startDate||'')+'" title="Startdatum">'
+    +'<input type="date" class="pend-edit-date" value="'+(item.due||'')+'" title="F\u00e4lligkeitsdatum">';
   var inp=textEl.querySelector('input[type=text]');
   inp.focus();
   card.setAttribute('draggable','false');
@@ -5540,7 +5548,9 @@ window.editProjectPendenz=function(id){
     if(saved)return;saved=true;
     var nv=inp.value.trim();if(!nv)nv=item.text;
     item.text=nv;
-    item.due=textEl.querySelector('.pend-edit-date').value||'';
+    var dates=textEl.querySelectorAll('.pend-edit-date');
+    item.startDate=dates[0].value||'';
+    item.due=dates[1].value||'';
     saveProjectPendenzen(S.pid,list);renderProjectPendenzenView();
   };
   textEl.querySelectorAll('input').forEach(function(el){
