@@ -8744,51 +8744,33 @@ function renderAdminUsers(){
 }
 
 function renderAdminPermissions(){
-  var idx=getIdx(),c=$('adminTabPermissions');
-  if(!idx.length){
-    c.innerHTML='<div class="admin-empty-msg">Keine Projekte vorhanden.</div>';return;
-  }
+  var c=$('adminTabPermissions');
+  var roles=getRoles();
   var html='<div class="admin-section">'
-    +'<div class="admin-section-title">Berechtigungen pro Projekt</div>'
-    +'<p style="font-size:13px;color:var(--text3);margin-bottom:16px;">Lege fest, welche Rechte die Benutzer in jedem Projekt haben.</p>';
-  idx.forEach(function(p){
-    var d=sGet('p_'+p.id,{});
-    var users=d.users||[];
-    var perms=d.permissions||{};
-    html+='<div class="admin-card">'
-      +'<div class="admin-card-header"><div class="admin-card-title">'+esc(p.name)+'</div>'
-      +'<span class="admin-badge blue">'+users.length+' Benutzer</span></div>';
-    if(!users.length){
-      html+='<div style="font-size:13px;color:var(--text3);font-style:italic;padding:8px 0;">Keine Benutzer zugewiesen</div>';
-    } else {
-      users.forEach(function(u){
-        var uPerms=perms[u]||{};
-        var ini=u.split(' ').map(function(w){return w.charAt(0).toUpperCase();}).join('').substring(0,2);
-        html+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">'
-          +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
-          +'<span class="tag-avatar" style="width:24px;height:24px;font-size:10px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--orange-light);color:var(--orange);border:1px solid var(--orange);font-weight:700;">'+esc(ini)+'</span>'
-          +'<span style="font-size:13px;font-weight:600;">'+esc(u)+'</span>'
-          +'<select class="admin-role-select" onchange="adminSetRole(\''+p.id+'\',\''+esc(u).replace(/'/g,"\\'")+'\',this.value)">'
-          +'<option value="viewer"'+(uPerms._role==='viewer'?' selected':'')+'>Betrachter</option>'
-          +'<option value="editor"'+(!uPerms._role||uPerms._role==='editor'?' selected':'')+'>Bearbeiter</option>'
-          +'<option value="admin"'+(uPerms._role==='admin'?' selected':'')+'>Administrator</option>'
-          +getRoles().filter(function(r){return !r.system;}).map(function(r){return '<option value="'+esc(r.id)+'"'+(uPerms._role===r.id?' selected':'')+'>'+esc(r.name)+'</option>';}).join('')
-          +'</select>'
-          +'</div>'
-          +'<div class="admin-perm-grid">';
-        PERMS.forEach(function(pm){
-          var checked=uPerms[pm.key]!==false;
-          if(uPerms._role==='viewer')checked=pm.key==='export_xml';
-          if(uPerms._role==='admin')checked=true;
-          html+='<label class="admin-perm-item">'
-            +'<input type="checkbox" '+(checked?'checked ':'')+' onchange="adminTogglePerm(\''+p.id+'\',\''+esc(u).replace(/'/g,"\\'")+'\',\''+pm.key+'\',this.checked)">'
-            +pm.label+'</label>';
-        });
-        html+='</div></div>';
-      });
-    }
-    html+='</div>';
+    +'<div class="admin-section-title">Berechtigungen pro Rolle</div>'
+    +'<p style="font-size:13px;color:var(--text3);margin-bottom:16px;">Lege fest, welche Berechtigungen jede Rolle hat. Alle Benutzer mit dieser Rolle erhalten automatisch die entsprechenden Rechte.</p>';
+
+  roles.forEach(function(role){
+    var isAdmin=role.id==='admin';
+    var rPerms=role.permissions||{};
+    html+='<div class="admin-card" style="margin-bottom:16px;">'
+      +'<div class="admin-card-header">'
+      +'<div style="display:flex;align-items:center;gap:10px;">'
+      +'<span style="width:12px;height:12px;border-radius:50%;background:'+(role.color||'var(--orange)')+';display:inline-block;"></span>'
+      +'<div class="admin-card-title">'+esc(role.name)+'</div>'
+      +(role.system?'<span class="admin-badge" style="font-size:10px;">System</span>':'')
+      +'</div></div>'
+      +'<div class="admin-perm-grid">';
+    PERMS.forEach(function(pm){
+      var checked=isAdmin?true:(rPerms[pm.key]===true);
+      html+='<label class="admin-perm-item">'
+        +'<input type="checkbox" '+(checked?'checked ':'')+(isAdmin?'disabled ':'')
+        +' onchange="adminToggleRolePerm(\''+esc(role.id)+'\',\''+pm.key+'\',this.checked)">'
+        +pm.label+'</label>';
+    });
+    html+='</div></div>';
   });
+
   html+='</div>';
   c.innerHTML=html;
 }
@@ -9273,6 +9255,16 @@ window.adminTogglePerm=function(pid,user,key,val){
   var uPerms=perms[user]||{};
   uPerms[key]=val;
   perms[user]=uPerms;d.permissions=perms;sSet('p_'+pid,d);
+  renderAdminPermissions();
+};
+
+window.adminToggleRolePerm=function(roleId,key,val){
+  var roles=getRoles();
+  var role=roles.find(function(r){return r.id===roleId;});
+  if(!role)return;
+  if(!role.permissions)role.permissions={};
+  role.permissions[key]=val;
+  saveRoles(roles);
   renderAdminPermissions();
 };
 
