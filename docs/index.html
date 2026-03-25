@@ -2363,8 +2363,8 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 </head>
 <body>
 
-<!-- LOGIN -->
-<div class="login-screen" id="loginScreen">
+<!-- LOGIN (hidden by default, JS shows it if needed) -->
+<div class="login-screen" id="loginScreen" style="display:none;">
   <div class="login-hero">
     <div class="login-grid-overlay"></div>
     <div class="login-geo login-geo-1"></div>
@@ -3198,6 +3198,7 @@ function findUser(username){
 }
 
 function showLogin(){
+  $('loginScreen').style.display='';
   $('loginScreen').classList.remove('hidden');
   $('appScreen').classList.add('hidden');
   S.currentUser=null;
