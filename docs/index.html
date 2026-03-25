@@ -1116,13 +1116,13 @@ tr.task-highlight td { animation: rowPulse 1s ease-in-out 3; box-shadow: inset 3
   height: 3px;
 }
 .kpi-card.total::before { background: linear-gradient(90deg, var(--blue), #818cf8); }
-.kpi-card.critical::before { background: linear-gradient(90deg, var(--red), var(--orange)); }
+.kpi-card.critical::before { background: linear-gradient(90deg, var(--orange), var(--yellow)); }
 .kpi-card.progress::before { background: linear-gradient(90deg, var(--green), #4ade80); }
 .kpi-card.overdue::before { background: linear-gradient(90deg, var(--yellow), var(--orange)); }
 .kpi-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
 .kpi-value { font-size: 24px; font-weight: 800; margin-top: 3px; line-height: 1; }
 .kpi-card.total .kpi-value { color: var(--blue); }
-.kpi-card.critical .kpi-value { color: var(--red); }
+.kpi-card.critical .kpi-value { color: var(--orange); }
 .kpi-card.progress .kpi-value { color: var(--green); }
 .kpi-card.overdue .kpi-value { color: var(--yellow); }
 .kpi-sub { font-size: 10px; color: var(--text3); margin-top: 4px; }
@@ -2394,7 +2394,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         <div class="kpi-sub" id="kpiTotalSub">Keine Daten</div>
       </div>
       <div class="kpi-card critical">
-        <div class="kpi-label">Kritischer Pfad</div>
+        <div class="kpi-label">Offene Vorg&auml;nge</div>
         <div class="kpi-value" id="kpiCritical">0</div>
         <div class="kpi-bar"><div class="kpi-bar-fill" id="kpiCritBar" style="width:0;background:var(--red)"></div></div>
       </div>
@@ -4329,7 +4329,7 @@ function updateKPI(){
   }
   var work=tasks.filter(function(x){return!x.summary;});
   var total=work.length;
-  var crit=tasks.filter(function(x){return x.critical&&!x.summary;}).length;
+  var crit=work.filter(function(x){return (x.percentComplete||0)<100;}).length;
   var avgProg=0;work.forEach(function(x){avgProg+=x.percentComplete||0;});
   avgProg=total?Math.round(avgProg/total):0;
   var minD=null,maxD=null;
