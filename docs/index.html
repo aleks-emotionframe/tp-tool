@@ -4907,6 +4907,7 @@ function renderMyPendenzen(){
   html+='</div>';
   c.innerHTML=html;
   _initMyPendDrag();
+  setTimeout(function(){var i=$('pendMyInput');if(i)i.value='';},50);
 }
 
 function _initMyPendDrag(){
@@ -5175,6 +5176,7 @@ function renderProjectPendenzenView(){
   html+='</div>';
   c.innerHTML=html;
   _initPendDragDrop();
+  setTimeout(function(){var i=$('pendProjInput');if(i)i.value='';},50);
 }
 
 function _renderPendCard(p,isDone){
