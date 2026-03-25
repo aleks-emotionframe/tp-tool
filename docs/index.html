@@ -2766,6 +2766,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       Um BAUTERM nutzen zu k&ouml;nnen, ben&ouml;tigst du einen g&uuml;ltigen Lizenzcode.<br>
       Diesen erh&auml;ltst du von deinem Unternehmen oder Administrator.
     </p>
+    <div id="licenseGateMsg"></div>
     <div id="licenseGateError" style="display:none;color:var(--red);font-size:13px;font-weight:600;margin-bottom:12px;"></div>
     <input type="text" id="licenseGateInput" placeholder="Lizenzcode eingeben..." onkeydown="if(event.key==='Enter')submitLicenseCode();" style="width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font);font-size:15px;text-align:center;background:var(--surface);color:var(--text);letter-spacing:1px;text-transform:uppercase;outline:none;margin-bottom:16px;">
     <button onclick="submitLicenseCode()" style="width:100%;padding:14px;border-radius:var(--radius-sm);border:none;background:linear-gradient(135deg,var(--orange),var(--orange-dim));color:#fff;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:var(--transition);">Aktivieren</button>
@@ -8254,6 +8255,27 @@ function showLicenseGate(){
   if(input){input.value='';input.focus();}
   var errEl=$('licenseGateError');
   if(errEl){errEl.style.display='none';}
+  // Check if user had a license that expired
+  var username=S.currentUser?S.currentUser.username:'';
+  var licenses=getLicenses();
+  var expiredLic=null;
+  licenses.forEach(function(lic){
+    if(lic.users&&lic.users.indexOf(username)!==-1){
+      var expiry=new Date(lic.expiry+'T23:59:59');
+      if(new Date()>expiry)expiredLic=lic;
+    }
+  });
+  var msgEl=$('licenseGateMsg');
+  if(msgEl){
+    if(expiredLic){
+      msgEl.innerHTML='<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px;text-align:center;">'
+        +'<div style="font-size:14px;font-weight:700;color:var(--red);margin-bottom:4px;">Dein Testzugang ist abgelaufen</div>'
+        +'<div style="font-size:13px;color:var(--text3);">Abgelaufen am '+new Date(expiredLic.expiry).toLocaleDateString('de-CH')+'. Bitte kontaktiere deinen Administrator f\u00fcr eine Verl\u00e4ngerung.</div>'
+        +'</div>';
+    } else {
+      msgEl.innerHTML='';
+    }
+  }
 }
 
 /* ─── ADMIN: Lizenzen Tab ─── */
@@ -8319,10 +8341,10 @@ window.renderAdminLizenzen=function(){
       html+='</div>';
       html+='<div id="licInviteStatus_'+esc(lic.id)+'" style="margin-top:6px;font-size:11px;"></div>';
       html+='</div>';
-      // Details
-      html+='<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text3);">';
-      html+='<span>&#128101; <strong style="color:var(--text);">'+usedSeats+' / '+lic.seats+'</strong> Pl\u00e4tze belegt</span>';
-      html+='<span>&#128197; G\u00fcltig bis: <strong style="color:'+(expired?'var(--red)':'var(--text)')+';">'+new Date(lic.expiry).toLocaleDateString('de-CH')+'</strong></span>';
+      // Details (editable)
+      html+='<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text3);">';
+      html+='<span>&#128101; <strong style="color:var(--text);">'+usedSeats+' / </strong><input type="number" value="'+lic.seats+'" min="1" style="width:50px;padding:2px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;font-weight:700;color:var(--text);background:var(--surface);font-family:var(--font);" onchange="adminUpdateLicenseField(\''+esc(lic.id)+'\',\'seats\',parseInt(this.value)||1)"> Pl\u00e4tze</span>';
+      html+='<span>&#128197; G\u00fcltig bis: <input type="date" value="'+esc(lic.expiry)+'" style="padding:2px 6px;border:1px solid '+(expired?'var(--red)':'var(--border)')+';border-radius:4px;font-size:12px;font-weight:700;color:'+(expired?'var(--red)':'var(--text)')+';background:var(--surface);font-family:var(--font);" onchange="adminUpdateLicenseField(\''+esc(lic.id)+'\',\'expiry\',this.value)"></span>';
       html+='<span>Erstellt: '+new Date(lic.created).toLocaleDateString('de-CH')+'</span>';
       html+='</div>';
       // Show users
@@ -8417,6 +8439,15 @@ window.adminSendInvite=function(licId){
   .catch(function(){
     status.innerHTML='<span style="color:var(--red);">Fehler beim Senden. Bitte versuche es erneut.</span>';
   });
+};
+
+window.adminUpdateLicenseField=function(id,field,value){
+  var licenses=getLicenses();
+  for(var i=0;i<licenses.length;i++){
+    if(licenses[i].id===id){licenses[i][field]=value;break;}
+  }
+  saveLicenses(licenses);
+  renderAdminLizenzen();
 };
 
 window.adminRemoveLicenseUser=function(licId,username){
