@@ -2435,14 +2435,32 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         </svg>
         <h1>BAUTERM</h1>
       </div>
-      <p class="login-sub">Melde dich an, um fortzufahren</p>
-      <form id="loginForm">
-        <input class="login-input" type="text" id="loginUser" placeholder="E-Mail Adresse" autocomplete="username" autofocus>
-        <input class="login-input" type="password" id="loginPw" placeholder="Passwort" autocomplete="current-password" style="margin-top:8px;">
-        <button class="login-btn" type="submit">Einloggen</button>
-      </form>
-      <div class="login-error" id="loginErr">Falsches Passwort oder E-Mail</div>
-      <div style="text-align:center;margin-top:32px;font-size:11px;color:var(--text3);">&copy; 2026 BAUTERM &middot; Alle Rechte vorbehalten</div>
+      <!-- LOGIN FORM -->
+      <div id="loginPanel">
+        <p class="login-sub">Melde dich an, um fortzufahren</p>
+        <form id="loginForm">
+          <input class="login-input" type="text" id="loginUser" placeholder="E-Mail Adresse" autocomplete="username" autofocus>
+          <input class="login-input" type="password" id="loginPw" placeholder="Passwort" autocomplete="current-password" style="margin-top:8px;">
+          <button class="login-btn" type="submit">Einloggen</button>
+        </form>
+        <div class="login-error" id="loginErr">Falsches Passwort oder E-Mail</div>
+        <div style="text-align:center;margin-top:24px;font-size:12px;"><a href="#" onclick="showRegisterPanel();return false;" style="color:var(--orange);text-decoration:none;">Noch kein Konto? Registrieren</a></div>
+      </div>
+      <!-- REGISTER FORM -->
+      <div id="registerPanel" style="display:none;">
+        <p class="login-sub">Erstelle dein BAUTERM-Konto</p>
+        <form id="registerForm">
+          <input class="login-input" type="text" id="regName" placeholder="Vor- und Nachname" autocomplete="name">
+          <input class="login-input" type="email" id="regEmail" placeholder="E-Mail Adresse" autocomplete="email" style="margin-top:8px;">
+          <input class="login-input" type="password" id="regPw" placeholder="Passwort w&auml;hlen" autocomplete="new-password" style="margin-top:8px;">
+          <input class="login-input" type="password" id="regPw2" placeholder="Passwort best&auml;tigen" autocomplete="new-password" style="margin-top:8px;">
+          <input class="login-input" type="text" id="regCode" placeholder="Lizenzcode (z.B. AB12-CD34-EF56)" autocomplete="off" style="margin-top:8px;text-transform:uppercase;letter-spacing:1px;">
+          <button class="login-btn" type="submit">Konto erstellen</button>
+        </form>
+        <div class="login-error" id="regErr"></div>
+        <div style="text-align:center;margin-top:24px;font-size:12px;"><a href="#" onclick="showLoginPanel();return false;" style="color:var(--orange);text-decoration:none;">Bereits ein Konto? Anmelden</a></div>
+      </div>
+      <div style="text-align:center;margin-top:24px;font-size:11px;color:var(--text3);">&copy; 2026 BAUTERM &middot; Alle Rechte vorbehalten</div>
     </div>
   </div>
 </div>
@@ -3697,9 +3715,19 @@ function updateUserDisplay(){
   if(!el)return;
   if(S.currentUser){
     var dn=getUserDisplayName(S.currentUser);
+    var licBadge='';
+    if(S.currentUser.role!=='admin'){
+      var _uLic=_checkUserLicense(S.currentUser.username);
+      if(_uLic){
+        var _expD=new Date(_uLic.expiry+'T23:59:59');
+        var _daysLeft=Math.ceil((_expD-new Date())/(1000*60*60*24));
+        licBadge='<div style="font-size:9px;color:var(--orange);font-weight:600;margin-top:1px;">Testzugang \u00b7 noch '+_daysLeft+' Tag'+(_daysLeft!==1?'e':'')+'</div>';
+      }
+    }
     el.innerHTML=renderAvatar(S.currentUser,32)
       +'<div class="sidebar-user-info"><div class="sidebar-user-name">'+esc(dn)+'</div>'
-      +'<div class="sidebar-user-role">'+esc(getRoleDisplay(S.currentUser.role))+'</div></div>';
+      +'<div class="sidebar-user-role">'+esc(getRoleDisplay(S.currentUser.role))+'</div>'
+      +licBadge+'</div>';
     el.style.display='flex';
     // Show Admin Center only for admins, Mein Profil for others
     var apBtn=$('adminOrProfileBtn');
@@ -3780,6 +3808,114 @@ $('loginForm').addEventListener('submit',function(e){
     }
   });
 });
+// --- Register/Login Panel Switching ---
+window.showRegisterPanel=function(){
+  $('loginPanel').style.display='none';
+  $('registerPanel').style.display='';
+};
+window.showLoginPanel=function(){
+  $('registerPanel').style.display='none';
+  $('loginPanel').style.display='';
+};
+// Auto-show register if URL has ?register=CODE
+(function(){
+  var params=new URLSearchParams(window.location.search);
+  var regCode=params.get('register');
+  var regEmail=params.get('email');
+  if(regCode){
+    setTimeout(function(){
+      showRegisterPanel();
+      var ci=$('regCode');if(ci)ci.value=regCode;
+      var ei=$('regEmail');if(ei&&regEmail)ei.value=regEmail;
+    },100);
+  }
+})();
+
+// --- Registration ---
+$('registerForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  var name=$('regName').value.trim();
+  var email=$('regEmail').value.trim();
+  var pw=$('regPw').value;
+  var pw2=$('regPw2').value;
+  var code=$('regCode').value.trim().toUpperCase();
+  var errEl=$('regErr');
+  errEl.style.display='none';
+  function showErr(msg){errEl.textContent=msg;errEl.style.display='block';errEl.style.animation='none';requestAnimationFrame(function(){errEl.style.animation='';});}
+
+  if(!name){showErr('Bitte Namen eingeben.');return;}
+  if(!email||email.indexOf('@')<1){showErr('Bitte g\u00fcltige E-Mail eingeben.');return;}
+  if(!pw||pw.length<4){showErr('Passwort muss mindestens 4 Zeichen haben.');return;}
+  if(pw!==pw2){showErr('Passw\u00f6rter stimmen nicht \u00fcberein.');return;}
+  if(!code){showErr('Bitte Lizenzcode eingeben.');return;}
+
+  // Check if user already exists
+  var users=getUsers();
+  if(users.some(function(u){return u.username.toLowerCase()===email.toLowerCase();})){
+    showErr('Ein Konto mit dieser E-Mail existiert bereits.');return;
+  }
+  // Validate license code
+  var result=_validateLicenseCode(code);
+  if(!result.ok){showErr(result.msg);return;}
+
+  // Create user
+  var nameParts=name.split(' ');
+  var firstName=nameParts[0]||'';
+  var lastName=nameParts.slice(1).join(' ')||'';
+  var newUser={
+    username:email.toLowerCase(),
+    password:pw,
+    firstName:firstName,
+    lastName:lastName,
+    displayName:name,
+    role:'user',
+    firma:'',phone:'',email:email,avatar:null,locked:false
+  };
+  users.push(newUser);
+  saveUsers(users);
+
+  // Add user to license
+  var licenses=getLicenses();
+  var lic=licenses[result.index];
+  if(!lic.users)lic.users=[];
+  if(lic.users.indexOf(email.toLowerCase())===-1)lic.users.push(email.toLowerCase());
+  saveLicenses(licenses);
+
+  addLog('create','Benutzer registriert',email);
+
+  // Auto-login via server
+  fetch('api/auth.php?action=login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({username:email.toLowerCase(),password:pw}),
+    credentials:'same-origin'
+  })
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(res.success){
+      _loadFromServer(function(){
+        S.currentUser=findUser(email.toLowerCase())||newUser;
+        sSet('auth',true);sSet('currentUser',email.toLowerCase());
+        // Clean URL
+        window.history.replaceState({},'',window.location.pathname);
+        showApp();
+      });
+    } else {
+      // Fallback local login
+      S.currentUser=newUser;
+      sSet('auth',true);sSet('currentUser',email.toLowerCase());
+      window.history.replaceState({},'',window.location.pathname);
+      showApp();
+    }
+  })
+  .catch(function(){
+    S.currentUser=newUser;
+    sSet('auth',true);sSet('currentUser',email.toLowerCase());
+    window.history.replaceState({},'',window.location.pathname);
+    showApp();
+  });
+});
+
 window.doLogout=function(){
   addLog('login','hat sich abgemeldet');
   sSet('auth',false);sDel('currentUser');S.currentUser=null;
@@ -8133,6 +8269,15 @@ window.renderAdminLizenzen=function(){
       html+='<span style="font-family:monospace;font-size:18px;font-weight:700;letter-spacing:2px;color:var(--text);user-select:all;">'+esc(lic.code)+'</span>';
       html+='<button class="admin-btn" style="font-size:11px;" onclick="navigator.clipboard.writeText(\''+esc(lic.code)+'\');this.textContent=\'Kopiert!\';var b=this;setTimeout(function(){b.textContent=\'Kopieren\';},1500);">Kopieren</button>';
       html+='</div>';
+      // Email invite
+      html+='<div style="margin:10px 0;padding:12px 16px;background:var(--surface2);border-radius:var(--radius-xs);">';
+      html+='<div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">Per E-Mail einladen:</div>';
+      html+='<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+      html+='<input type="text" id="licInviteEmails_'+esc(lic.id)+'" placeholder="E-Mail Adressen (kommagetrennt)" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-family:var(--font);font-size:12px;background:var(--surface);color:var(--text);">';
+      html+='<button class="admin-btn" style="background:var(--orange);color:#fff;border-color:var(--orange);font-size:12px;" onclick="adminSendInvite(\''+esc(lic.id)+'\')">&#9993; Einladung senden</button>';
+      html+='</div>';
+      html+='<div id="licInviteStatus_'+esc(lic.id)+'" style="margin-top:6px;font-size:11px;"></div>';
+      html+='</div>';
       // Details
       html+='<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text3);">';
       html+='<span>&#128101; <strong style="color:var(--text);">'+usedSeats+' / '+lic.seats+'</strong> Pl\u00e4tze belegt</span>';
@@ -8199,6 +8344,38 @@ window.adminDeleteLicense=function(id){
   var licenses=getLicenses().filter(function(l){return l.id!==id;});
   saveLicenses(licenses);
   renderAdminLizenzen();
+};
+
+window.adminSendInvite=function(licId){
+  var lic=getLicenses().find(function(l){return l.id===licId;});
+  if(!lic)return;
+  var input=$('licInviteEmails_'+licId);
+  var status=$('licInviteStatus_'+licId);
+  var raw=(input?input.value:'').trim();
+  if(!raw){alert('Bitte E-Mail Adressen eingeben.');return;}
+  var emails=raw.split(/[,;\s]+/).filter(function(e){return e.indexOf('@')>0;});
+  if(!emails.length){alert('Keine g\u00fcltigen E-Mail Adressen gefunden.');return;}
+  status.innerHTML='<span style="color:var(--orange);">Sende '+emails.length+' Einladung'+(emails.length>1?'en':'')+'...</span>';
+  fetch('api/invite.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'send',emails:emails,code:lic.code,company:lic.company,expiry:lic.expiry}),
+    credentials:'same-origin'
+  })
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(res.sent&&res.sent.length){
+      status.innerHTML='<span style="color:var(--green);">&#10003; '+res.sent.length+' Einladung'+(res.sent.length>1?'en':'')+' gesendet!</span>';
+      if(input)input.value='';
+    }
+    if(res.failed&&res.failed.length){
+      var failMsg=res.failed.map(function(f){return f.email+' ('+f.reason+')';}).join(', ');
+      status.innerHTML+='<br><span style="color:var(--red);">Fehlgeschlagen: '+failMsg+'</span>';
+    }
+  })
+  .catch(function(){
+    status.innerHTML='<span style="color:var(--red);">Fehler beim Senden. Bitte versuche es erneut.</span>';
+  });
 };
 
 window.adminRemoveLicenseUser=function(licId,username){
