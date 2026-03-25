@@ -8293,7 +8293,7 @@ function renderAdminRoles(){
   var roles=getRoles(),users=getUsers(),c=$('adminTabRoles');
   var html='<div class="admin-section">'
     +'<div class="admin-section-title">Rollen verwalten ('+roles.length+')</div>'
-    +'<p style="font-size:13px;color:var(--text3);margin-bottom:16px;">Erstelle und verwalte Rollen mit individuellen Berechtigungen. Weise dann Benutzern die passende Rolle zu.</p>';
+    +'<p style="font-size:13px;color:var(--text3);margin-bottom:16px;">Erstelle und verwalte Rollen. Berechtigungen werden im Tab &laquo;Berechtigungen&raquo; festgelegt.</p>';
 
   // --- Create Role Card ---
   html+='<div class="create-user-card">'
@@ -8302,12 +8302,6 @@ function renderAdminRoles(){
     +'<div><label>Farbe</label><input type="hidden" id="nrColor" value="#6366f1">'
     +_roleColorGrid('#6366f1','nrColor')
     +'</div>'
-    +'<div style="margin-top:12px;"><label style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Berechtigungen</label>'
-    +'<div class="admin-perm-grid" style="margin-top:8px;">';
-  PERMS.forEach(function(pm){
-    html+='<label class="admin-perm-item"><input type="checkbox" id="nrPerm_'+pm.key+'"> '+pm.label+'</label>';
-  });
-  html+='</div></div>'
     +'<div class="create-user-actions">'
     +'<button class="admin-btn primary" onclick="adminCreateRole()">Rolle erstellen</button>'
     +'</div></div>';
@@ -8328,20 +8322,9 @@ function renderAdminRoles(){
       +(role.id==='admin'?'':'<button class="admin-btn danger" onclick="adminDeleteRole(\''+rEsc+'\')" style="padding:4px 10px;font-size:12px;">L\u00f6schen</button>')
       +'</div></div>';
 
-    // Permissions edit
-    html+='<div class="admin-card-body">'
-      +'<div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Berechtigungen</div>'
-      +'<div class="admin-perm-grid">';
-    PERMS.forEach(function(pm){
-      var checked=role.permissions[pm.key]===true;
-      html+='<label class="admin-perm-item">'
-        +'<input type="checkbox" '+(checked?'checked ':'')+' onchange="adminUpdateRolePerm(\''+rEsc+'\',\''+pm.key+'\',this.checked)">'
-        +pm.label+'</label>';
-    });
-    html+='</div>';
-
     // Inline rename + color swatches
-    html+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">'
+    html+='<div class="admin-card-body">'
+      +'<div style="">'
       +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">'
       +'<input class="admin-inline-edit" value="'+esc(role.name)+'" onchange="adminRenameRole(\''+rEsc+'\',this.value)" style="max-width:200px;padding:6px 10px;font-size:13px;">'
       +'</div>'
@@ -8400,15 +8383,11 @@ window.adminCreateRole=function(){
     id=id+'_'+Date.now().toString(36);
   }
   var permissions={};
-  PERMS.forEach(function(pm){
-    var el=$('nrPerm_'+pm.key);
-    permissions[pm.key]=el?el.checked:false;
-  });
+  PERMS.forEach(function(pm){permissions[pm.key]=false;});
   roles.push({id:id,name:name,color:color,system:false,permissions:permissions});
   saveRoles(roles);
   addLog('create','Rolle erstellt',name);
   var el=$('nrName');if(el)el.value='';
-  PERMS.forEach(function(pm){var cb=$('nrPerm_'+pm.key);if(cb)cb.checked=false;});
   renderAdminRoles();
 };
 
