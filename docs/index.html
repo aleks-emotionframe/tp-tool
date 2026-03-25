@@ -4582,6 +4582,12 @@ function _pendStartLabel(start){
   var label=d.toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit',year:'numeric'});
   return '<span class="pend-due" style="color:var(--text3);"><span class="pend-due-dot" style="background:var(--blue);"></span>'+label+'</span>';
 }
+function _pendCreatedLabel(created){
+  if(!created)return '';
+  var d=new Date(created);
+  var label=d.toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit',year:'numeric'});
+  return '<span style="font-size:10px;color:var(--text3);white-space:nowrap;" title="Er\u00f6ffnet am '+label+'">Er\u00f6ffnet: '+label+'</span>';
+}
 
 window.showPendenzenView=function(type){
   document.querySelectorAll('.sidebar-tab').forEach(function(x){x.classList.remove('active');});
@@ -4608,6 +4614,7 @@ function _renderMyPendItem(p){
   html+='<span class="pend-text"'+(isFromTP?'':' ondblclick="editMyPendenz(\''+p.id+'\')"')+'>'+esc(p.text)+'</span>';
   html+=_pendStartLabel(p.startDate);
   html+=_pendDueLabel(p.due);
+  html+=_pendCreatedLabel(p.created);
   if(S.pid){
     html+='<div class="pend-move-wrap">';
     html+='<button class="pend-move-btn" onclick="toggleMoveMenu(\''+p.id+'\')" title="Zum Jour Fixe verschieben">&#10140;</button>';
@@ -4994,10 +5001,12 @@ function _renderPendCard(p,isDone){
   html+='</div>';
   var startLbl=_pendStartLabel(p.startDate);
   var dueLbl=_pendDueLabel(p.due);
-  if(startLbl||dueLbl||(p.images&&p.images.length)){
+  var createdLbl=_pendCreatedLabel(p.created);
+  if(startLbl||dueLbl||createdLbl||(p.images&&p.images.length)){
     html+='<div class="pend-card-meta">';
     if(startLbl) html+=startLbl;
     if(dueLbl) html+=dueLbl;
+    if(createdLbl) html+=createdLbl;
     if(p.images&&p.images.length){
       p.images.forEach(function(img){
         html+='<img src="'+esc(img)+'" class="pend-thumb" onclick="event.stopPropagation();openLightbox(this.src)">';
