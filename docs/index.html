@@ -2426,7 +2426,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
   </div>
   <div class="login-side">
     <div class="login-card">
-      <div class="login-brand">
+      <div class="login-brand" id="loginBrand">
         <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
           <rect width="36" height="36" rx="8" fill="url(#g1)"/>
           <path d="M10 24V14l8-6 8 6v10H10z" fill="#fff" fill-opacity="0.9"/>
@@ -3820,16 +3820,19 @@ window.showRegisterPanel=function(){
     $('loginPanel').style.display='none';
     $('registerPanel').style.display='none';
     $('regDisabledPanel').style.display='';
+    $('loginBrand').style.display='none';
     return;
   }
   $('loginPanel').style.display='none';
   $('regDisabledPanel').style.display='none';
   $('registerPanel').style.display='';
+  $('loginBrand').style.display='';
 };
 window.showLoginPanel=function(){
   $('registerPanel').style.display='none';
   $('regDisabledPanel').style.display='none';
   $('loginPanel').style.display='';
+  $('loginBrand').style.display='';
 };
 // Auto-show register if URL has ?register=CODE
 (function(){
