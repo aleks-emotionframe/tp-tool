@@ -2393,9 +2393,8 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         <div class="kpi-value" id="kpiTotal">0</div>
         <div class="kpi-sub" id="kpiTotalSub">Keine Daten</div>
       </div>
-      <div class="kpi-card critical" style="overflow:hidden;">
-        <div class="kpi-label">Wetter (3 Tage)</div>
-        <div id="kpiWeather" style="display:flex;gap:6px;justify-content:center;align-items:center;min-height:38px;font-size:12px;color:var(--text3);">Laden...</div>
+      <div class="kpi-card critical" style="overflow:hidden;padding:0;">
+        <div id="kpiWeather" style="display:flex;min-height:82px;align-items:center;justify-content:center;font-size:12px;color:var(--text3);">Laden...</div>
       </div>
       <div class="kpi-card progress">
         <div class="kpi-label">Fortschritt</div>
@@ -4361,20 +4360,33 @@ function _renderWeather(el){
   if(!_weatherCache)return;
   var d=_weatherCache;
   var days=['So','Mo','Di','Mi','Do','Fr','Sa'];
-  var html='';
-  for(var i=0;i<3;i++){
+  // Today: big display
+  var todayIcon=_weatherIcon(d.weathercode[0]);
+  var todayHi=Math.round(d.temperature_2m_max[0]);
+  var todayLo=Math.round(d.temperature_2m_min[0]);
+  var todayLabel=_weatherLabel(d.weathercode[0]);
+  var html='<div style="flex:1;display:flex;align-items:center;gap:8px;padding:10px 14px;">';
+  html+='<div style="font-size:32px;line-height:1;">'+todayIcon+'</div>';
+  html+='<div>';
+  html+='<div style="font-size:20px;font-weight:800;color:var(--text);line-height:1;">'+todayHi+'\u00b0<span style="font-size:13px;font-weight:500;color:var(--text3);"> / '+todayLo+'\u00b0</span></div>';
+  html+='<div style="font-size:10px;color:var(--text3);margin-top:2px;">'+todayLabel+'</div>';
+  html+='</div></div>';
+  // Next 2 days: compact
+  html+='<div style="display:flex;flex-direction:column;gap:4px;padding:10px 14px 10px 0;border-left:1px solid var(--border);">';
+  for(var i=1;i<3;i++){
     var dt=new Date(d.time[i]+'T00:00:00');
-    var dayName=i===0?'Heute':days[dt.getDay()];
+    var dayName=days[dt.getDay()];
     var icon=_weatherIcon(d.weathercode[i]);
     var hi=Math.round(d.temperature_2m_max[i]);
     var lo=Math.round(d.temperature_2m_min[i]);
-    html+='<div style="text-align:center;flex:1;min-width:0;" title="'+_weatherLabel(d.weathercode[i])+'">';
-    html+='<div style="font-size:10px;font-weight:600;color:var(--text3);">'+dayName+'</div>';
-    html+='<div style="font-size:20px;line-height:1.2;">'+icon+'</div>';
-    html+='<div style="font-size:11px;font-weight:600;color:var(--text);">'+hi+'\u00b0</div>';
-    html+='<div style="font-size:10px;color:var(--text3);">'+lo+'\u00b0</div>';
+    html+='<div style="display:flex;align-items:center;gap:6px;padding-left:10px;" title="'+_weatherLabel(d.weathercode[i])+'">';
+    html+='<span style="font-size:10px;font-weight:600;color:var(--text3);min-width:18px;">'+dayName+'</span>';
+    html+='<span style="font-size:14px;">'+icon+'</span>';
+    html+='<span style="font-size:11px;font-weight:700;color:var(--text);">'+hi+'\u00b0</span>';
+    html+='<span style="font-size:10px;color:var(--text3);">'+lo+'\u00b0</span>';
     html+='</div>';
   }
+  html+='</div>';
   el.innerHTML=html;
 }
 
