@@ -3177,11 +3177,15 @@ function _renderClSlide(){
   }else{
     html+='<span></span>';
   }
-  html+='<div class="cl-nav-dots">';
-  for(var i=0;i<total;i++){
-    html+='<button class="cl-nav-dot'+(i===_clSlideIdx?' active':'')+'" onclick="clNavTo('+i+')"></button>';
+  if(total>1){
+    html+='<div class="cl-nav-dots">';
+    for(var i=0;i<total;i++){
+      html+='<button class="cl-nav-dot'+(i===_clSlideIdx?' active':'')+'" onclick="clNavTo('+i+')"></button>';
+    }
+    html+='</div>';
+  } else {
+    html+='<span></span>';
   }
-  html+='</div>';
   if(isLast){
     html+='<button class="cl-nav-btn cl-nav-next" onclick="closeChangelog()">Verstanden &#10003;</button>';
   }else{
