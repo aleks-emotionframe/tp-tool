@@ -4525,7 +4525,7 @@ function updateKPI(){
     $('kpiTotal').textContent='0';
     $('kpiProgress').textContent='0%';$('kpiDuration').textContent='-';
     $('kpiTotalSub').textContent='Keine Daten';$('kpiDurationSub').textContent='-';
-    $('kpiProgBar').style.width='0';loadWeather();return;
+    $('kpiProgBar').style.width='0';loadWeather();runKiAnalyse();return;
   }
   var work=tasks.filter(function(x){return!x.summary;});
   var total=work.length;
