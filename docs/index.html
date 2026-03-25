@@ -6276,6 +6276,9 @@ window.toggleFVTask=function(cardId,taskId){
   var list=_getFV();
   var card=list.find(function(v){return v.id===cardId;});
   if(!card)return;
+  // Only the substitute user or admin can toggle tasks
+  var curUser=S.currentUser?S.currentUser.username:'';
+  if(curUser!==card.vertretung&&S.currentUser&&S.currentUser.role!=='admin')return;
   var task=card.tasks.find(function(t){return t.id===taskId;});
   if(task)task.done=!task.done;
   _saveFV(list);
@@ -6428,7 +6431,8 @@ function _renderFVSection(projectUsers,ferien){
       html+='<ul class="fv-task-list">';
       card.tasks.forEach(function(task){
         html+='<li class="fv-task-item">';
-        html+='<div class="fv-task-check'+(task.done?' done':'')+'" onclick="toggleFVTask(\''+card.id+'\',\''+task.id+'\')">'+(task.done?'&#10003;':'')+'</div>';
+        var _canToggle=S.currentUser&&(S.currentUser.username===card.vertretung||S.currentUser.role==='admin');
+        html+='<div class="fv-task-check'+(task.done?' done':'')+'"'+(_canToggle?' onclick="toggleFVTask(\''+card.id+'\',\''+task.id+'\')"':' style="opacity:0.4;cursor:default;" title="Nur die Vertretung kann dies als erledigt markieren"')+'>'+(task.done?'&#10003;':'')+'</div>';
 
         html+='<div class="fv-task-main">';
         html+='<span class="fv-task-text'+(task.done?' done':'')+'">'+esc(task.text)+'</span>';
