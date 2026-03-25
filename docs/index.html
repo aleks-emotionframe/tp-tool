@@ -5032,12 +5032,10 @@ function _renderMyPendItem(p){
     html+='<div class="pend-move-wrap">';
     html+='<button class="pend-move-btn" onclick="toggleMoveMenu(\''+p.id+'\')" title="Zum Jour Fixe verschieben">&#10140;</button>';
     html+='<div class="pend-move-menu" id="moveMenu_'+p.id+'">';
-    var d=sGet('p_'+S.pid,{});var pu=d.users||[];
-    pu.forEach(function(uname){
-      var u=findUser(uname);var dn=u?getUserDisplayName(u):uname;
-      html+='<div class="pend-move-option" data-pid="'+p.id+'" data-assignee="'+esc(uname)+'" onclick="moveToJourFixe(this.dataset.pid,this.dataset.assignee)">'+esc(dn)+'</div>';
+    var _moveCols=_getJfCols(S.pid);
+    _moveCols.forEach(function(col){
+      html+='<div class="pend-move-option" data-pid="'+p.id+'" data-assignee="'+esc(col.id)+'" onclick="moveToJourFixe(this.dataset.pid,this.dataset.assignee)">'+esc(col.label)+'</div>';
     });
-    if(!pu.length) html+='<div class="pend-move-option" style="color:var(--text3);cursor:default;">Keine Benutzer im Projekt</div>';
     html+='</div></div>';
   }
   if(!isFromTP){
