@@ -9350,6 +9350,16 @@ function renderAdminBackup(){
     +'<div id="backupPreview" style="display:none;margin-top:16px;"></div>'
     +'</div></div>';
 
+  // Auto-Backups from server
+  html+='<div class="admin-card" style="margin-top:16px;">'
+    +'<div class="admin-card-header"><div class="admin-card-title">Automatische Server-Backups</div>'
+    +'<span class="admin-badge green">T\u00e4glich 03:00 Uhr</span></div>'
+    +'<div class="admin-card-body">'
+    +'<p style="font-size:13px;color:var(--text2);margin-bottom:12px;">Automatische Backups werden t\u00e4glich um 03:00 Uhr erstellt und 30 Tage aufbewahrt.</p>'
+    +'<button class="admin-btn primary" onclick="adminTriggerBackup()" style="margin-bottom:12px;">Jetzt manuelles Backup erstellen</button>'
+    +'<div id="autoBackupList" style="font-size:12px;color:var(--text3);">Lade Backup-Liste...</div>'
+    +'</div></div>';
+
   // Reupload log
   var logs=sGet('reupload_log',[]);
   if(logs.length){
@@ -9370,7 +9380,61 @@ function renderAdminBackup(){
 
   html+='</div>';
   c.innerHTML=html;
+  _loadAutoBackups();
 }
+
+// Load auto-backup list from server
+function _loadAutoBackups(){
+  var el=$('autoBackupList');if(!el)return;
+  fetch('api/backups-list.php?action=list',{credentials:'same-origin'})
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(!res.backups||!res.backups.length){
+      el.innerHTML='<div style="color:var(--text3);font-style:italic;">Noch keine automatischen Backups vorhanden.</div>';
+      return;
+    }
+    var html='<div style="max-height:300px;overflow-y:auto;">';
+    html+='<table style="width:100%;border-collapse:collapse;">';
+    html+='<thead><tr style="border-bottom:2px solid var(--border);">'
+      +'<th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text3);font-weight:600;">Datum</th>'
+      +'<th style="text-align:left;padding:6px 8px;font-size:11px;color:var(--text3);font-weight:600;">Datei</th>'
+      +'<th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text3);font-weight:600;">Gr\u00f6sse</th>'
+      +'<th style="text-align:right;padding:6px 8px;font-size:11px;color:var(--text3);font-weight:600;"></th>'
+      +'</tr></thead><tbody>';
+    res.backups.forEach(function(b){
+      var sizeKB=Math.round(b.size/1024);
+      var sizeStr=sizeKB>1024?(sizeKB/1024).toFixed(1)+' MB':sizeKB+' KB';
+      html+='<tr style="border-bottom:1px solid var(--border);">'
+        +'<td style="padding:6px 8px;font-size:12px;color:var(--text);">'+esc(b.dateFormatted)+'</td>'
+        +'<td style="padding:6px 8px;font-size:11px;color:var(--text3);font-family:monospace;">'+esc(b.name)+'</td>'
+        +'<td style="padding:6px 8px;font-size:11px;color:var(--text3);text-align:right;">'+sizeStr+'</td>'
+        +'<td style="padding:6px 8px;text-align:right;"><a href="api/backups-list.php?action=download&file='+encodeURIComponent(b.name)+'" style="color:var(--orange);font-size:11px;font-weight:600;text-decoration:none;">Herunterladen</a></td>'
+        +'</tr>';
+    });
+    html+='</tbody></table></div>';
+    html+='<div style="margin-top:8px;font-size:11px;color:var(--text3);">'+res.total+' Backup'+(res.total!==1?'s':'')+' gespeichert \u00b7 N\u00e4chstes: morgen 03:00 Uhr</div>';
+    el.innerHTML=html;
+  })
+  .catch(function(){
+    el.innerHTML='<div style="color:var(--text3);">Backup-Liste konnte nicht geladen werden.</div>';
+  });
+}
+window.adminTriggerBackup=function(){
+  var el=$('autoBackupList');
+  if(el)el.innerHTML='<div style="color:var(--orange);">Erstelle Backup...</div>';
+  fetch('api/backups-list.php?action=trigger',{credentials:'same-origin'})
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(res.success){
+      _loadAutoBackups();
+    } else {
+      if(el)el.innerHTML='<div style="color:var(--red);">Fehler: '+(res.error||'Unbekannt')+'</div>';
+    }
+  })
+  .catch(function(){
+    if(el)el.innerHTML='<div style="color:var(--red);">Backup fehlgeschlagen.</div>';
+  });
+};
 
 window.adminDownloadBackup=function(){
   addLog('backup','Backup heruntergeladen');
