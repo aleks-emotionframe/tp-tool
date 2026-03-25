@@ -1,0 +1,9 @@
+# Deny direct access to config
+<Files "config.php">
+    Deny from all
+</Files>
+
+# Deny direct access to init (only run manually)
+<Files "init.php">
+    Deny from all
+</Files>

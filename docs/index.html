@@ -2974,11 +2974,53 @@ function sSet(k,v){
   try{localStorage.setItem(PFX+k,json);}
   catch(e){
     console.error('localStorage write failed for key '+k,e);
-    alert('Speicherfehler! Der Browser-Speicher ist möglicherweise voll. Bitte exportiere deine Daten (Admin Center → Backup).');
+    alert('Speicherfehler! Der Browser-Speicher ist m\u00f6glicherweise voll. Bitte exportiere deine Daten (Admin Center \u2192 Backup).');
   }
   _idbSet(k,json);
+  // Sync to server (fire-and-forget)
+  _serverSync(PFX+k,json);
 }
-function sDel(k){localStorage.removeItem(PFX+k);_idbDel(k);}
+function sDel(k){localStorage.removeItem(PFX+k);_idbDel(k);
+  fetch('api/data.php?action=delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:PFX+k}),credentials:'same-origin'}).catch(function(){});
+}
+
+var _syncQueue=[],_syncTimer=null;
+function _serverSync(key,json){
+  _syncQueue.push({key:key,value:json});
+  if(!_syncTimer){
+    _syncTimer=setTimeout(_flushSync,300);
+  }
+}
+function _flushSync(){
+  _syncTimer=null;
+  if(!_syncQueue.length)return;
+  var items=_syncQueue.splice(0);
+  fetch('api/data.php?action=setBatch',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({items:items}),
+    credentials:'same-origin'
+  }).catch(function(){
+    // On failure, re-queue for retry
+    _syncQueue=items.concat(_syncQueue);
+    setTimeout(_flushSync,5000);
+  });
+}
+
+// Load all data from server into localStorage
+function _loadFromServer(cb){
+  fetch('api/data.php?action=getAll',{credentials:'same-origin'})
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(res.data){
+      Object.keys(res.data).forEach(function(key){
+        try{localStorage.setItem(key,res.data[key]);}catch(e){}
+      });
+    }
+    if(cb)cb(true);
+  })
+  .catch(function(){if(cb)cb(false);});
+}
 
 /* Seed IndexedDB with existing localStorage data (once) */
 function _seedIDB(){
@@ -3688,52 +3730,62 @@ $('loginForm').addEventListener('submit',function(e){
   e.preventDefault();
   var username=$('loginUser').value.trim();
   var pw=$('loginPw').value;
-  var user=findUser(username);
-  if(user&&user.password===pw){
-    if(user.locked){
-      $('loginErr').textContent='Dieser Account ist gesperrt.';
-      var el=$('loginErr');el.style.display='block';el.style.animation='none';
+  var btn=$('loginForm').querySelector('.login-btn');
+  btn.textContent='Anmelden...';btn.disabled=true;
+
+  fetch('api/auth.php?action=login',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({username:username,password:pw}),
+    credentials:'same-origin'
+  })
+  .then(function(r){return r.json().then(function(data){return{ok:r.ok,data:data};});})
+  .then(function(res){
+    if(!res.ok){
+      var el=$('loginErr');
+      el.textContent=res.data.error||'Falsches Passwort oder E-Mail';
+      el.style.display='block';el.style.animation='none';
       requestAnimationFrame(function(){el.style.animation='';});
+      btn.textContent='Einloggen';btn.disabled=false;
       return;
     }
-    if(getAppSettings().maintenanceMode&&user.role!=='admin'){
-      $('loginErr').textContent='Wartungsmodus aktiv. Nur Admins k\u00f6nnen sich anmelden.';
-      var el=$('loginErr');el.style.display='block';el.style.animation='none';
+    // Server login OK — load all data from server
+    _loadFromServer(function(){
+      S.currentUser=res.data.user;
+      // Also update local user reference from loaded users
+      var user=findUser(username);
+      if(user)S.currentUser=user;
+      sSet('auth',true);
+      sSet('currentUser',username);
+      addLog('login','hat sich angemeldet');
+      btn.textContent='Einloggen';btn.disabled=false;
+      showApp();
+    });
+  })
+  .catch(function(){
+    // Server not reachable — fallback to local login
+    var user=findUser(username);
+    if(user&&(user.password===pw||(user.password_hash&&false))){
+      sSet('auth',true);sSet('currentUser',user.username);
+      S.currentUser=user;
+      addLog('login','hat sich angemeldet (offline)');
+      btn.textContent='Einloggen';btn.disabled=false;
+      showApp();
+    } else {
+      var el=$('loginErr');
+      el.textContent='Falsches Passwort oder E-Mail';
+      el.style.display='block';el.style.animation='none';
       requestAnimationFrame(function(){el.style.animation='';});
-      return;
+      btn.textContent='Einloggen';btn.disabled=false;
     }
-    sSet('auth',true);
-    sSet('currentUser',user.username);
-    S.currentUser=user;
-    localStorage.removeItem('login_fails_'+username.toLowerCase());
-    addLog('login','hat sich angemeldet');
-    showApp();
-  } else {
-    addLog('login','Fehlgeschlagener Login-Versuch','Benutzername: '+username);
-    // Max login attempts check
-    var _maxAttempts=getAppSettings().maxLoginAttempts;
-    if(_maxAttempts&&_maxAttempts>0&&user){
-      var _failKey='login_fails_'+username.toLowerCase();
-      var _fails=(parseInt(localStorage.getItem(_failKey))||0)+1;
-      localStorage.setItem(_failKey,_fails);
-      if(_fails>=_maxAttempts){
-        var users=getUsers();
-        users.forEach(function(u){if(u.username.toLowerCase()===username.toLowerCase())u.locked=true;});
-        saveUsers(users);
-        addLog('settings','Account gesperrt nach '+_fails+' Fehlversuchen',username);
-        localStorage.removeItem(_failKey);
-        $('loginErr').textContent='Account wurde nach '+_fails+' Fehlversuchen gesperrt.';
-        var el=$('loginErr');el.style.display='block';el.style.animation='none';
-        requestAnimationFrame(function(){el.style.animation='';});
-        return;
-      }
-    }
-    $('loginErr').textContent='Falsches Passwort oder E-Mail';
-    var el=$('loginErr');el.style.display='block';el.style.animation='none';
-    requestAnimationFrame(function(){el.style.animation='';});
-  }
+  });
 });
-window.doLogout=function(){addLog('login','hat sich abgemeldet');sSet('auth',false);sDel('currentUser');S.currentUser=null;showLogin();};
+window.doLogout=function(){
+  addLog('login','hat sich abgemeldet');
+  sSet('auth',false);sDel('currentUser');S.currentUser=null;
+  fetch('api/auth.php?action=logout',{credentials:'same-origin'}).catch(function(){});
+  showLogin();
+};
 
 /* ─── PROJECTS ─── */
 function getIdx(){return sGet('idx',[]);}
@@ -11013,12 +11065,36 @@ _tryRestoreFromIDB(function(){
   });
   resetAutoLogout();
 
-  // Check auth and restore user
-  if(sGet('auth',false)){
-    var savedUsername=sGet('currentUser',null);
-    if(savedUsername){S.currentUser=findUser(savedUsername);}
-    showApp();
-  }else{showLogin();}
+  // Check server session, then restore user
+  fetch('api/auth.php?action=check',{credentials:'same-origin'})
+  .then(function(r){return r.json();})
+  .then(function(res){
+    if(res.loggedIn){
+      // Session valid — sync data from server then show app
+      _loadFromServer(function(){
+        var savedUsername=res.user.username||sGet('currentUser',null);
+        S.currentUser=findUser(savedUsername)||res.user;
+        sSet('auth',true);
+        sSet('currentUser',savedUsername);
+        showApp();
+      });
+    } else if(sGet('auth',false)){
+      // No server session but local auth — try local login (offline)
+      var savedUsername=sGet('currentUser',null);
+      if(savedUsername){S.currentUser=findUser(savedUsername);}
+      if(S.currentUser){showApp();}else{showLogin();}
+    } else {
+      showLogin();
+    }
+  })
+  .catch(function(){
+    // Server not reachable — fallback to local auth
+    if(sGet('auth',false)){
+      var savedUsername=sGet('currentUser',null);
+      if(savedUsername){S.currentUser=findUser(savedUsername);}
+      if(S.currentUser){showApp();}else{showLogin();}
+    } else {showLogin();}
+  });
 });
 
 })();
