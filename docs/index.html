@@ -387,6 +387,8 @@ body {
   animation: shake 0.4s ease;
 }
 @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+@keyframes rowPulse { 0%,100%{background:rgba(232,96,10,0.18);} 50%{background:rgba(232,96,10,0.35);} }
+tr.task-highlight td { animation: rowPulse 1s ease-in-out 3; box-shadow: inset 3px 0 0 var(--orange); }
 
 /* ═══════════════════════════════════════════
    APP LAYOUT
@@ -6826,12 +6828,8 @@ window.goToTaskInList=function(uid){
       var row=document.querySelector('tr[data-uid="'+uid+'"]');
       if(row){
         row.scrollIntoView({behavior:'smooth',block:'center'});
-        row.style.transition='background 0.3s';
-        row.style.background='rgba(255,140,50,0.15)';
-        setTimeout(function(){
-          row.style.transition='background 1s';
-          row.style.background='';
-        },2000);
+        row.classList.add('task-highlight');
+        setTimeout(function(){row.classList.remove('task-highlight');},4000);
       }
     },100);
   });
@@ -7109,9 +7107,8 @@ window.jumpToTask=function(uid){
       var row=document.querySelector('tr[data-uid="'+uid+'"]');
       if(row){
         row.scrollIntoView({behavior:'smooth',block:'center'});
-        row.style.transition='background 0.3s';
-        row.style.background='rgba(255,140,50,0.15)';
-        setTimeout(function(){row.style.transition='background 1s';row.style.background='';},2000);
+        row.classList.add('task-highlight');
+        setTimeout(function(){row.classList.remove('task-highlight');},4000);
       }
     },100);
   });
