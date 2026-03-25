@@ -4095,7 +4095,10 @@ function loadProjects(){
 function loadProject(id){
   var d=sGet('p_'+id,null);if(!d)return;
   trackUsage('action','action:project_switch');
-  S.pid=id;S.tasks=d.tasks||[];
+  S.pid=id;S.tasks=d.tasks||[];S.filtered=[];S.search='';S.critOnly=false;S.hideCompleted=false;
+  var si=$('searchInput');if(si)si.value='';
+  var cb=$('critToggle');if(cb)cb.checked=false;
+  var hc=$('hideCompleted');if(hc)hc.checked=false;
   sSet('lastPid_'+(S.currentUser?S.currentUser.username:''),id);
   var idx=getIdx(),p=idx.find(function(x){return x.id==id;});
   $('topTitle').textContent=p?p.name:'Projekt';
@@ -4105,6 +4108,8 @@ function loadProject(id){
   applyFilters();
   updateXmlUploadBtn();
   updateProjektPendBtn();
+  // Reset views that depend on project data
+  if(S.view==='dashboard')renderDashboard();
 }
 
 function userHasPerm(key){
@@ -4177,7 +4182,7 @@ function showEmpty(show){
   $('listView').style.display='none';
   $('ganttView').style.display='none';
   $('kpiStrip').style.display=show?'none':'grid';
-  $('kiAnalyseStrip').style.display=show?'none':'block';
+  if(show)$('kiAnalyseStrip').style.display='none';
   $('filterBar').style.display='none';
   if(!show){renderView();}
 }
@@ -4410,6 +4415,9 @@ function runKiAnalyse(){
   var total=insights.length;
 
   // Update badge
+  // Show strip now that we have data
+  strip.style.display='block';
+
   var badgeEl=document.getElementById('kiAnalyseBadge');
   var bodyEl=document.getElementById('kiAnalyseBody');
   if(badgeEl){
@@ -4704,7 +4712,7 @@ function renderView(){
     $('ferienView').style.display='block';
     renderFerien();
   }else{
-    if(S.pid){$('kpiStrip').style.display='grid';$('kiAnalyseStrip').style.display='block';}
+    if(S.pid){$('kpiStrip').style.display='grid';}
     if(S.view==='dashboard'){
       $('dashboardView').style.display='flex';
       $('contentArea').style.overflow='hidden';
