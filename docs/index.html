@@ -2446,6 +2446,13 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         <div class="login-error" id="loginErr">Falsches Passwort oder E-Mail</div>
         <div style="text-align:center;margin-top:24px;font-size:12px;"><a href="#" onclick="showRegisterPanel();return false;" style="color:var(--orange);text-decoration:none;">Noch kein Konto? Registrieren</a></div>
       </div>
+      <!-- REGISTRATION DISABLED -->
+      <div id="regDisabledPanel" style="display:none;text-align:center;padding:20px 0;">
+        <div style="font-size:48px;margin-bottom:16px;">&#128274;</div>
+        <h3 style="font-size:18px;font-weight:700;color:var(--text);margin-bottom:8px;">Registrierung noch nicht verf&uuml;gbar</h3>
+        <p style="font-size:14px;color:var(--text3);line-height:1.6;margin-bottom:24px;">Die Registrierung ist aktuell deaktiviert. BAUTERM befindet sich in der Closed Beta Phase.<br><br>Wenn du einen Einladungscode erhalten hast, wende dich bitte an deinen Administrator.</p>
+        <a href="#" onclick="showLoginPanel();return false;" style="color:var(--orange);text-decoration:none;font-size:13px;font-weight:600;">&#8592; Zur&uuml;ck zum Login</a>
+      </div>
       <!-- REGISTER FORM -->
       <div id="registerPanel" style="display:none;">
         <p class="login-sub">Erstelle dein BAUTERM-Konto</p>
@@ -3810,11 +3817,19 @@ $('loginForm').addEventListener('submit',function(e){
 });
 // --- Register/Login Panel Switching ---
 window.showRegisterPanel=function(){
+  if(!getAppSettings().registrationEnabled){
+    $('loginPanel').style.display='none';
+    $('registerPanel').style.display='none';
+    $('regDisabledPanel').style.display='';
+    return;
+  }
   $('loginPanel').style.display='none';
+  $('regDisabledPanel').style.display='none';
   $('registerPanel').style.display='';
 };
 window.showLoginPanel=function(){
   $('registerPanel').style.display='none';
+  $('regDisabledPanel').style.display='none';
   $('loginPanel').style.display='';
 };
 // Auto-show register if URL has ?register=CODE
@@ -10047,6 +10062,14 @@ function renderAdminSettings(){
     +'<div class="settings-row-desc">Sperrt die App f\u00fcr alle Nicht-Admins</div>'
     +'</div><div class="settings-row-control">'
     +'<label class="settings-toggle"><input type="checkbox"'+(s.maintenanceMode?' checked':'')+' onchange="adminUpdateSetting(\'maintenanceMode\',this.checked)">'
+    +'<span class="toggle-slider"></span></label></div></div>';
+
+  // Registration toggle
+  html+='<div class="settings-row"><div class="settings-row-info">'
+    +'<div class="settings-row-label">Registrierung aktivieren</div>'
+    +'<div class="settings-row-desc">Erlaubt neuen Benutzern sich mit Lizenzcode zu registrieren</div>'
+    +'</div><div class="settings-row-control">'
+    +'<label class="settings-toggle"><input type="checkbox"'+(s.registrationEnabled?' checked':'')+' onchange="adminUpdateSetting(\'registrationEnabled\',this.checked)">'
     +'<span class="toggle-slider"></span></label></div></div>';
 
   // Debug mode
