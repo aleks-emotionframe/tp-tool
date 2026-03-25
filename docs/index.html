@@ -1116,7 +1116,7 @@ tr.task-highlight td { animation: rowPulse 1s ease-in-out 3; box-shadow: inset 3
   height: 3px;
 }
 .kpi-card.total::before { background: linear-gradient(90deg, var(--blue), #818cf8); }
-.kpi-card.critical::before { background: linear-gradient(90deg, var(--orange), var(--yellow)); }
+.kpi-card.critical::before { background: linear-gradient(90deg, #87CEEB, #4FC3F7); }
 .kpi-card.progress::before { background: linear-gradient(90deg, var(--green), #4ade80); }
 .kpi-card.overdue::before { background: linear-gradient(90deg, var(--yellow), var(--orange)); }
 .kpi-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
@@ -2393,10 +2393,9 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
         <div class="kpi-value" id="kpiTotal">0</div>
         <div class="kpi-sub" id="kpiTotalSub">Keine Daten</div>
       </div>
-      <div class="kpi-card critical">
-        <div class="kpi-label">Offene Vorg&auml;nge</div>
-        <div class="kpi-value" id="kpiCritical">0</div>
-        <div class="kpi-bar"><div class="kpi-bar-fill" id="kpiCritBar" style="width:0;background:var(--red)"></div></div>
+      <div class="kpi-card critical" style="overflow:hidden;">
+        <div class="kpi-label">Wetter (3 Tage)</div>
+        <div id="kpiWeather" style="display:flex;gap:6px;justify-content:center;align-items:center;min-height:38px;font-size:12px;color:var(--text3);">Laden...</div>
       </div>
       <div class="kpi-card progress">
         <div class="kpi-label">Fortschritt</div>
@@ -4318,18 +4317,78 @@ function runKiAnalyse(){
   if(bodyEl)bodyEl.innerHTML=html;
 }
 
+/* ─── WEATHER ─── */
+var _weatherCache=null,_weatherCacheTime=0;
+function _weatherIcon(code){
+  if(code===0)return '\u2600\ufe0f';
+  if(code<=3)return '\u26c5';
+  if(code<=48)return '\ud83c\udf2b\ufe0f';
+  if(code<=67)return '\ud83c\udf27\ufe0f';
+  if(code<=77)return '\u2744\ufe0f';
+  if(code<=82)return '\ud83c\udf26\ufe0f';
+  if(code<=86)return '\ud83c\udf28\ufe0f';
+  return '\u26a1';
+}
+function _weatherLabel(code){
+  if(code===0)return 'Klar';
+  if(code<=3)return 'Bew\u00f6lkt';
+  if(code<=48)return 'Nebel';
+  if(code<=55)return 'Nieselregen';
+  if(code<=67)return 'Regen';
+  if(code<=77)return 'Schnee';
+  if(code<=82)return 'Schauer';
+  if(code<=86)return 'Schneeschauer';
+  return 'Gewitter';
+}
+function loadWeather(){
+  var el=$('kpiWeather');if(!el)return;
+  // Cache for 30min
+  if(_weatherCache&&Date.now()-_weatherCacheTime<1800000){_renderWeather(el);return;}
+  // Get location from app settings or default to Zurich
+  var s=getAppSettings();
+  var lat=s.weatherLat||47.38;
+  var lon=s.weatherLon||8.54;
+  var url='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe%2FZurich&forecast_days=3';
+  fetch(url).then(function(r){return r.json();}).then(function(data){
+    _weatherCache=data.daily;
+    _weatherCacheTime=Date.now();
+    _renderWeather(el);
+  }).catch(function(){
+    el.innerHTML='<span style="font-size:11px;color:var(--text3);">Wetter nicht verf\u00fcgbar</span>';
+  });
+}
+function _renderWeather(el){
+  if(!_weatherCache)return;
+  var d=_weatherCache;
+  var days=['So','Mo','Di','Mi','Do','Fr','Sa'];
+  var html='';
+  for(var i=0;i<3;i++){
+    var dt=new Date(d.time[i]+'T00:00:00');
+    var dayName=i===0?'Heute':days[dt.getDay()];
+    var icon=_weatherIcon(d.weathercode[i]);
+    var hi=Math.round(d.temperature_2m_max[i]);
+    var lo=Math.round(d.temperature_2m_min[i]);
+    html+='<div style="text-align:center;flex:1;min-width:0;" title="'+_weatherLabel(d.weathercode[i])+'">';
+    html+='<div style="font-size:10px;font-weight:600;color:var(--text3);">'+dayName+'</div>';
+    html+='<div style="font-size:20px;line-height:1.2;">'+icon+'</div>';
+    html+='<div style="font-size:11px;font-weight:600;color:var(--text);">'+hi+'\u00b0</div>';
+    html+='<div style="font-size:10px;color:var(--text3);">'+lo+'\u00b0</div>';
+    html+='</div>';
+  }
+  el.innerHTML=html;
+}
+
 /* ─── KPI ─── */
 function updateKPI(){
   var tasks=S.tasks;
   if(!tasks.length){
-    $('kpiTotal').textContent='0';$('kpiCritical').textContent='0';
+    $('kpiTotal').textContent='0';
     $('kpiProgress').textContent='0%';$('kpiDuration').textContent='-';
     $('kpiTotalSub').textContent='Keine Daten';$('kpiDurationSub').textContent='-';
-    $('kpiCritBar').style.width='0';$('kpiProgBar').style.width='0';return;
+    $('kpiProgBar').style.width='0';loadWeather();return;
   }
   var work=tasks.filter(function(x){return!x.summary;});
   var total=work.length;
-  var crit=work.filter(function(x){return (x.percentComplete||0)<100;}).length;
   var avgProg=0;work.forEach(function(x){avgProg+=x.percentComplete||0;});
   avgProg=total?Math.round(avgProg/total):0;
   var minD=null,maxD=null;
@@ -4340,8 +4399,7 @@ function updateKPI(){
   var dur=minD&&maxD?Math.ceil((maxD-minD)/86400000):0;
   $('kpiTotal').textContent=total;
   $('kpiTotalSub').textContent=tasks.filter(function(x){return x.summary;}).length+' Sammelvorg\u00e4nge';
-  $('kpiCritical').textContent=crit;
-  $('kpiCritBar').style.width=total?(crit/total*100)+'%':'0';
+  loadWeather();
   $('kpiProgress').textContent=avgProg+'%';
   $('kpiProgBar').style.width=avgProg+'%';
   $('kpiDuration').textContent=dur+' Tage';
