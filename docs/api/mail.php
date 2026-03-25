@@ -100,7 +100,7 @@ function buildInviteEmail($company, $code, $expiry, $registerUrl) {
   </div>
   <div style="padding:32px 40px;">
     <h2 style="font-size:20px;font-weight:700;color:#1a1a2e;margin:0 0 12px;">Du wurdest eingeladen!</h2>
-    <p style="font-size:15px;color:#555;line-height:1.6;margin:0 0 20px;">' . htmlspecialchars($company) . ' hat dir einen Testzugang f&uuml;r BAUTERM freigeschaltet. Erstelle jetzt dein Konto und starte sofort.</p>
+    <p style="font-size:15px;color:#555;line-height:1.6;margin:0 0 20px;">' . htmlspecialchars($company) . ' hat dir einen Zugang zu BAUTERM freigeschaltet. Erstelle jetzt dein Konto und starte sofort.</p>
     <div style="background:#f8f8fa;border-radius:12px;padding:16px 20px;margin-bottom:24px;">
       <div style="font-size:11px;color:#888;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:4px;">Dein Lizenzcode</div>
       <div style="font-size:22px;font-weight:800;letter-spacing:2px;color:#e8600a;font-family:monospace;">' . htmlspecialchars($code) . '</div>
