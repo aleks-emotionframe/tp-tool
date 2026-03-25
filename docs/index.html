@@ -2519,6 +2519,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <button class="admin-tab" onclick="switchAdminTab('analytics',this)">Nutzungsanalyse</button>
       <button class="admin-tab" onclick="switchAdminTab('changelog',this)">Changelog</button>
       <button class="admin-tab" onclick="switchAdminTab('testaufgaben',this)" id="adminTabBtnFeedback">Feedback</button>
+      <button class="admin-tab" onclick="switchAdminTab('lizenzen',this)">Lizenzen</button>
     </div>
 
     <!-- TAB: Projekte -->
@@ -2550,6 +2551,9 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 
     <!-- TAB: Testaufgaben -->
     <div class="admin-tab-content" id="adminTabTestaufgaben" style="display:none"></div>
+
+    <!-- TAB: Lizenzen -->
+    <div class="admin-tab-content" id="adminTabLizenzen" style="display:none"></div>
   </div>
 </div>
 
@@ -2609,6 +2613,22 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     <div class="modal-btns">
       <button class="btn-primary" onclick="closeFeedbackReplyModal()">Verstanden</button>
     </div>
+  </div>
+</div>
+
+<!-- LICENSE GATE SCREEN -->
+<div id="licenseGateScreen" style="display:none;position:fixed;inset:0;z-index:2000;background:var(--bg);align-items:center;justify-content:center;">
+  <div style="text-align:center;max-width:440px;width:90vw;padding:40px;">
+    <div style="font-size:48px;margin-bottom:16px;">&#128274;</div>
+    <h2 style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px;">Lizenz erforderlich</h2>
+    <p style="color:var(--text3);font-size:14px;margin-bottom:24px;line-height:1.5;">
+      Um BAUTERM nutzen zu k&ouml;nnen, ben&ouml;tigst du einen g&uuml;ltigen Lizenzcode.<br>
+      Diesen erh&auml;ltst du von deinem Unternehmen oder Administrator.
+    </p>
+    <div id="licenseGateError" style="display:none;color:var(--red);font-size:13px;font-weight:600;margin-bottom:12px;"></div>
+    <input type="text" id="licenseGateInput" placeholder="Lizenzcode eingeben..." onkeydown="if(event.key==='Enter')submitLicenseCode();" style="width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font);font-size:15px;text-align:center;background:var(--surface);color:var(--text);letter-spacing:1px;text-transform:uppercase;outline:none;margin-bottom:16px;">
+    <button onclick="submitLicenseCode()" style="width:100%;padding:14px;border-radius:var(--radius-sm);border:none;background:linear-gradient(135deg,var(--orange),var(--orange-dim));color:#fff;font-family:var(--font);font-size:15px;font-weight:700;cursor:pointer;transition:var(--transition);">Aktivieren</button>
+    <button onclick="logoutFromLicenseGate()" style="margin-top:12px;background:none;border:none;color:var(--text3);font-family:var(--font);font-size:12px;cursor:pointer;text-decoration:underline;">Abmelden</button>
   </div>
 </div>
 
@@ -3417,6 +3437,11 @@ window.clReleaseAll=function(){
 
 function showApp(){
   $('loginScreen').classList.add('hidden');
+  // License check (admin bypasses)
+  if(S.currentUser&&S.currentUser.role!=='admin'){
+    var lic=_checkUserLicense(S.currentUser.username);
+    if(!lic){showLicenseGate();return;}
+  }
   $('appScreen').classList.remove('hidden');
   updateUserDisplay();
   // Restore last view
@@ -7664,6 +7689,221 @@ window.closeFeedbackReplyModal=function(){
   $('feedbackReplyModal').classList.remove('show');
 };
 
+/* ═══════════════════════════════════════════════════
+   LICENSE / SUBSCRIPTION SYSTEM
+   ═══════════════════════════════════════════════════ */
+function getLicenses(){return sGet('licenses',[]);}
+function saveLicenses(l){sSet('licenses',l);}
+
+function _generateLicenseCode(){
+  var chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var parts=[];
+  for(var p=0;p<3;p++){
+    var s='';
+    for(var i=0;i<4;i++)s+=chars[Math.floor(Math.random()*chars.length)];
+    parts.push(s);
+  }
+  return parts.join('-');
+}
+
+function _checkUserLicense(username){
+  if(!username)return null;
+  var licenses=getLicenses();
+  var now=new Date();
+  for(var i=0;i<licenses.length;i++){
+    var lic=licenses[i];
+    if(!lic.active)continue;
+    var expiry=new Date(lic.expiry+'T23:59:59');
+    if(now>expiry)continue;
+    if(lic.users&&lic.users.indexOf(username)!==-1)return lic;
+  }
+  return null;
+}
+
+function _validateLicenseCode(code){
+  var licenses=getLicenses();
+  var now=new Date();
+  for(var i=0;i<licenses.length;i++){
+    var lic=licenses[i];
+    if(lic.code!==code.toUpperCase().trim())continue;
+    if(!lic.active)return{ok:false,msg:'Dieser Lizenzcode ist deaktiviert.'};
+    var expiry=new Date(lic.expiry+'T23:59:59');
+    if(now>expiry)return{ok:false,msg:'Dieser Lizenzcode ist am '+new Date(lic.expiry).toLocaleDateString('de-CH')+' abgelaufen.'};
+    var usedSeats=(lic.users||[]).length;
+    if(usedSeats>=lic.seats)return{ok:false,msg:'Alle '+lic.seats+' Pl\u00e4tze dieses Codes sind bereits belegt.'};
+    return{ok:true,license:lic,index:i};
+  }
+  return{ok:false,msg:'Ung\u00fcltiger Lizenzcode.'};
+}
+
+window.submitLicenseCode=function(){
+  var input=$('licenseGateInput');
+  var errEl=$('licenseGateError');
+  var code=(input?input.value:'').trim();
+  if(!code){errEl.textContent='Bitte einen Code eingeben.';errEl.style.display='block';return;}
+  var result=_validateLicenseCode(code);
+  if(!result.ok){errEl.textContent=result.msg;errEl.style.display='block';return;}
+  // Add user to license
+  var licenses=getLicenses();
+  var lic=licenses[result.index];
+  if(!lic.users)lic.users=[];
+  var username=S.currentUser.username;
+  if(lic.users.indexOf(username)===-1)lic.users.push(username);
+  saveLicenses(licenses);
+  // Hide gate, show app
+  $('licenseGateScreen').style.display='none';
+  $('appScreen').classList.remove('hidden');
+  showApp();
+};
+
+window.logoutFromLicenseGate=function(){
+  S.currentUser=null;
+  $('licenseGateScreen').style.display='none';
+  $('loginScreen').classList.remove('hidden');
+};
+
+function showLicenseGate(){
+  $('appScreen').classList.add('hidden');
+  var gate=$('licenseGateScreen');
+  gate.style.display='flex';
+  var input=$('licenseGateInput');
+  if(input){input.value='';input.focus();}
+  var errEl=$('licenseGateError');
+  if(errEl){errEl.style.display='none';}
+}
+
+/* ─── ADMIN: Lizenzen Tab ─── */
+window.renderAdminLizenzen=function(){
+  var c=$('adminTabLizenzen');
+  var licenses=getLicenses();
+  var now=new Date();
+  var html='<div class="admin-section">';
+
+  // Create new license
+  html+='<div class="admin-section-title">Neue Lizenz erstellen</div>';
+  html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:20px;">';
+  html+='<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:end;">';
+  html+='<div style="flex:2;min-width:180px;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;">Firmenname</label>';
+  html+='<input type="text" id="licNewCompany" placeholder="z.B. Muster AG" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-family:var(--font);font-size:14px;background:var(--surface2);color:var(--text);"></div>';
+  html+='<div style="flex:1;min-width:100px;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;">Pl\u00e4tze</label>';
+  html+='<input type="number" id="licNewSeats" value="5" min="1" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-family:var(--font);font-size:14px;background:var(--surface2);color:var(--text);"></div>';
+  html+='<div style="flex:1;min-width:140px;"><label style="display:block;font-size:11px;color:var(--text3);margin-bottom:4px;font-weight:600;">G\u00fcltig bis</label>';
+  // Default: 3 months from now
+  var def=new Date();def.setMonth(def.getMonth()+3);
+  var defStr=def.toISOString().substring(0,10);
+  html+='<input type="date" id="licNewExpiry" value="'+defStr+'" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-xs);font-family:var(--font);font-size:14px;background:var(--surface2);color:var(--text);"></div>';
+  html+='<button class="admin-btn" style="background:var(--orange);color:#fff;border-color:var(--orange);padding:10px 20px;font-size:14px;font-weight:600;" onclick="adminCreateLicense()">Erstellen</button>';
+  html+='</div></div>';
+
+  // List licenses
+  html+='<div class="admin-section-title">Alle Lizenzen ('+licenses.length+')</div>';
+  if(licenses.length===0){
+    html+='<div class="admin-empty-msg">Noch keine Lizenzen erstellt.</div>';
+  } else {
+    licenses.slice().reverse().forEach(function(lic){
+      var expiry=new Date(lic.expiry+'T23:59:59');
+      var expired=now>expiry;
+      var usedSeats=(lic.users||[]).length;
+      var statusColor=!lic.active?'var(--text3)':expired?'var(--red)':'var(--green)';
+      var statusText=!lic.active?'Deaktiviert':expired?'Abgelaufen':'Aktiv';
+      html+='<div class="ta-task-card" style="position:relative;'+((!lic.active||expired)?'opacity:0.7;':'')+'">';
+      html+='<div class="ta-task-header">';
+      html+='<span class="admin-badge" style="background:'+statusColor+'15;color:'+statusColor+';border-color:'+statusColor+'30;">'+statusText+'</span>';
+      html+='<div class="ta-task-title">'+esc(lic.company)+'</div>';
+      html+='<div style="display:flex;gap:6px;">';
+      if(lic.active){
+        html+='<button class="admin-btn" style="font-size:12px;" onclick="adminToggleLicense(\''+esc(lic.id)+'\',false)">Deaktivieren</button>';
+      } else {
+        html+='<button class="admin-btn" style="font-size:12px;" onclick="adminToggleLicense(\''+esc(lic.id)+'\',true)">Aktivieren</button>';
+      }
+      html+='<button class="admin-btn danger" style="font-size:12px;" onclick="adminDeleteLicense(\''+esc(lic.id)+'\')">L\u00f6schen</button>';
+      html+='</div></div>';
+      // Code display
+      html+='<div style="margin:10px 0;padding:12px 16px;background:var(--surface2);border-radius:var(--radius-xs);display:flex;align-items:center;gap:12px;">';
+      html+='<span style="font-family:monospace;font-size:18px;font-weight:700;letter-spacing:2px;color:var(--text);user-select:all;">'+esc(lic.code)+'</span>';
+      html+='<button class="admin-btn" style="font-size:11px;" onclick="navigator.clipboard.writeText(\''+esc(lic.code)+'\');this.textContent=\'Kopiert!\';var b=this;setTimeout(function(){b.textContent=\'Kopieren\';},1500);">Kopieren</button>';
+      html+='</div>';
+      // Details
+      html+='<div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--text3);">';
+      html+='<span>&#128101; <strong style="color:var(--text);">'+usedSeats+' / '+lic.seats+'</strong> Pl\u00e4tze belegt</span>';
+      html+='<span>&#128197; G\u00fcltig bis: <strong style="color:'+(expired?'var(--red)':'var(--text)')+';">'+new Date(lic.expiry).toLocaleDateString('de-CH')+'</strong></span>';
+      html+='<span>Erstellt: '+new Date(lic.created).toLocaleDateString('de-CH')+'</span>';
+      html+='</div>';
+      // Show users
+      if(lic.users&&lic.users.length>0){
+        html+='<div style="margin-top:10px;padding:10px 14px;background:var(--surface2);border-radius:var(--radius-xs);">';
+        html+='<div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:6px;">Registrierte Benutzer:</div>';
+        var users=getUsers();
+        lic.users.forEach(function(uname){
+          var user=users.find(function(u){return u.username===uname;});
+          var displayName=user?(user.displayName||user.username):uname;
+          html+='<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:var(--surface);border:1px solid var(--border);border-radius:12px;font-size:11px;margin:2px 4px 2px 0;color:var(--text);">';
+          html+=esc(displayName);
+          html+='<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 2px;line-height:1;" onclick="adminRemoveLicenseUser(\''+esc(lic.id)+'\',\''+esc(uname)+'\')" title="Entfernen">&times;</button>';
+          html+='</span>';
+        });
+        html+='</div>';
+      }
+      html+='</div>';
+    });
+  }
+  html+='</div>';
+  c.innerHTML=html;
+};
+
+window.adminCreateLicense=function(){
+  var company=($('licNewCompany')||{}).value;
+  var seats=parseInt(($('licNewSeats')||{}).value)||5;
+  var expiry=($('licNewExpiry')||{}).value;
+  if(!company||!company.trim()){alert('Bitte Firmenname eingeben.');return;}
+  if(!expiry){alert('Bitte Ablaufdatum w\u00e4hlen.');return;}
+  var licenses=getLicenses();
+  var code=_generateLicenseCode();
+  // Ensure unique code
+  while(licenses.some(function(l){return l.code===code;}))code=_generateLicenseCode();
+  licenses.push({
+    id:'lic_'+Date.now(),
+    code:code,
+    company:company.trim(),
+    seats:seats,
+    expiry:expiry,
+    active:true,
+    users:[],
+    created:new Date().toISOString()
+  });
+  saveLicenses(licenses);
+  renderAdminLizenzen();
+};
+
+window.adminToggleLicense=function(id,active){
+  var licenses=getLicenses();
+  for(var i=0;i<licenses.length;i++){
+    if(licenses[i].id===id){licenses[i].active=active;break;}
+  }
+  saveLicenses(licenses);
+  renderAdminLizenzen();
+};
+
+window.adminDeleteLicense=function(id){
+  if(!confirm('Lizenz wirklich l\u00f6schen? Alle zugeordneten Benutzer verlieren den Zugang.'))return;
+  var licenses=getLicenses().filter(function(l){return l.id!==id;});
+  saveLicenses(licenses);
+  renderAdminLizenzen();
+};
+
+window.adminRemoveLicenseUser=function(licId,username){
+  if(!confirm('Benutzer von dieser Lizenz entfernen?'))return;
+  var licenses=getLicenses();
+  for(var i=0;i<licenses.length;i++){
+    if(licenses[i].id===licId){
+      licenses[i].users=(licenses[i].users||[]).filter(function(u){return u!==username;});
+      break;
+    }
+  }
+  saveLicenses(licenses);
+  renderAdminLizenzen();
+};
+
 window.adminCreateTestaufgabe=function(){
   var title=($('taNewTitle')||{}).value;
   if(!title||!title.trim()){alert('Bitte Titel eingeben.');return;}
@@ -8313,12 +8553,12 @@ window.switchAdminTab=function(tab,btn){
   tabs.forEach(function(t){t.classList.remove('active');});
   if(btn)btn.classList.add('active');
   // Show/hide content
-  var allTabs=['Projects','Users','Roles','Permissions','Backup','Settings','Logs','Analytics','Changelog','Testaufgaben'];
+  var allTabs=['Projects','Users','Roles','Permissions','Backup','Settings','Logs','Analytics','Changelog','Testaufgaben','Lizenzen'];
   allTabs.forEach(function(t){
     var el=$('adminTab'+t);
     if(el)el.style.display='none';
   });
-  var tabMap={projects:'Projects',users:'Users',roles:'Roles',permissions:'Permissions',backup:'Backup',settings:'Settings',logs:'Logs',analytics:'Analytics',changelog:'Changelog',testaufgaben:'Testaufgaben'};
+  var tabMap={projects:'Projects',users:'Users',roles:'Roles',permissions:'Permissions',backup:'Backup',settings:'Settings',logs:'Logs',analytics:'Analytics',changelog:'Changelog',testaufgaben:'Testaufgaben',lizenzen:'Lizenzen'};
   var el=$('adminTab'+(tabMap[tab]||'Projects'));
   if(el)el.style.display='block';
   // Render
@@ -8332,6 +8572,7 @@ window.switchAdminTab=function(tab,btn){
   if(tab==='analytics')renderAdminAnalytics();
   if(tab==='changelog')renderAdminChangelog();
   if(tab==='testaufgaben')renderAdminTestaufgaben();
+  if(tab==='lizenzen')renderAdminLizenzen();
 };
 
 function renderAdminProjects(){
