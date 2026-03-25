@@ -2634,6 +2634,12 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
   </div>
 </div>
 
+<!-- IMAGE LIGHTBOX -->
+<div id="imgLightbox" style="display:none;position:fixed;inset:0;z-index:2500;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;cursor:zoom-out;" onclick="this.style.display='none'">
+  <img id="imgLightboxImg" src="" style="max-width:92vw;max-height:92vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.5);object-fit:contain;">
+  <button onclick="event.stopPropagation();$('imgLightbox').style.display='none';" style="position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:32px;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50;opacity:0.8;">&times;</button>
+</div>
+
 <!-- CHANGELOG MODAL -->
 <div class="modal-bg" id="changelogModal">
   <div class="modal cl-modal">
@@ -4612,7 +4618,7 @@ function _renderMyPendItem(p){
   if(p.images&&p.images.length){
     html+='<div style="width:100%;display:flex;gap:6px;margin-top:4px;padding-left:28px;">';
     p.images.forEach(function(img){
-      html+='<img src="'+esc(img)+'" class="pend-thumb" onclick="window.open(this.src)">';
+      html+='<img src="'+esc(img)+'" class="pend-thumb" onclick="openLightbox(this.src)">';
     });
     html+='</div>';
   }
@@ -4976,7 +4982,7 @@ function _renderPendCard(p,isDone){
     if(dueLbl) html+=dueLbl;
     if(p.images&&p.images.length){
       p.images.forEach(function(img){
-        html+='<img src="'+esc(img)+'" class="pend-thumb" onclick="event.stopPropagation();window.open(this.src)">';
+        html+='<img src="'+esc(img)+'" class="pend-thumb" onclick="event.stopPropagation();openLightbox(this.src)">';
       });
     }
     html+='</div>';
@@ -7216,6 +7222,8 @@ window.showJokeAnswer=function(){
   launchConfetti();
 };
 window.closeJoke=function(){$('jokeOverlay').classList.remove('show');};
+
+window.openLightbox=function(src){var lb=$('imgLightbox');$('imgLightboxImg').src=src;lb.style.display='flex';};
 function launchConfetti(){
   var colors=['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff922b','#cc5de8','#20c997','#e64980','#f06595','#fcc419','#51cf66','#339af0','#ff8787','#ffe066'];
   var emojis=['\ud83c\udf89','\ud83c\udf8a','\ud83e\udd73','\ud83d\ude02','\ud83d\udc4f','\u2b50','\ud83d\udca5','\ud83c\udf1f','\ud83d\ude4c','\ud83c\udf88'];
@@ -7594,7 +7602,7 @@ window.renderAdminTestaufgaben=function(){
       html+='<span>'+esc(date)+'</span>';
       html+='</div>';
       if(fb.screenshot){
-        html+='<div style="margin-top:10px;"><img src="'+esc(fb.screenshot)+'" style="max-width:100%;max-height:300px;border-radius:var(--radius-xs);border:1px solid var(--border);cursor:pointer;" onclick="window.open(this.src,\'_blank\')"></div>';
+        html+='<div style="margin-top:10px;"><img src="'+esc(fb.screenshot)+'" style="max-width:100%;max-height:300px;border-radius:var(--radius-xs);border:1px solid var(--border);cursor:pointer;" onclick="openLightbox(this.src)"></div>';
       }
       // Show existing reply
       if(fb.reply){
