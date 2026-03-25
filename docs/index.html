@@ -4576,6 +4576,12 @@ function _pendDueLabel(due){
   var label=d.toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit',year:'numeric'});
   return '<span class="pend-due pend-due-'+color+'"><span class="pend-due-dot"></span>'+label+'</span>';
 }
+function _pendStartLabel(start){
+  if(!start)return '';
+  var d=new Date(start+'T00:00:00');
+  var label=d.toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit',year:'numeric'});
+  return '<span class="pend-due" style="color:var(--text3);"><span class="pend-due-dot" style="background:var(--blue);"></span>'+label+'</span>';
+}
 
 window.showPendenzenView=function(type){
   document.querySelectorAll('.sidebar-tab').forEach(function(x){x.classList.remove('active');});
@@ -4600,6 +4606,7 @@ function _renderMyPendItem(p){
   html+='<div class="pend-check" onclick="toggleMyPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
   if(isFromTP) html+='<span class="pend-tp-badge" title="Aus Terminplan: '+esc(p.taskProject||'')+'">TP</span>';
   html+='<span class="pend-text"'+(isFromTP?'':' ondblclick="editMyPendenz(\''+p.id+'\')"')+'>'+esc(p.text)+'</span>';
+  html+=_pendStartLabel(p.startDate);
   html+=_pendDueLabel(p.due);
   if(S.pid){
     html+='<div class="pend-move-wrap">';
@@ -4650,6 +4657,7 @@ function renderMyPendenzen(){
     +'<button class="ferien-fullscreen-btn" style="margin-left:auto;font-size:11px;" onclick="exportMyPendenzenPDF()">&#128438; PDF</button></div>';
   html+='<div class="pend-add-row" style="flex-wrap:wrap;">';
   html+='<input type="text" id="pendMyInput" placeholder="Neue Pendenz..." onkeydown="if(event.key===\'Enter\')addMyPendenz()">';
+  html+='<input type="date" id="pendMyStart" title="Startdatum" placeholder="Start">';
   html+='<input type="date" id="pendMyDue" title="F\u00e4lligkeitsdatum">';
   html+='<label class="pend-add-img-btn" title="Bilder hinzuf\u00fcgen">&#128247; Bilder <input type="file" accept="image/*" multiple style="display:none;" onchange="previewAddMyImages(this)"></label>';
   html+='<button onclick="addMyPendenz()">Hinzuf\u00fcgen</button>';
@@ -4908,6 +4916,7 @@ function renderProjectPendenzenView(){
   // Add row
   html+='<div class="pend-add-row" style="margin-bottom:20px;flex-wrap:wrap;">';
   html+='<input type="text" id="pendProjInput" placeholder="Neue Pendenz..." onkeydown="if(event.key===\'Enter\')addProjectPendenz()">';
+  html+='<input type="date" id="pendProjStart" title="Startdatum">';
   html+='<input type="date" id="pendProjDue" title="F\u00e4lligkeitsdatum">';
   html+='<select id="pendProjAssignee">';
   cols.forEach(function(col){
@@ -4980,9 +4989,11 @@ function _renderPendCard(p,isDone){
   html+='<span class="pend-card-text" ondblclick="editProjectPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
   html+='<button class="pend-delete" onclick="deleteProjectPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
   html+='</div>';
+  var startLbl=_pendStartLabel(p.startDate);
   var dueLbl=_pendDueLabel(p.due);
-  if(dueLbl||(p.images&&p.images.length)){
+  if(startLbl||dueLbl||(p.images&&p.images.length)){
     html+='<div class="pend-card-meta">';
+    if(startLbl) html+=startLbl;
     if(dueLbl) html+=dueLbl;
     if(p.images&&p.images.length){
       p.images.forEach(function(img){
@@ -5241,9 +5252,11 @@ function _renderAddMyImgPreview(){
 window.addMyPendenz=function(){
   var inp=$('pendMyInput');if(!inp)return;
   var text=inp.value.trim();if(!text)return;
+  var startDate=($('pendMyStart')||{}).value||'';
   var due=($('pendMyDue')||{}).value||'';
   var list=getMyPendenzen();
   var item={id:_pendId(),text:text,done:false,due:due,created:new Date().toISOString()};
+  if(startDate)item.startDate=startDate;
   if(_addMyPendImages.length)item.images=_addMyPendImages.slice(0,2);
   list.unshift(item);
   saveMyPendenzen(list);
@@ -5301,14 +5314,17 @@ window.exportMyPendenzenPDF=function(){
 
   function renderTable(items){
     if(!items.length)return '<p style="color:#999;font-size:11px;padding:4px 0;">Keine Pendenzen</p>';
-    var h='<table><thead><tr><th style="width:20px;"></th><th>Pendenz</th><th style="width:90px;">F\u00e4llig</th><th style="width:90px;">Bilder</th></tr></thead><tbody>';
+    var h='<table><thead><tr><th style="width:20px;"></th><th>Pendenz</th><th style="width:90px;">Start</th><th style="width:90px;">F\u00e4llig</th><th style="width:90px;">Bilder</th></tr></thead><tbody>';
     items.forEach(function(p){
+      var startStr='';
+      if(p.startDate){var sp=p.startDate.split('-');startStr=sp[2]+'.'+sp[1]+'.'+sp[0];}
       var dueStr='';
       if(p.due){var dp=p.due.split('-');dueStr=dp[2]+'.'+dp[1]+'.'+dp[0];}
       h+='<tr><td><span class="status '+(p.done?'closed':'open')+'"></span></td>';
       h+='<td'+(p.done?' class="done"':'')+'>'+esc(p.text);
       if(p.comment) h+='<div style="font-size:10px;color:#888;font-style:italic;margin-top:3px;">'+esc(p.comment)+'</div>';
       h+='</td>';
+      h+='<td class="due">'+startStr+'</td>';
       h+='<td class="due">'+dueStr+'</td>';
       h+='<td>';
       if(p.images&&p.images.length){
@@ -5479,10 +5495,12 @@ window.addProjectPendenz=function(){
   if(!S.pid)return;
   var inp=$('pendProjInput');if(!inp)return;
   var text=inp.value.trim();if(!text)return;
+  var startDate=($('pendProjStart')||{}).value||'';
   var due=($('pendProjDue')||{}).value||'';
   var assignee=($('pendProjAssignee')||{}).value||'_unassigned';
   var list=getProjectPendenzen(S.pid);
   var item={id:_pendId(),text:text,done:false,due:due,assignee:assignee,created:new Date().toISOString(),createdBy:S.currentUser?S.currentUser.username:''};
+  if(startDate)item.startDate=startDate;
   if(_addPendImages.length)item.images=_addPendImages.slice(0,2);
   list.unshift(item);
   saveProjectPendenzen(S.pid,list);
