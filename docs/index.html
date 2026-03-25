@@ -3817,7 +3817,10 @@ $('loginForm').addEventListener('submit',function(e){
 });
 // --- Register/Login Panel Switching ---
 window.showRegisterPanel=function(){
-  if(!getAppSettings().registrationEnabled){
+  // Allow registration if user has valid invite code in URL, even if registration is disabled
+  var params=new URLSearchParams(window.location.search);
+  var hasInviteCode=params.get('register');
+  if(!getAppSettings().registrationEnabled && !hasInviteCode){
     $('loginPanel').style.display='none';
     $('registerPanel').style.display='none';
     $('regDisabledPanel').style.display='';
