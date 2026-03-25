@@ -4193,7 +4193,12 @@ window.toggleKiAnalyse=function(){
 function runKiAnalyse(){
   var strip=document.getElementById('kiAnalyseStrip');
   if(!strip)return;
-  if(!S.tasks||!S.tasks.length){strip.style.display='none';return;}
+  if(!S.tasks||!S.tasks.length){
+    strip.style.display='none';
+    var b=document.getElementById('kiAnalyseBadge');if(b){b.textContent='0 Hinweise';b.className='ki-analyse-badge green';}
+    var bd=document.getElementById('kiAnalyseBody');if(bd)bd.innerHTML='';
+    return;
+  }
   // Only show on views that also show KPI strip
   if(S.view==='pendenzen_my'||S.view==='pendenzen_project'||S.view==='ferien')return;
 
