@@ -11029,7 +11029,20 @@ window.renderBesprechungen=function(){
     html+='<input type="text" value="'+esc(active.title||'')+'" placeholder="Titel..." style="flex:1;font-size:15px;font-weight:700;border:none;background:transparent;color:var(--text);font-family:var(--font);outline:none;" onchange="_bespUpdateTitle(\''+active.id+'\',this.value)">';
     html+='<span style="font-size:10px;color:var(--text3);">'+new Date(active.created).toLocaleDateString('de-CH')+'</span>';
     html+='</div>';
-    html+='<textarea id="bespEditor" style="flex:1;padding:16px;border:none;background:transparent;color:var(--text);font-family:var(--font);font-size:13px;line-height:1.7;resize:none;outline:none;" placeholder="Notizen hier eingeben..." onblur="_bespSaveContent(\''+active.id+'\',this.value)">'+esc(active.content||'')+'</textarea>';
+    // Toolbar
+    html+='<div style="padding:6px 16px;border-bottom:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap;">';
+    html+='<button onclick="_bespCmd(\'bold\')" style="background:none;border:1px solid var(--border);border-radius:4px;width:28px;height:28px;cursor:pointer;font-weight:700;font-size:13px;color:var(--text);" title="Fett">B</button>';
+    html+='<button onclick="_bespCmd(\'italic\')" style="background:none;border:1px solid var(--border);border-radius:4px;width:28px;height:28px;cursor:pointer;font-style:italic;font-size:13px;color:var(--text);" title="Kursiv">I</button>';
+    html+='<button onclick="_bespCmd(\'underline\')" style="background:none;border:1px solid var(--border);border-radius:4px;width:28px;height:28px;cursor:pointer;text-decoration:underline;font-size:13px;color:var(--text);" title="Unterstrichen">U</button>';
+    html+='<span style="width:1px;background:var(--border);margin:2px 4px;"></span>';
+    html+='<button onclick="_bespCmd(\'insertUnorderedList\')" style="background:none;border:1px solid var(--border);border-radius:4px;width:28px;height:28px;cursor:pointer;font-size:12px;color:var(--text);" title="Liste">&#8226;</button>';
+    html+='<button onclick="_bespInsertCheckbox()" style="background:none;border:1px solid var(--border);border-radius:4px;height:28px;cursor:pointer;font-size:11px;color:var(--text);padding:0 8px;display:flex;align-items:center;gap:4px;" title="Checkbox einf\u00fcgen">&#9745; Checkbox</button>';
+    html+='<span style="width:1px;background:var(--border);margin:2px 4px;"></span>';
+    html+='<button onclick="_bespInsertTable()" style="background:none;border:1px solid var(--border);border-radius:4px;height:28px;cursor:pointer;font-size:11px;color:var(--text);padding:0 8px;display:flex;align-items:center;gap:4px;" title="Tabelle einf\u00fcgen">&#9638; Tabelle</button>';
+    html+='<button onclick="_bespCmd(\'formatBlock\',\'h2\')" style="background:none;border:1px solid var(--border);border-radius:4px;height:28px;cursor:pointer;font-size:11px;font-weight:700;color:var(--text);padding:0 8px;" title="\u00dcberschrift">H</button>';
+    html+='</div>';
+    // Editor
+    html+='<div id="bespEditor" contenteditable="true" data-id="'+esc(active.id)+'" style="flex:1;padding:16px;overflow-y:auto;color:var(--text);font-family:var(--font);font-size:13px;line-height:1.7;outline:none;" onblur="_bespSaveHtml(this)">'+(active.content||'<p style="color:var(--text3);">Notizen hier eingeben...</p>')+'</div>';
   } else {
     html+='<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;"><div style="text-align:center;"><div style="font-size:40px;margin-bottom:12px;">&#128221;</div>W\u00e4hle eine Besprechung<br>oder erstelle eine neue.</div></div>';
   }
@@ -11067,10 +11080,7 @@ window._bespSelect=function(id){
   // Save current content first
   var editor=document.getElementById('bespEditor');
   if(editor&&_bespActiveId){
-    var list=_getBesprechungen(S.pid);
-    var cur=list.find(function(b){return b.id===_bespActiveId;});
-    if(cur)cur.content=editor.value;
-    _saveBesprechungen(S.pid,list);
+    _bespSaveHtml(editor);
   }
   _bespActiveId=id;
   renderBesprechungen();
@@ -11084,6 +11094,28 @@ window._bespUpdateTitle=function(id,title){
   renderBesprechungen();
 };
 
+// Rich editor commands
+window._bespCmd=function(cmd,val){
+  document.execCommand(cmd,false,val||null);
+  document.getElementById('bespEditor').focus();
+};
+window._bespInsertCheckbox=function(){
+  var cb='<label style="display:flex;align-items:flex-start;gap:8px;margin:4px 0;cursor:pointer;"><input type="checkbox" style="margin-top:3px;width:16px;height:16px;accent-color:var(--orange);cursor:pointer;flex-shrink:0;" onclick="event.stopPropagation();setTimeout(function(){_bespSaveHtml(document.getElementById(\'bespEditor\'));},50);"><span contenteditable="true" style="flex:1;">Aufgabe hier eingeben</span></label>';
+  document.execCommand('insertHTML',false,cb);
+};
+window._bespInsertTable=function(){
+  var tbl='<table style="width:100%;border-collapse:collapse;margin:8px 0;"><tr><td style="border:1px solid var(--border);padding:6px 8px;min-width:60px;">&nbsp;</td><td style="border:1px solid var(--border);padding:6px 8px;min-width:60px;">&nbsp;</td><td style="border:1px solid var(--border);padding:6px 8px;min-width:60px;">&nbsp;</td></tr><tr><td style="border:1px solid var(--border);padding:6px 8px;">&nbsp;</td><td style="border:1px solid var(--border);padding:6px 8px;">&nbsp;</td><td style="border:1px solid var(--border);padding:6px 8px;">&nbsp;</td></tr><tr><td style="border:1px solid var(--border);padding:6px 8px;">&nbsp;</td><td style="border:1px solid var(--border);padding:6px 8px;">&nbsp;</td><td style="border:1px solid var(--border);padding:6px 8px;">&nbsp;</td></tr></table><p></p>';
+  document.execCommand('insertHTML',false,tbl);
+};
+window._bespSaveHtml=function(el){
+  if(!el)return;
+  var id=el.getAttribute('data-id');
+  var content=el.innerHTML;
+  var list=_getBesprechungen(S.pid);
+  var item=list.find(function(b){return b.id===id;});
+  if(item)item.content=content;
+  _saveBesprechungen(S.pid,list);
+};
 window._bespSaveContent=function(id,content){
   var list=_getBesprechungen(S.pid);
   var item=list.find(function(b){return b.id===id;});
