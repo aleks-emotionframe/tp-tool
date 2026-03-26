@@ -11526,11 +11526,48 @@ function _renderAdressTable(){
   if(!area)return;
   var list=_subPageData('unternehmer');
   var q=_adressSearch.toLowerCase().trim();
-  var filtered=[];
+  // Sort entries within each category by BKP
+  var sorted=[];
+  var currentGroup=[];
   list.forEach(function(u,i){
-    if(!q){filtered.push({u:u,i:i});return;}
+    if(u._isCategory){
+      // Sort previous group by BKP before adding
+      if(currentGroup.length){
+        currentGroup.sort(function(a,b){
+          var aVal=String(a.u.bereich||'').replace(/[^\d.]/g,'');
+          var bVal=String(b.u.bereich||'').replace(/[^\d.]/g,'');
+          var aN=parseFloat(aVal)||999999;
+          var bN=parseFloat(bVal)||999999;
+          if(aN!==bN)return aN-bN;
+          return String(a.u.bereich||'').localeCompare(String(b.u.bereich||''));
+        });
+        sorted=sorted.concat(currentGroup);
+        currentGroup=[];
+      }
+      sorted.push({u:u,i:i});
+    } else {
+      currentGroup.push({u:u,i:i});
+    }
+  });
+  // Sort and add last group
+  if(currentGroup.length){
+    currentGroup.sort(function(a,b){
+      var aVal=String(a.u.bereich||'').replace(/[^\d.]/g,'');
+      var bVal=String(b.u.bereich||'').replace(/[^\d.]/g,'');
+      var aN=parseFloat(aVal)||999999;
+      var bN=parseFloat(bVal)||999999;
+      if(aN!==bN)return aN-bN;
+      return String(a.u.bereich||'').localeCompare(String(b.u.bereich||''));
+    });
+    sorted=sorted.concat(currentGroup);
+  }
+  // Apply search filter
+  var filtered=[];
+  sorted.forEach(function(entry){
+    if(!q){filtered.push(entry);return;}
+    var u=entry.u;
     var haystack=[u.bereich,u.firma,u.strasse,u.ort,u.sachbearbeiter,u.funktion,u.telefon,u.natel,u.email].join(' ').toLowerCase();
-    if(haystack.indexOf(q)>=0) filtered.push({u:u,i:i});
+    if(u._isCategory||haystack.indexOf(q)>=0) filtered.push(entry);
   });
   var html='';
   if(!list.length){
