@@ -10771,8 +10771,8 @@ function _fmtCHF(n){return(n<0?'-':'')+Math.abs(n).toFixed(2).replace(/\B(?=(\d{
 var _ukEditId=null;
 
 window.renderUKonto=function(){
-  if(!S.pid)return;
-  var c=$('uKontoView');
+  var c=$('uKontoView');if(!c)return;
+  if(!S.pid){c.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);">Bitte zuerst ein Projekt w\u00e4hlen.</div>';return;}
   var list=_getUKontos(S.pid);
 
   if(_ukEditId){
