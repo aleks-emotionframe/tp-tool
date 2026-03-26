@@ -11542,12 +11542,12 @@ function _renderAdressTable(){
     var tdStyle='padding:7px 12px;font-size:11px;color:var(--text);border-bottom:1px solid var(--border);vertical-align:top;';
     html+='<table style="width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">';
     html+='<thead><tr>'
-      +'<th style="'+thStyle+'">Bereich / Arbeitsgattung</th>'
-      +'<th style="'+thStyle+'">Adresse</th>'
+      +'<th style="'+thStyle+'">BKP</th>'
+      +'<th style="'+thStyle+'">Unternehmer</th>'
       +'<th style="'+thStyle+'">Sachbearbeiter</th>'
       +'<th style="'+thStyle+'">Funktion</th>'
       +'<th style="'+thStyle+'">Telefon / Direktwahl</th>'
-      +'<th style="'+thStyle+'">Natel</th>'
+      +'<th style="'+thStyle+'">Mobile</th>'
       +'<th style="'+thStyle+'">Email</th>'
       +'</tr></thead><tbody>';
     filtered.forEach(function(entry,fi){
@@ -11581,14 +11581,14 @@ window.clearAdressliste=function(){
 };
 window.addUnternehmer=function(){
   var fields=[
-    {key:'bereich',label:'Bereich / Arbeitsgattung',val:''},
-    {key:'firma',label:'Firma',val:''},
+    {key:'bereich',label:'BKP',val:''},
+    {key:'firma',label:'Unternehmer',val:''},
     {key:'strasse',label:'Strasse',val:''},
     {key:'ort',label:'PLZ / Ort',val:''},
     {key:'sachbearbeiter',label:'Sachbearbeiter',val:''},
     {key:'funktion',label:'Funktion',val:''},
     {key:'telefon',label:'Telefon / Direktwahl',val:''},
-    {key:'natel',label:'Natel',val:''},
+    {key:'natel',label:'Mobile',val:''},
     {key:'email',label:'Email',val:''}
   ];
   _openMultiFieldModal('Neuer Eintrag',fields,function(vals){
@@ -11603,14 +11603,14 @@ window.editUnternehmer=function(idx){
   var list=_subPageData('unternehmer');
   var u=list[idx];if(!u)return;
   var fields=[
-    {key:'bereich',label:'Bereich / Arbeitsgattung',val:u.bereich||''},
-    {key:'firma',label:'Firma',val:u.firma||''},
+    {key:'bereich',label:'BKP',val:u.bereich||''},
+    {key:'firma',label:'Unternehmer',val:u.firma||''},
     {key:'strasse',label:'Strasse',val:u.strasse||''},
     {key:'ort',label:'PLZ / Ort',val:u.ort||''},
     {key:'sachbearbeiter',label:'Sachbearbeiter',val:u.sachbearbeiter||''},
     {key:'funktion',label:'Funktion',val:u.funktion||''},
     {key:'telefon',label:'Telefon / Direktwahl',val:u.telefon||''},
-    {key:'natel',label:'Natel',val:u.natel||''},
+    {key:'natel',label:'Mobile',val:u.natel||''},
     {key:'email',label:'Email',val:u.email||''}
   ];
   _openMultiFieldModal('Eintrag bearbeiten',fields,function(vals){
@@ -11772,7 +11772,7 @@ window.exportUnternehmerPdf=function(){
     +'</style></head><body>'
     +'<div class="header"><h1>Adressliste \u2013 '+esc(pName)+'</h1><div class="meta">Stand: '+today+'<br>'+list.length+' Eintr\u00e4ge</div></div>'
     +'<table><thead><tr>'
-    +'<th>Bereich / Arbeitsgattung</th><th>Adresse</th><th>Sachbearbeiter</th><th>Funktion</th><th>Telefon / Direktwahl</th><th>Natel</th><th>Email</th>'
+    +'<th>BKP</th><th>Unternehmer</th><th>Sachbearbeiter</th><th>Funktion</th><th>Telefon / Direktwahl</th><th>Mobile</th><th>Email</th>'
     +'</tr></thead><tbody>';
 
   list.forEach(function(u){
