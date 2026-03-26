@@ -10879,40 +10879,67 @@ window._ukCreate=function(){
 
 function _renderUKontoDetail(c,uk){
   var calc=_ukCalc(uk);
-  var html='<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">';
+  var pct=calc.leistungsstand;
+  var barColor=pct>90?'var(--red)':pct>75?'var(--orange)':'var(--green)';
+  var nachtragSum=(uk.nachtraege||[]).reduce(function(s,n){return s+(parseFloat(n.betrag)||0);},0);
+  var _inp='padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:12px;background:var(--surface2);color:var(--text);font-family:var(--font);';
+
+  // Header
+  var html='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">';
   html+='<h2 style="font-size:18px;font-weight:700;margin:0;flex:1;">'+esc(uk.firma||'Neues Unternehmerkonto')+'</h2>';
   html+='<button class="admin-btn" onclick="_ukExportPDF()" style="font-size:11px;">&#128438; PDF</button>';
-  html+='<button class="admin-btn danger" onclick="_ukDelete(\''+esc(uk.id)+'\')" style="font-size:11px;">L\u00f6schen</button>';
+  if(userHasPerm('manage_ukonto'))html+='<button class="admin-btn danger" onclick="_ukDelete(\''+uk.id+'\')" style="font-size:11px;">L\u00f6schen</button>';
   html+='</div>';
 
-  // Header fields
-  html+='<div class="admin-card" style="margin-bottom:16px;"><div class="admin-card-body">';
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
+  // === TOP SUMMARY BAR ===
+  html+='<div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:12px;padding:16px 20px;margin-bottom:20px;color:#fff;">';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">';
+  html+='<span style="font-size:11px;opacity:0.6;">LEISTUNGSSTAND</span>';
+  html+='<span data-uk-total="pct" style="font-size:13px;font-weight:700;color:'+barColor+';">'+pct+'% von 90%</span>';
+  html+='</div>';
+  html+='<div style="height:10px;background:rgba(255,255,255,0.1);border-radius:5px;overflow:hidden;position:relative;margin-bottom:14px;">';
+  html+='<div data-uk-total="bar" style="height:100%;width:'+Math.min(pct,100)+'%;background:'+barColor+';border-radius:5px;transition:width 0.3s;"></div>';
+  html+='<div style="position:absolute;left:90%;top:0;bottom:0;width:2px;background:#ef4444;"></div>';
+  html+='</div>';
+  html+='<div data-uk-total="warn90" style="'+(calc.ueber90?'':'display:none;')+'padding:6px 10px;background:rgba(239,68,68,0.15);border-radius:6px;color:#fca5a5;font-size:11px;font-weight:600;margin-bottom:10px;">'+(calc.ueber90?'&#9888; 90%-Grenze \u00fcberschritten! Max CHF '+_fmtCHF(calc.grenze90):'')+'</div>';
+  html+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center;">';
+  html+='<div><div style="font-size:10px;opacity:0.5;">Total exkl. MwSt</div><div data-uk-total="totalExkl" style="font-size:18px;font-weight:800;margin-top:2px;">CHF '+_fmtCHF(calc.totalExkl)+'</div></div>';
+  html+='<div><div style="font-size:10px;opacity:0.5;">Bezahlt (Akontos)</div><div data-uk-total="totalZahlungen" style="font-size:18px;font-weight:800;color:#fb923c;margin-top:2px;">CHF '+_fmtCHF(calc.totalZahlungen)+'</div></div>';
+  html+='<div><div style="font-size:10px;opacity:0.5;">Noch offen</div><div data-uk-total="totalAuszahlung" style="font-size:18px;font-weight:800;color:#4ade80;margin-top:2px;">CHF '+_fmtCHF(calc.totalAuszahlung)+'</div></div>';
+  html+='</div></div>';
+
+  // === VERTRAGSDATEN ===
+  html+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Vertragsdaten</div>';
+  html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;">';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">';
   html+=_ukField('BKP','bkp',uk.bkp,'text');
   html+=_ukField('Beschreibung','beschreibung',uk.beschreibung,'text');
   html+=_ukField('Firma','firma',uk.firma,'text');
   html+=_ukField('Werkvertrag Nr.','werkvertragNr',uk.werkvertragNr,'text');
   html+=_ukField('Zust\u00e4ndiger PL','zustaendig',uk.zustaendig,'text');
   html+=_ukField('Werkvertragssumme (CHF)','hauptvertrag',uk.hauptvertrag,'number');
-  html+='</div></div></div>';
-
-  // Nachträge
-  html+='<div class="admin-card" style="margin-bottom:16px;"><div class="admin-card-header"><div class="admin-card-title">Nachtr\u00e4ge</div></div><div class="admin-card-body">';
-  (uk.nachtraege||[]).forEach(function(n,i){
-    html+='<div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">';
-    html+='<span style="font-size:11px;color:var(--text3);min-width:24px;">Nr. '+(i+1)+'</span>';
-    html+='<input type="text" value="'+esc(n.text||'')+'" placeholder="Beschreibung" style="flex:2;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:12px;background:var(--surface2);color:var(--text);font-family:var(--font);" onchange="_ukUpdateNachtrag('+i+',\'text\',this.value)">';
-    html+='<input type="number" value="'+(n.betrag||0)+'" step="0.01" style="width:120px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:12px;background:var(--surface2);color:var(--text);font-family:var(--font);text-align:right;" onchange="_ukUpdateNachtrag('+i+',\'betrag\',this.value)">';
-    html+='<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;" onclick="_ukRemoveNachtrag('+i+')">&times;</button>';
-    html+='</div>';
-  });
-  html+='<button class="admin-btn" onclick="_ukAddNachtrag()" style="font-size:11px;margin-top:4px;">+ Nachtrag</button>';
   html+='</div></div>';
 
-  // Totals & Abzüge
-  html+='<div class="admin-card" style="margin-bottom:16px;"><div class="admin-card-body">';
+  // === NACHTRÄGE ===
+  html+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Nachtr\u00e4ge <span style="color:var(--blue);font-weight:700;">CHF '+_fmtCHF(nachtragSum)+'</span></div>';
+  html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;">';
+  (uk.nachtraege||[]).forEach(function(n,i){
+    html+='<div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">';
+    html+='<span style="font-size:11px;color:var(--text3);min-width:32px;font-weight:600;">Nr.'+(i+1)+'</span>';
+    html+='<input type="text" value="'+esc(n.text||'')+'" placeholder="Beschreibung" style="flex:2;'+_inp+'" onchange="_ukUpdateNachtrag('+i+',\'text\',this.value)">';
+    html+='<span style="font-size:11px;color:var(--text3);">CHF</span>';
+    html+='<input type="number" value="'+(n.betrag||0)+'" step="0.01" style="width:110px;'+_inp+'text-align:right;" onchange="_ukUpdateNachtrag('+i+',\'betrag\',this.value)">';
+    html+='<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:16px;padding:0 4px;" onclick="_ukRemoveNachtrag('+i+')">&times;</button>';
+    html+='</div>';
+  });
+  html+='<button class="admin-btn" onclick="_ukAddNachtrag()" style="font-size:11px;margin-top:4px;">+ Nachtrag hinzuf\u00fcgen</button>';
+  html+='</div>';
+
+  // === TOTAL BRUTTO + ABZÜGE ===
+  html+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Abz\u00fcge</div>';
+  html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;">';
   html+='<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:2px solid var(--border);font-weight:700;font-size:14px;"><span>Total brutto exkl. MwSt</span><span data-uk-total="totalBrutto">CHF '+_fmtCHF(calc.totalBrutto)+'</span></div>';
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;">';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:12px 0;">';
   html+=_ukField('Rabatt (%)','rabatt',uk.rabatt,'number');
   html+=_ukField('Skonto (%)','skonto',uk.skonto,'number');
   html+=_ukField('Pauschalabzug (CHF)','pauschalabzug',uk.pauschalabzug,'number');
@@ -10920,59 +10947,54 @@ function _renderUKontoDetail(c,uk){
   html+=_ukField('Baugarantie (%)','baugarantie',uk.baugarantie,'number');
   html+=_ukField('Baureklame (CHF)','baureklame',uk.baureklame,'number');
   html+='</div>';
-  html+='<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--border);font-weight:700;font-size:14px;"><span>Total exkl. MwSt</span><span data-uk-total="totalExkl">CHF '+_fmtCHF(calc.totalExkl)+'</span></div>';
-  html+='</div></div>';
-
-  // Akontos
-  html+='<div class="admin-card" style="margin-bottom:16px;"><div class="admin-card-header"><div class="admin-card-title">Akonto / Lastschriften</div>';
-  var pct=calc.leistungsstand;
-  var barColor=pct>90?'var(--red)':pct>75?'var(--orange)':'var(--green)';
-  html+='<span data-uk-total="pct" style="font-size:12px;font-weight:700;color:'+barColor+';">'+pct+'% von 90%</span></div><div class="admin-card-body">';
-  // Progress bar
-  html+='<div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;position:relative;margin-bottom:16px;">';
-  html+='<div data-uk-total="bar" style="height:100%;width:'+Math.min(pct,100)+'%;background:'+barColor+';border-radius:4px;transition:width 0.3s;"></div>';
-  html+='<div style="position:absolute;left:90%;top:0;bottom:0;width:2px;background:var(--red);"></div>';
+  html+='<div style="display:flex;justify-content:space-between;padding:10px 0;border-top:2px solid var(--orange);font-weight:800;font-size:15px;"><span>Total exkl. MwSt</span><span data-uk-total="totalExkl" style="color:var(--orange);">CHF '+_fmtCHF(calc.totalExkl)+'</span></div>';
   html+='</div>';
-  html+='<div data-uk-total="warn90" style="'+(calc.ueber90?'':'display:none;')+'padding:8px 12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-xs);color:var(--red);font-size:12px;font-weight:600;margin-bottom:12px;">'+(calc.ueber90?'&#9888; Achtung: Akontos \u00fcberschreiten die 90%-Grenze! (Max CHF '+_fmtCHF(calc.grenze90)+')':'')+'</div>';
 
-  // Akonto list
+  // === AKONTOS ===
+  html+='<div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Akonto / Lastschriften</div>';
+  html+='<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;">';
+  // Akonto table header
+  if((uk.akontos||[]).length){
+    html+='<div style="display:flex;gap:6px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border);font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;">';
+    html+='<span style="min-width:60px;"></span><span style="width:80px;">Ref.</span><span style="width:110px;">Datum</span><span style="width:110px;text-align:right;">Betrag (CHF)</span><span style="width:20px;"></span>';
+    html+='</div>';
+  }
   (uk.akontos||[]).forEach(function(a,i){
     html+='<div style="display:flex;gap:6px;margin-bottom:4px;align-items:center;">';
-    html+='<span style="font-size:11px;color:var(--text3);min-width:60px;">'+(i+1)+'. Akonto</span>';
-    html+='<input type="text" value="'+esc(a.ref||'')+'" placeholder="Ref." style="width:80px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:11px;background:var(--surface2);color:var(--text);font-family:var(--font);" onchange="_ukUpdateAkonto('+i+',\'ref\',this.value)">';
-    html+='<input type="date" value="'+(a.datum||'')+'" style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:11px;background:var(--surface2);color:var(--text);font-family:var(--font);" onchange="_ukUpdateAkonto('+i+',\'datum\',this.value)">';
-    html+='<input type="number" value="'+(a.betrag||0)+'" step="0.01" style="width:120px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:11px;background:var(--surface2);color:var(--text);font-family:var(--font);text-align:right;" onchange="_ukUpdateAkonto('+i+',\'betrag\',this.value)">';
-    html+='<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;" onclick="_ukRemoveAkonto('+i+')">&times;</button>';
+    html+='<span style="font-size:11px;color:var(--text3);min-width:60px;font-weight:600;">'+(i+1)+'. Akonto</span>';
+    html+='<input type="text" value="'+esc(a.ref||'')+'" placeholder="Ref." style="width:80px;'+_inp+'font-size:11px;" onchange="_ukUpdateAkonto('+i+',\'ref\',this.value)">';
+    html+='<input type="date" value="'+(a.datum||'')+'" style="width:110px;'+_inp+'font-size:11px;" onchange="_ukUpdateAkonto('+i+',\'datum\',this.value)">';
+    html+='<input type="number" value="'+(a.betrag||0)+'" step="0.01" style="width:110px;'+_inp+'font-size:11px;text-align:right;" onchange="_ukUpdateAkonto('+i+',\'betrag\',this.value)">';
+    html+='<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;width:20px;" onclick="_ukRemoveAkonto('+i+')">&times;</button>';
     html+='</div>';
   });
   html+='<button class="admin-btn" onclick="_ukAddAkonto()" style="font-size:11px;margin-top:6px;">+ Akonto</button>';
 
   // Lastschriften
-  html+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">';
+  if((uk.lastschriften||[]).length||(uk.akontos||[]).length){
+    html+='<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">';
+  } else {
+    html+='<div style="margin-top:8px;">';
+  }
   (uk.lastschriften||[]).forEach(function(l,i){
     html+='<div style="display:flex;gap:6px;margin-bottom:4px;align-items:center;">';
-    html+='<span style="font-size:11px;color:var(--text3);min-width:60px;">Lastschrift</span>';
-    html+='<input type="text" value="'+esc(l.text||'')+'" placeholder="Beschreibung" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:11px;background:var(--surface2);color:var(--text);font-family:var(--font);" onchange="_ukUpdateLastschrift('+i+',\'text\',this.value)">';
-    html+='<input type="date" value="'+(l.datum||'')+'" style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:11px;background:var(--surface2);color:var(--text);font-family:var(--font);" onchange="_ukUpdateLastschrift('+i+',\'datum\',this.value)">';
-    html+='<input type="number" value="'+(l.betrag||0)+'" step="0.01" style="width:120px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-xs);font-size:11px;background:var(--surface2);color:var(--text);font-family:var(--font);text-align:right;" onchange="_ukUpdateLastschrift('+i+',\'betrag\',this.value)">';
-    html+='<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;" onclick="_ukRemoveLastschrift('+i+')">&times;</button>';
+    html+='<span style="font-size:11px;color:var(--red);min-width:60px;font-weight:600;">Lastschrift</span>';
+    html+='<input type="text" value="'+esc(l.text||'')+'" placeholder="Beschreibung" style="flex:1;'+_inp+'font-size:11px;" onchange="_ukUpdateLastschrift('+i+',\'text\',this.value)">';
+    html+='<input type="date" value="'+(l.datum||'')+'" style="width:110px;'+_inp+'font-size:11px;" onchange="_ukUpdateLastschrift('+i+',\'datum\',this.value)">';
+    html+='<input type="number" value="'+(l.betrag||0)+'" step="0.01" style="width:110px;'+_inp+'font-size:11px;text-align:right;" onchange="_ukUpdateLastschrift('+i+',\'betrag\',this.value)">';
+    html+='<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;width:20px;" onclick="_ukRemoveLastschrift('+i+')">&times;</button>';
     html+='</div>';
   });
   html+='<button class="admin-btn" onclick="_ukAddLastschrift()" style="font-size:11px;margin-top:6px;">+ Lastschrift</button>';
-  html+='</div>';
-
-  // Totals
-  html+='<div style="margin-top:16px;padding-top:12px;border-top:2px solid var(--border);">';
-  html+='<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>Total Zahlungen</span><span data-uk-total="totalZahlungen" style="font-weight:600;">CHF '+_fmtCHF(calc.totalZahlungen)+'</span></div>';
-  html+='<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;font-weight:700;"><span>Total Auszahlungsbetrag exkl. MwSt</span><span data-uk-total="totalAuszahlung">CHF '+_fmtCHF(calc.totalAuszahlung)+'</span></div>';
-  html+='</div>';
-
-  // MwSt
-  html+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">';
-  html+='<span style="font-size:12px;">Mehrwertsteuer <input type="number" value="'+(uk.mwst||8.1)+'" step="0.1" style="width:60px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;text-align:right;background:var(--surface2);color:var(--text);font-family:var(--font);" onchange="_ukUpdate(\'mwst\',this.value)"> %</span>';
-  html+='<span data-uk-total="mwstBetrag" style="font-size:12px;">CHF '+_fmtCHF(calc.mwstBetrag)+'</span></div>';
-  html+='<div style="display:flex;justify-content:space-between;padding:8px 0;margin-top:8px;border-top:2px solid var(--orange);font-size:15px;font-weight:800;color:var(--text);"><span>Total Auszahlungsbetrag inkl. MwSt</span><span data-uk-total="totalInkl">CHF '+_fmtCHF(calc.totalInkl)+'</span></div>';
   html+='</div></div>';
+
+  // === ENDABRECHNUNG ===
+  html+='<div style="background:var(--surface);border:2px solid var(--orange);border-radius:var(--radius);padding:16px;margin-bottom:8px;">';
+  html+='<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;color:var(--text3);"><span>Total Zahlungen (Akontos - Lastschriften)</span><span data-uk-total="totalZahlungen" style="font-weight:600;color:var(--text);">CHF '+_fmtCHF(calc.totalZahlungen)+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:14px;font-weight:700;border-top:1px solid var(--border);"><span>Auszahlungsbetrag exkl. MwSt</span><span data-uk-total="totalAuszahlung">CHF '+_fmtCHF(calc.totalAuszahlung)+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;color:var(--text3);align-items:center;"><span>Mehrwertsteuer <input type="number" value="'+(uk.mwst||8.1)+'" step="0.1" style="width:55px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-size:11px;text-align:right;background:var(--surface2);color:var(--text);font-family:var(--font);" onchange="_ukUpdate(\'mwst\',this.value)"> %</span><span data-uk-total="mwstBetrag">CHF '+_fmtCHF(calc.mwstBetrag)+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;padding:10px 0 4px;margin-top:6px;border-top:3px solid var(--orange);font-size:17px;font-weight:800;color:var(--orange);"><span>Total inkl. MwSt</span><span data-uk-total="totalInkl">CHF '+_fmtCHF(calc.totalInkl)+'</span></div>';
+  html+='</div>';
 
   c.innerHTML=html;
 }
