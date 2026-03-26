@@ -3136,16 +3136,22 @@ function _pollSync(){
         var d=sGet('p_'+S.pid,null);
         if(d)S.tasks=d.tasks||[];
       }
-      // Don't refresh if on a subpage (Besprechungen, Adressliste, Unternehmerkonto)
-      if(S.view&&S.view.indexOf('subpage_')===0)return;
       // Refresh sidebar project list
       loadProjects();
-      // Refresh visible view
-      updateKPI();
-      if(S.view==='dashboard'){renderDashboard();}
-      else if(S.view==='pendenzen_my'){renderMyPendenzen();}
-      else if(S.view==='pendenzen_project'){renderProjectPendenzenView();}
-      else{applyFilters();}
+      // Refresh visible view based on current page
+      if(S.view&&S.view.indexOf('subpage_')===0){
+        // Subpages: refresh in place without switching
+        var sp=S.view.replace('subpage_','');
+        if(sp==='unternehmer')renderUnternehmer();
+        else if(sp==='uKonto')renderUKonto();
+        else if(sp==='besprechungen')renderBesprechungen();
+      } else {
+        updateKPI();
+        if(S.view==='dashboard'){renderDashboard();}
+        else if(S.view==='pendenzen_my'){renderMyPendenzen();}
+        else if(S.view==='pendenzen_project'){renderProjectPendenzenView();}
+        else{applyFilters();}
+      }
     }
   })
   .catch(function(){});
