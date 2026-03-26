@@ -5127,7 +5127,7 @@ function _renderMyPendItem(p){
   if(_dateRow)html+='<div style="width:100%;padding-left:28px;margin-bottom:2px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'+_dateRow+'</div>';
   html+='<div class="pend-check" onclick="toggleMyPendenz(\''+p.id+'\')">'+(p.done?'&#10003;':'')+'</div>';
   if(isFromTP) html+='<span class="pend-tp-badge" title="Aus Terminplan: '+esc(p.taskProject||'')+'">TP</span>';
-  html+='<span class="pend-text"'+(isFromTP?'':' ondblclick="editMyPendenz(\''+p.id+'\')"')+'>'+esc(p.text)+'</span>';
+  html+='<span class="pend-text" style="white-space:pre-wrap;"'+(isFromTP?'':' ondblclick="editMyPendenz(\''+p.id+'\')"')+'>'+esc(p.text)+'</span>';
   if(S.pid){
     html+='<div class="pend-move-wrap">';
     html+='<button class="pend-move-btn" onclick="toggleMoveMenu(\''+p.id+'\')" title="Zum Jour Fixe verschieben">&#10140;</button>';
@@ -5513,7 +5513,7 @@ function _renderPendCard(p,isDone){
   if(_dateRow)html+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">'+_dateRow+'</div>';
   html+='<div class="pend-card-top">';
   html+='<div class="pend-check" onclick="toggleProjectPendenz(\''+p.id+'\')" title="Als erledigt markieren">'+(p.done?'&#10003;':'')+'</div>';
-  html+='<span class="pend-card-text" ondblclick="editProjectPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
+  html+='<span class="pend-card-text" style="white-space:pre-wrap;" ondblclick="editProjectPendenz(\''+p.id+'\')">'+esc(p.text)+'</span>';
   html+='<button class="pend-delete" onclick="deleteProjectPendenz(\''+p.id+'\')" title="L\u00f6schen">&times;</button>';
   html+='</div>';
   if(p.images&&p.images.length){
@@ -5960,10 +5960,10 @@ window.editMyPendenz=function(id){
   var li=document.querySelector('.pend-item[data-id="'+id+'"]');
   if(!li)return;
   var textEl=li.querySelector('.pend-text');
-  textEl.innerHTML='<input type="text" class="pend-edit-input" value="'+esc(item.text)+'">'
+  textEl.innerHTML='<textarea class="pend-edit-input" style="resize:vertical;min-height:32px;">'+esc(item.text)+'</textarea>'
     +'<input type="date" class="pend-edit-date" value="'+(item.startDate||'')+'" title="Startdatum">'
     +'<input type="date" class="pend-edit-date" value="'+(item.due||'')+'" title="F\u00e4lligkeitsdatum">';
-  var inp=textEl.querySelector('input[type=text]');
+  var inp=textEl.querySelector('textarea');
   inp.focus();
   var saved=false;
   var save=function(){
@@ -5975,6 +5975,7 @@ window.editMyPendenz=function(id){
     item.due=dates[1].value||'';
     saveMyPendenzen(list);renderMyPendenzen();
   };
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();save();}if(e.key==='Escape'){saved=true;renderMyPendenzen();}});
   textEl.querySelectorAll('input').forEach(function(el){
     el.addEventListener('keydown',function(e){if(e.key==='Enter')save();if(e.key==='Escape'){saved=true;renderMyPendenzen();}});
   });
@@ -6056,10 +6057,10 @@ window.editProjectPendenz=function(id){
   var card=document.querySelector('.pend-card[data-id="'+id+'"]');
   if(!card)return;
   var textEl=card.querySelector('.pend-card-text');
-  textEl.innerHTML='<input type="text" class="pend-edit-input" value="'+esc(item.text)+'" style="width:100%;">'
+  textEl.innerHTML='<textarea class="pend-edit-input" style="width:100%;resize:vertical;min-height:32px;">'+esc(item.text)+'</textarea>'
     +'<input type="date" class="pend-edit-date" value="'+(item.startDate||'')+'" title="Startdatum">'
     +'<input type="date" class="pend-edit-date" value="'+(item.due||'')+'" title="F\u00e4lligkeitsdatum">';
-  var inp=textEl.querySelector('input[type=text]');
+  var inp=textEl.querySelector('textarea');
   inp.focus();
   card.setAttribute('draggable','false');
   var saved=false;
@@ -6072,6 +6073,7 @@ window.editProjectPendenz=function(id){
     item.due=dates[1].value||'';
     saveProjectPendenzen(S.pid,list);renderProjectPendenzenView();
   };
+  inp.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();save();}if(e.key==='Escape'){saved=true;renderProjectPendenzenView();}});
   textEl.querySelectorAll('input').forEach(function(el){
     el.addEventListener('keydown',function(e){if(e.key==='Enter')save();if(e.key==='Escape'){saved=true;renderProjectPendenzenView();}});
   });
