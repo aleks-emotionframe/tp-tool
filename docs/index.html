@@ -10999,18 +10999,18 @@ window.renderBesprechungen=function(){
       var isActive=_bespActiveId===folder.id;
       var children=list.filter(function(b){return b.parentId===folder.id;});
       var hasChildren=children.length>0;
-      html+='<div style="margin-bottom:2px;">';
-      // Folder header
-      html+='<div onclick="_bespSelect(\''+folder.id+'\')" style="display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:var(--radius-xs);cursor:pointer;font-size:12px;font-weight:600;color:'+(isActive?'var(--orange)':'var(--text)')+';background:'+(isActive?'var(--orange-light)':'transparent')+';transition:all 0.15s;" onmouseover="this.style.background=this.style.background||\'var(--surface2)\'" onmouseout="this.style.background=\''+(isActive?'var(--orange-light)':'')+'\';">';
+      html+='<div style="margin-bottom:2px;" class="besp-folder" draggable="true" data-bespid="'+folder.id+'">';
+      html+='<div onclick="_bespSelect(\''+folder.id+'\')" style="display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:var(--radius-xs);cursor:grab;font-size:12px;font-weight:600;color:'+(isActive?'var(--orange)':'var(--text)')+';background:'+(isActive?'var(--orange-light)':'transparent')+';transition:all 0.15s;">';
+      html+='<span style="font-size:10px;color:var(--text3);cursor:grab;">&#9776;</span>';
       html+='<span style="font-size:14px;">'+(hasChildren?'&#128194;':'&#128196;')+'</span>';
       html+='<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(folder.title||'Unbenannt')+'</span>';
       html+='<button style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text3);padding:0 2px;opacity:0.5;" onclick="event.stopPropagation();_bespAddSub(\''+folder.id+'\')" title="Unterseite hinzuf\u00fcgen">+</button>';
       html+='<button style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text3);padding:0 2px;opacity:0.5;" onclick="event.stopPropagation();_bespDelete(\''+folder.id+'\')" title="L\u00f6schen">&times;</button>';
       html+='</div>';
-      // Children
       children.forEach(function(child){
         var isChildActive=_bespActiveId===child.id;
-        html+='<div onclick="_bespSelect(\''+child.id+'\')" style="display:flex;align-items:center;gap:6px;padding:5px 10px 5px 28px;border-radius:var(--radius-xs);cursor:pointer;font-size:11px;color:'+(isChildActive?'var(--orange)':'var(--text2)')+';background:'+(isChildActive?'var(--orange-light)':'transparent')+';transition:all 0.15s;">';
+        html+='<div class="besp-sub" draggable="true" data-bespid="'+child.id+'" onclick="_bespSelect(\''+child.id+'\')" style="display:flex;align-items:center;gap:6px;padding:5px 10px 5px 28px;border-radius:var(--radius-xs);cursor:grab;font-size:11px;color:'+(isChildActive?'var(--orange)':'var(--text2)')+';background:'+(isChildActive?'var(--orange-light)':'transparent')+';transition:all 0.15s;">';
+        html+='<span style="font-size:8px;color:var(--text3);cursor:grab;">&#9776;</span>';
         html+='<span style="font-size:12px;">&#128196;</span>';
         html+='<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(child.title||'Unbenannt')+'</span>';
         html+='<button style="background:none;border:none;cursor:pointer;font-size:12px;color:var(--text3);padding:0 2px;opacity:0.5;" onclick="event.stopPropagation();_bespDelete(\''+child.id+'\')" title="L\u00f6schen">&times;</button>';
@@ -11040,6 +11040,9 @@ window.renderBesprechungen=function(){
     html+='<span style="width:1px;background:var(--border);margin:2px 4px;"></span>';
     html+='<button onclick="_bespInsertTable()" style="background:none;border:1px solid var(--border);border-radius:4px;height:28px;cursor:pointer;font-size:11px;color:var(--text);padding:0 8px;display:flex;align-items:center;gap:4px;" title="Tabelle einf\u00fcgen">&#9638; Tabelle</button>';
     html+='<button onclick="_bespCmd(\'formatBlock\',\'h2\')" style="background:none;border:1px solid var(--border);border-radius:4px;height:28px;cursor:pointer;font-size:11px;font-weight:700;color:var(--text);padding:0 8px;" title="\u00dcberschrift">H</button>';
+    html+='<span style="width:1px;background:var(--border);margin:2px 4px;"></span>';
+    html+='<button onclick="_bespCmd(\'undo\')" style="background:none;border:1px solid var(--border);border-radius:4px;width:28px;height:28px;cursor:pointer;font-size:13px;color:var(--text);" title="R\u00fcckg\u00e4ngig">&#8617;</button>';
+    html+='<button onclick="_bespCmd(\'redo\')" style="background:none;border:1px solid var(--border);border-radius:4px;width:28px;height:28px;cursor:pointer;font-size:13px;color:var(--text);" title="Wiederherstellen">&#8618;</button>';
     html+='</div>';
     // Editor
     html+='<div id="bespEditor" contenteditable="true" data-id="'+esc(active.id)+'" style="flex:1;padding:16px;overflow-y:auto;color:var(--text);font-family:var(--font);font-size:13px;line-height:1.7;outline:none;" onblur="_bespSaveHtml(this)">'+(active.content||'<p style="color:var(--text3);">Notizen hier eingeben...</p>')+'</div>';
@@ -11050,6 +11053,33 @@ window.renderBesprechungen=function(){
 
   html+='</div>';
   c.innerHTML=html;
+  // D&D for folders and subpages
+  var _bDragId=null;
+  c.querySelectorAll('[data-bespid]').forEach(function(el){
+    el.addEventListener('dragstart',function(e){
+      _bDragId=this.getAttribute('data-bespid');
+      this.style.opacity='0.4';
+      e.dataTransfer.effectAllowed='move';
+      e.stopPropagation();
+    });
+    el.addEventListener('dragend',function(){this.style.opacity='';_bDragId=null;});
+    el.addEventListener('dragover',function(e){e.preventDefault();e.stopPropagation();this.style.borderTop='2px solid var(--orange)';});
+    el.addEventListener('dragleave',function(){this.style.borderTop='';});
+    el.addEventListener('drop',function(e){
+      e.preventDefault();e.stopPropagation();this.style.borderTop='';
+      var dropId=this.getAttribute('data-bespid');
+      if(!_bDragId||_bDragId===dropId)return;
+      var list=_getBesprechungen(S.pid);
+      var dragIdx=list.findIndex(function(b){return b.id===_bDragId;});
+      var dropIdx=list.findIndex(function(b){return b.id===dropId;});
+      if(dragIdx<0||dropIdx<0)return;
+      var item=list.splice(dragIdx,1)[0];
+      var newIdx=dropIdx>dragIdx?dropIdx:dropIdx;
+      list.splice(newIdx,0,item);
+      _saveBesprechungen(S.pid,list);
+      renderBesprechungen();
+    });
+  });
 };
 
 window._bespAdd=function(){
@@ -11112,6 +11142,7 @@ window._bespInsertTable=function(){
     +'<button onclick="_bespTblAddCol(this)" contenteditable="false" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--text3);">+ Spalte</button>'
     +'<button onclick="_bespTblRemoveRow(this)" contenteditable="false" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--red);">- Zeile</button>'
     +'<button onclick="_bespTblRemoveCol(this)" contenteditable="false" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--red);">- Spalte</button>'
+    +'<button onclick="_bespTblDelete(this)" contenteditable="false" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--red);margin-left:8px;">Tabelle l\u00f6schen</button>'
     +'</div></div><p>&nbsp;</p>';
   document.execCommand('insertHTML',false,tbl);
 };
@@ -11130,6 +11161,11 @@ window._bespTblAddCol=function(btn){
 window._bespTblRemoveRow=function(btn){
   var tbl=btn.closest('.besp-tbl-wrap').querySelector('table');
   if(tbl.rows.length>1)tbl.deleteRow(tbl.rows.length-1);
+  setTimeout(function(){_bespSaveHtml(document.getElementById('bespEditor'));},50);
+};
+window._bespTblDelete=function(btn){
+  var wrap=btn.closest('.besp-tbl-wrap');
+  if(wrap)wrap.remove();
   setTimeout(function(){_bespSaveHtml(document.getElementById('bespEditor'));},50);
 };
 window._bespTblRemoveCol=function(btn){
