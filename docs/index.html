@@ -5027,7 +5027,7 @@ function renderView(){
     $('ferienView').style.display='block';
     renderFerien();
   }else{
-    if(S.pid){$('kpiStrip').style.display='grid';}
+    if(S.pid){$('kpiStrip').style.display='grid';updateKPI();}
     if(S.view==='dashboard'){
       $('dashboardView').style.display='flex';
       $('contentArea').style.overflow='hidden';
