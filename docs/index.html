@@ -3136,6 +3136,8 @@ function _pollSync(){
         var d=sGet('p_'+S.pid,null);
         if(d)S.tasks=d.tasks||[];
       }
+      // Don't refresh if on a subpage (Besprechungen, Adressliste, Unternehmerkonto)
+      if(S.view&&S.view.indexOf('subpage_')===0)return;
       // Refresh sidebar project list
       loadProjects();
       // Refresh visible view
