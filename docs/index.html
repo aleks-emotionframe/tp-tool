@@ -2820,6 +2820,18 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
   </div>
 </div>
 
+<!-- PROMPT MODAL (reusable) -->
+<div class="modal-bg" id="promptModal" style="z-index:1100;" onclick="if(event.target===this)_promptAnswer(null)">
+  <div class="modal" style="max-width:400px;">
+    <h3 id="promptTitle" style="font-size:17px;"></h3>
+    <input type="text" id="promptInput" class="login-input" style="margin:16px 0 0;" onkeydown="if(event.key==='Enter')_promptAnswer(this.value);">
+    <div class="modal-btns" style="margin-top:16px;">
+      <button onclick="_promptAnswer(null)">Abbrechen</button>
+      <button class="btn-primary" onclick="_promptAnswer(document.getElementById('promptInput').value)">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- UNTERNEHMERKONTO MODAL -->
 <div class="modal-bg" id="ukModal" onclick="if(event.target===this)_ukCloseModal()">
   <div style="background:var(--surface);border-radius:16px;width:90vw;max-width:800px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:var(--shadow-lg);">
@@ -11046,6 +11058,24 @@ window.renderUKonto=function(){
 };
 
 // Custom confirm dialog
+// Custom prompt dialog
+var _promptCallback=null;
+window._promptAnswer=function(val){
+  document.getElementById('promptModal').classList.remove('show');
+  if(_promptCallback)_promptCallback(val?val.trim():null);
+  _promptCallback=null;
+};
+function customPrompt(title,defaultVal){
+  return new Promise(function(resolve){
+    document.getElementById('promptTitle').textContent=title;
+    var inp=document.getElementById('promptInput');
+    inp.value=defaultVal||'';
+    _promptCallback=resolve;
+    document.getElementById('promptModal').classList.add('show');
+    setTimeout(function(){inp.focus();inp.select();},100);
+  });
+}
+
 var _confirmCallback=null;
 window._confirmAnswer=function(val){
   document.getElementById('confirmModal').classList.remove('show');
@@ -11621,21 +11651,23 @@ function _renderAdressTable(){
   area.innerHTML=html;
 }
 window.addAdressKategorie=function(){
-  var name=prompt('Name der Kategorie:');
-  if(!name||!name.trim())return;
-  var list=_subPageData('unternehmer');
-  list.push({_isCategory:true,bereich:name.trim()});
-  var d=sGet('p_'+S.pid,{});d.unternehmer=list;sSet('p_'+S.pid,d);
-  renderUnternehmer();
+  customPrompt('Neue Kategorie','').then(function(name){
+    if(!name)return;
+    var list=_subPageData('unternehmer');
+    list.push({_isCategory:true,bereich:name});
+    var d=sGet('p_'+S.pid,{});d.unternehmer=list;sSet('p_'+S.pid,d);
+    renderUnternehmer();
+  });
 };
 window.editAdressKategorie=function(idx){
   var list=_subPageData('unternehmer');
   var entry=list[idx];if(!entry)return;
-  var name=prompt('Kategorie umbenennen:',entry.bereich||'');
-  if(!name||!name.trim())return;
-  entry.bereich=name.trim();
-  var d=sGet('p_'+S.pid,{});d.unternehmer=list;sSet('p_'+S.pid,d);
-  renderUnternehmer();
+  customPrompt('Kategorie umbenennen',entry.bereich||'').then(function(name){
+    if(!name)return;
+    entry.bereich=name;
+    var d=sGet('p_'+S.pid,{});d.unternehmer=list;sSet('p_'+S.pid,d);
+    renderUnternehmer();
+  });
 };
 window.deleteAdressEntry=function(idx){
   customConfirm('Eintrag l\u00f6schen','Diesen Eintrag wirklich l\u00f6schen?','Ja, l\u00f6schen').then(function(ok){
