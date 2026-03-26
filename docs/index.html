@@ -11112,65 +11112,112 @@ window._ukExportPDF=function(){
   var idx=getIdx();var p=idx.find(function(x){return x.id==S.pid;});
   if(p)pName=p.name;
   var today=new Date().toLocaleDateString('de-CH');
+  var pctVal=calc.leistungsstand;
+  var barCol=pctVal>90?'#ef4444':pctVal>75?'#f59e0b':'#22c55e';
+  var nachtragSum=(uk.nachtraege||[]).reduce(function(s,n){return s+(parseFloat(n.betrag)||0);},0);
 
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Unternehmerkonto - '+esc(uk.firma)+'</title>'
     +'<style>'
-    +'body{font-family:Arial,sans-serif;font-size:11px;color:#222;margin:20px;}'
-    +'h1{font-size:16px;margin:0 0 4px;}h2{font-size:13px;margin:16px 0 6px;border-bottom:1px solid #999;padding-bottom:3px;}'
-    +'table{width:100%;border-collapse:collapse;margin-bottom:12px;}td,th{padding:4px 8px;border:1px solid #ccc;text-align:left;}th{background:#f0f0f0;font-size:10px;}'
-    +'.r{text-align:right;font-family:monospace;}.b{font-weight:bold;}.total{background:#f8f8f8;font-weight:bold;}'
-    +'.warn{color:#e00;font-weight:bold;}.bar{height:10px;background:#eee;border-radius:5px;overflow:hidden;margin:4px 0;}.bar-fill{height:100%;border-radius:5px;}'
-    +'@media print{body{margin:10px;}}'
-    +'</style></head><body>';
+    +'*{margin:0;padding:0;box-sizing:border-box;}'
+    +'body{font-family:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;font-size:10px;color:#222;padding:0;}'
+    +'.page{max-width:760px;margin:0 auto;padding:24px 32px;}'
+    +'.header{display:flex;align-items:center;justify-content:space-between;padding-bottom:16px;border-bottom:3px solid #e8600a;margin-bottom:20px;}'
+    +'.logo{display:flex;align-items:center;gap:10px;}'
+    +'.logo-box{width:36px;height:36px;background:linear-gradient(135deg,#e8600a,#c2410c);border-radius:8px;display:flex;align-items:center;justify-content:center;}'
+    +'.logo-house{width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:9px solid #fff;position:relative;top:-3px;}'
+    +'.logo-body{width:16px;height:10px;background:#fff;border-radius:0 0 2px 2px;margin:-1px auto 0;}'
+    +'.logo-win{width:8px;height:8px;background:#e8600a;border-radius:1px;margin:2px auto 0;}'
+    +'.logo-text{font-size:20px;font-weight:800;color:#e8600a;letter-spacing:-0.3px;}'
+    +'.logo-sub{font-size:9px;color:#888;margin-top:1px;}'
+    +'.meta{text-align:right;font-size:9px;color:#888;}'
+    +'h1{font-size:15px;font-weight:700;margin:0 0 12px;color:#1a1a2e;}'
+    +'h2{font-size:11px;font-weight:700;margin:18px 0 8px;color:#e8600a;text-transform:uppercase;letter-spacing:0.5px;}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:10px;}'
+    +'td,th{padding:5px 8px;border:1px solid #ddd;text-align:left;font-size:10px;}'
+    +'th{background:#f5f5f7;font-size:9px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:0.3px;}'
+    +'.r{text-align:right;font-family:"SF Mono",Consolas,monospace;font-size:10px;}'
+    +'.total{background:#f0f0f3;font-weight:700;}'
+    +'.grand{background:#e8600a;color:#fff;font-weight:800;font-size:12px;}'
+    +'.warn{color:#ef4444;font-weight:700;}'
+    +'.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #ddd;border-radius:6px;overflow:hidden;margin-bottom:14px;}'
+    +'.info-cell{padding:8px 10px;border-bottom:1px solid #eee;font-size:10px;}'
+    +'.info-cell:nth-child(odd){border-right:1px solid #eee;}'
+    +'.info-label{font-size:8px;color:#888;text-transform:uppercase;font-weight:600;letter-spacing:0.3px;}'
+    +'.info-val{font-weight:600;margin-top:2px;}'
+    +'.bar-wrap{margin:6px 0 10px;}'
+    +'.bar{height:12px;background:#eee;border-radius:6px;overflow:hidden;position:relative;}'
+    +'.bar-fill{height:100%;border-radius:6px;}'
+    +'.bar-mark{position:absolute;left:90%;top:0;bottom:0;width:2px;background:#ef4444;}'
+    +'.bar-label{font-size:9px;display:flex;justify-content:space-between;margin-bottom:3px;}'
+    +'.footer{margin-top:20px;padding-top:10px;border-top:1px solid #ddd;font-size:8px;color:#999;text-align:center;}'
+    +'@media print{body{padding:0;}.page{padding:16px 20px;}}'
+    +'</style></head><body><div class="page">';
 
-  html+='<h1>Unternehmerkonto</h1>';
-  html+='<table><tr><td><b>Projekt:</b> '+esc(pName)+'</td><td><b>Datum:</b> '+today+'</td></tr>';
-  html+='<tr><td><b>BKP:</b> '+esc(uk.bkp)+' '+esc(uk.beschreibung)+'</td><td><b>Firma:</b> '+esc(uk.firma)+'</td></tr>';
-  html+='<tr><td><b>Werkvertrag Nr.:</b> '+esc(uk.werkvertragNr)+'</td><td><b>Zust\u00e4ndiger PL:</b> '+esc(uk.zustaendig)+'</td></tr>';
-  html+='<tr><td><b>Werkvertragssumme:</b></td><td class="r">CHF '+_fmtCHF(uk.hauptvertrag||0)+'</td></tr></table>';
+  // Header with logo
+  html+='<div class="header">';
+  html+='<div class="logo"><div class="logo-box"><div class="logo-house"></div><div class="logo-body"><div class="logo-win"></div></div></div><div><div class="logo-text">BAUTERM</div><div class="logo-sub">Bauprojekte. Einfach organisiert.</div></div></div>';
+  html+='<div class="meta">'+esc(pName)+'<br>'+today+'</div>';
+  html+='</div>';
+
+  html+='<h1>Unternehmerkonto &mdash; '+esc(uk.firma||'')+'</h1>';
+
+  // Info grid
+  html+='<div class="info-grid">';
+  html+='<div class="info-cell"><div class="info-label">BKP</div><div class="info-val">'+esc(uk.bkp)+' '+esc(uk.beschreibung)+'</div></div>';
+  html+='<div class="info-cell"><div class="info-label">Firma</div><div class="info-val">'+esc(uk.firma)+'</div></div>';
+  html+='<div class="info-cell"><div class="info-label">Werkvertrag Nr.</div><div class="info-val">'+esc(uk.werkvertragNr)+'</div></div>';
+  html+='<div class="info-cell"><div class="info-label">Zust\u00e4ndiger PL</div><div class="info-val">'+esc(uk.zustaendig)+'</div></div>';
+  html+='<div class="info-cell"><div class="info-label">Werkvertragssumme</div><div class="info-val">CHF '+_fmtCHF(uk.hauptvertrag||0)+'</div></div>';
+  html+='<div class="info-cell"><div class="info-label">Leistungsstand</div><div class="info-val" style="color:'+barCol+';">'+pctVal+'% von 90%</div></div>';
+  html+='</div>';
 
   // Nachträge
   if(uk.nachtraege&&uk.nachtraege.length){
     html+='<h2>Nachtr\u00e4ge</h2><table>';
+    html+='<tr><th style="width:100px;"></th><th>Beschreibung</th><th class="r" style="width:120px;">Betrag</th></tr>';
     uk.nachtraege.forEach(function(n,i){
       html+='<tr><td>Nachtrag Nr. '+(i+1)+'</td><td>'+esc(n.text)+'</td><td class="r">CHF '+_fmtCHF(n.betrag||0)+'</td></tr>';
     });
+    html+='<tr class="total"><td colspan="2">Total Nachtr\u00e4ge</td><td class="r">CHF '+_fmtCHF(nachtragSum)+'</td></tr>';
     html+='</table>';
   }
 
-  html+='<table>';
+  // Abzüge
+  html+='<h2>Vertragssumme &amp; Abz\u00fcge</h2><table>';
   html+='<tr class="total"><td colspan="2">Total brutto exkl. MwSt</td><td class="r">CHF '+_fmtCHF(calc.totalBrutto)+'</td></tr>';
   if(uk.rabatt)html+='<tr><td>Rabatt</td><td class="r">'+(uk.rabatt||0)+' %</td><td class="r">CHF -'+_fmtCHF(calc.rabatt)+'</td></tr>';
   if(uk.skonto)html+='<tr><td>Skonto</td><td class="r">'+(uk.skonto||0)+' %</td><td class="r">CHF -'+_fmtCHF(Math.abs(calc.skonto))+'</td></tr>';
+  if(uk.pauschalabzug)html+='<tr><td>Pauschalabzug</td><td></td><td class="r">CHF -'+_fmtCHF(uk.pauschalabzug)+'</td></tr>';
   if(uk.bauabzuege)html+='<tr><td>Allg. Bauabz\u00fcge</td><td class="r">'+(uk.bauabzuege||0)+' %</td><td class="r">CHF -'+_fmtCHF(Math.abs(calc.bauabzuege))+'</td></tr>';
   if(uk.baugarantie)html+='<tr><td>Baugarantie</td><td class="r">'+(uk.baugarantie||0)+' %</td><td class="r">CHF -'+_fmtCHF(Math.abs(calc.baugarantie))+'</td></tr>';
-  if(uk.baureklame)html+='<tr><td>Baureklame</td><td colspan="2" class="r">CHF -'+_fmtCHF(uk.baureklame||0)+'</td></tr>';
+  if(uk.baureklame)html+='<tr><td>Baureklame</td><td></td><td class="r">CHF -'+_fmtCHF(uk.baureklame||0)+'</td></tr>';
   html+='<tr class="total"><td colspan="2">Total exkl. MwSt</td><td class="r">CHF '+_fmtCHF(calc.totalExkl)+'</td></tr>';
   html+='</table>';
 
   // Akontos
   html+='<h2>Akonto / Lastschriften</h2>';
-  var pctVal=calc.leistungsstand;
-  var barCol=pctVal>90?'#e00':pctVal>75?'#f90':'#2a2';
-  html+='<div class="bar"><div class="bar-fill" style="width:'+Math.min(pctVal,100)+'%;background:'+barCol+';"></div></div>';
-  html+='<p style="font-size:10px;">Leistungsstand: <b>'+pctVal+'%</b> von 90%'+(calc.ueber90?' <span class="warn">- \u00dcBERSCHRITTEN!</span>':'')+'</p>';
-  html+='<table><tr><th></th><th>Ref.</th><th>Datum</th><th class="r">Betrag</th></tr>';
+  html+='<div class="bar-wrap"><div class="bar-label"><span>Leistungsstand</span><span style="font-weight:700;color:'+barCol+';">'+pctVal+'% von 90%'+(calc.ueber90?' \u2014 \u00dcBERSCHRITTEN!':'')+'</span></div>';
+  html+='<div class="bar"><div class="bar-fill" style="width:'+Math.min(pctVal,100)+'%;background:'+barCol+';"></div><div class="bar-mark"></div></div></div>';
+
+  html+='<table><tr><th style="width:80px;"></th><th>Ref.</th><th>Datum</th><th class="r" style="width:120px;">Betrag</th></tr>';
   (uk.akontos||[]).forEach(function(a,i){
     html+='<tr><td>'+(i+1)+'. Akonto</td><td>'+esc(a.ref||'')+'</td><td>'+(a.datum?new Date(a.datum+'T00:00:00').toLocaleDateString('de-CH'):'')+'</td><td class="r">CHF '+_fmtCHF(a.betrag||0)+'</td></tr>';
   });
   (uk.lastschriften||[]).forEach(function(l){
-    html+='<tr><td>Lastschrift</td><td colspan="2">'+esc(l.text||'')+'</td><td class="r">CHF -'+_fmtCHF(l.betrag||0)+'</td></tr>';
+    html+='<tr><td style="color:#ef4444;">Lastschrift</td><td colspan="2">'+esc(l.text||'')+'</td><td class="r" style="color:#ef4444;">CHF -'+_fmtCHF(l.betrag||0)+'</td></tr>';
   });
   html+='<tr class="total"><td colspan="3">Total Zahlungen</td><td class="r">CHF '+_fmtCHF(calc.totalZahlungen)+'</td></tr>';
   html+='</table>';
 
-  html+='<table>';
+  // Endabrechnung
+  html+='<h2>Endabrechnung</h2><table>';
   html+='<tr class="total"><td>Total Auszahlungsbetrag exkl. MwSt</td><td class="r">CHF '+_fmtCHF(calc.totalAuszahlung)+'</td></tr>';
   html+='<tr><td>Mehrwertsteuer '+(uk.mwst||8.1)+' %</td><td class="r">CHF '+_fmtCHF(calc.mwstBetrag)+'</td></tr>';
-  html+='<tr class="total" style="font-size:13px;"><td>Total Auszahlungsbetrag inkl. MwSt</td><td class="r">CHF '+_fmtCHF(calc.totalInkl)+'</td></tr>';
+  html+='<tr class="grand"><td>Total Auszahlungsbetrag inkl. MwSt</td><td class="r">CHF '+_fmtCHF(calc.totalInkl)+'</td></tr>';
   html+='</table>';
 
-  html+='</body></html>';
+  html+='<div class="footer">BAUTERM &middot; bauterm.ch &middot; Generiert am '+today+'</div>';
+  html+='</div></body></html>';
   var win=window.open('','_blank');
   win.document.write(html);
   win.document.close();
