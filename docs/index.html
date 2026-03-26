@@ -11104,8 +11104,38 @@ window._bespInsertCheckbox=function(){
   document.execCommand('insertHTML',false,cb);
 };
 window._bespInsertTable=function(){
-  var tbl='<table style="width:100%;border-collapse:collapse;margin:8px 0;"><tr><td style="border:1px solid var(--border);padding:6px 8px;min-width:60px;">&nbsp;</td><td style="border:1px solid var(--border);padding:6px 8px;min-width:60px;">&nbsp;</td><td style="border:1px solid var(--border);padding:6px 8px;min-width:60px;">&nbsp;</td></tr><tr><td style="border:1px solid var(--border);padding:6px 8px;">&nbsp;</td><td style="border:1px solid var(--border);padding:6px 8px;">&nbsp;</td><td style="border:1px solid var(--border);padding:6px 8px;">&nbsp;</td></tr><tr><td style="border:1px solid var(--border);padding:6px 8px;">&nbsp;</td><td style="border:1px solid var(--border);padding:6px 8px;">&nbsp;</td><td style="border:1px solid var(--border);padding:6px 8px;">&nbsp;</td></tr></table><p></p>';
+  var _cs='border:1px solid #ccc;padding:6px 8px;min-width:50px;';
+  var tbl='<div class="besp-tbl-wrap" contenteditable="false" style="margin:8px 0;position:relative;display:inline-block;">'
+    +'<table style="border-collapse:collapse;" contenteditable="true"><tr><td style="'+_cs+'">&nbsp;</td><td style="'+_cs+'">&nbsp;</td></tr><tr><td style="'+_cs+'">&nbsp;</td><td style="'+_cs+'">&nbsp;</td></tr></table>'
+    +'<div style="display:flex;gap:4px;margin-top:4px;">'
+    +'<button onclick="_bespTblAddRow(this)" contenteditable="false" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--text3);">+ Zeile</button>'
+    +'<button onclick="_bespTblAddCol(this)" contenteditable="false" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--text3);">+ Spalte</button>'
+    +'<button onclick="_bespTblRemoveRow(this)" contenteditable="false" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--red);">- Zeile</button>'
+    +'<button onclick="_bespTblRemoveCol(this)" contenteditable="false" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--red);">- Spalte</button>'
+    +'</div></div><p>&nbsp;</p>';
   document.execCommand('insertHTML',false,tbl);
+};
+window._bespTblAddRow=function(btn){
+  var tbl=btn.closest('.besp-tbl-wrap').querySelector('table');
+  var cols=tbl.rows[0]?tbl.rows[0].cells.length:2;
+  var row=tbl.insertRow();
+  for(var i=0;i<cols;i++){var cell=row.insertCell();cell.style.cssText='border:1px solid #ccc;padding:6px 8px;min-width:50px;';cell.innerHTML='&nbsp;';}
+  setTimeout(function(){_bespSaveHtml(document.getElementById('bespEditor'));},50);
+};
+window._bespTblAddCol=function(btn){
+  var tbl=btn.closest('.besp-tbl-wrap').querySelector('table');
+  for(var r=0;r<tbl.rows.length;r++){var cell=tbl.rows[r].insertCell();cell.style.cssText='border:1px solid #ccc;padding:6px 8px;min-width:50px;';cell.innerHTML='&nbsp;';}
+  setTimeout(function(){_bespSaveHtml(document.getElementById('bespEditor'));},50);
+};
+window._bespTblRemoveRow=function(btn){
+  var tbl=btn.closest('.besp-tbl-wrap').querySelector('table');
+  if(tbl.rows.length>1)tbl.deleteRow(tbl.rows.length-1);
+  setTimeout(function(){_bespSaveHtml(document.getElementById('bespEditor'));},50);
+};
+window._bespTblRemoveCol=function(btn){
+  var tbl=btn.closest('.besp-tbl-wrap').querySelector('table');
+  if(tbl.rows[0]&&tbl.rows[0].cells.length>1){for(var r=0;r<tbl.rows.length;r++)tbl.rows[r].deleteCell(tbl.rows[r].cells.length-1);}
+  setTimeout(function(){_bespSaveHtml(document.getElementById('bespEditor'));},50);
 };
 window._bespSaveHtml=function(el){
   if(!el)return;
