@@ -10828,7 +10828,8 @@ function _renderUKontoDetail(c,uk){
   var html='<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">';
   html+='<button class="admin-btn" onclick="_ukEditId=null;renderUKonto();" style="font-size:12px;">&#8592; Zur\u00fcck</button>';
   html+='<h2 style="font-size:18px;font-weight:700;margin:0;">'+esc(uk.firma||'Neues Unternehmerkonto')+'</h2>';
-  html+='<button class="admin-btn danger" onclick="_ukDelete(\''+esc(uk.id)+'\')" style="margin-left:auto;font-size:11px;">L\u00f6schen</button>';
+  html+='<button class="admin-btn" onclick="_ukExportPDF()" style="margin-left:auto;font-size:11px;">&#128438; PDF Export</button>';
+  html+='<button class="admin-btn danger" onclick="_ukDelete(\''+esc(uk.id)+'\')" style="font-size:11px;">L\u00f6schen</button>';
   html+='</div>';
 
   // Header fields
@@ -10857,7 +10858,7 @@ function _renderUKontoDetail(c,uk){
 
   // Totals & Abzüge
   html+='<div class="admin-card" style="margin-bottom:16px;"><div class="admin-card-body">';
-  html+='<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:2px solid var(--border);font-weight:700;font-size:14px;"><span>Total brutto exkl. MwSt</span><span>CHF '+_fmtCHF(calc.totalBrutto)+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:2px solid var(--border);font-weight:700;font-size:14px;"><span>Total brutto exkl. MwSt</span><span data-uk-total="totalBrutto">CHF '+_fmtCHF(calc.totalBrutto)+'</span></div>';
   html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;">';
   html+=_ukField('Rabatt (%)','rabatt',uk.rabatt,'number');
   html+=_ukField('Skonto (%)','skonto',uk.skonto,'number');
@@ -10866,20 +10867,20 @@ function _renderUKontoDetail(c,uk){
   html+=_ukField('Baugarantie (%)','baugarantie',uk.baugarantie,'number');
   html+=_ukField('Baureklame (CHF)','baureklame',uk.baureklame,'number');
   html+='</div>';
-  html+='<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--border);font-weight:700;font-size:14px;"><span>Total exkl. MwSt</span><span>CHF '+_fmtCHF(calc.totalExkl)+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--border);font-weight:700;font-size:14px;"><span>Total exkl. MwSt</span><span data-uk-total="totalExkl">CHF '+_fmtCHF(calc.totalExkl)+'</span></div>';
   html+='</div></div>';
 
   // Akontos
   html+='<div class="admin-card" style="margin-bottom:16px;"><div class="admin-card-header"><div class="admin-card-title">Akonto / Lastschriften</div>';
   var pct=calc.leistungsstand;
   var barColor=pct>90?'var(--red)':pct>75?'var(--orange)':'var(--green)';
-  html+='<span style="font-size:12px;font-weight:700;color:'+barColor+';">'+pct+'% von 90%</span></div><div class="admin-card-body">';
+  html+='<span data-uk-total="pct" style="font-size:12px;font-weight:700;color:'+barColor+';">'+pct+'% von 90%</span></div><div class="admin-card-body">';
   // Progress bar
   html+='<div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;position:relative;margin-bottom:16px;">';
-  html+='<div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+barColor+';border-radius:4px;transition:width 0.3s;"></div>';
+  html+='<div data-uk-total="bar" style="height:100%;width:'+Math.min(pct,100)+'%;background:'+barColor+';border-radius:4px;transition:width 0.3s;"></div>';
   html+='<div style="position:absolute;left:90%;top:0;bottom:0;width:2px;background:var(--red);"></div>';
   html+='</div>';
-  if(calc.ueber90)html+='<div style="padding:8px 12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-xs);color:var(--red);font-size:12px;font-weight:600;margin-bottom:12px;">&#9888; Achtung: Akontos \u00fcberschreiten die 90%-Grenze! (Max CHF '+_fmtCHF(calc.grenze90)+')</div>';
+  html+='<div data-uk-total="warn90" style="'+(calc.ueber90?'':'display:none;')+'padding:8px 12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-xs);color:var(--red);font-size:12px;font-weight:600;margin-bottom:12px;">'+(calc.ueber90?'&#9888; Achtung: Akontos \u00fcberschreiten die 90%-Grenze! (Max CHF '+_fmtCHF(calc.grenze90)+')':'')+'</div>';
 
   // Akonto list
   (uk.akontos||[]).forEach(function(a,i){
@@ -10909,15 +10910,15 @@ function _renderUKontoDetail(c,uk){
 
   // Totals
   html+='<div style="margin-top:16px;padding-top:12px;border-top:2px solid var(--border);">';
-  html+='<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>Total Zahlungen</span><span style="font-weight:600;">CHF '+_fmtCHF(calc.totalZahlungen)+'</span></div>';
-  html+='<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;font-weight:700;"><span>Total Auszahlungsbetrag exkl. MwSt</span><span>CHF '+_fmtCHF(calc.totalAuszahlung)+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;"><span>Total Zahlungen</span><span data-uk-total="totalZahlungen" style="font-weight:600;">CHF '+_fmtCHF(calc.totalZahlungen)+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;font-weight:700;"><span>Total Auszahlungsbetrag exkl. MwSt</span><span data-uk-total="totalAuszahlung">CHF '+_fmtCHF(calc.totalAuszahlung)+'</span></div>';
   html+='</div>';
 
   // MwSt
   html+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">';
   html+='<span style="font-size:12px;">Mehrwertsteuer <input type="number" value="'+(uk.mwst||8.1)+'" step="0.1" style="width:60px;padding:4px 6px;border:1px solid var(--border);border-radius:4px;font-size:12px;text-align:right;background:var(--surface2);color:var(--text);font-family:var(--font);" onchange="_ukUpdate(\'mwst\',this.value)"> %</span>';
-  html+='<span style="font-size:12px;">CHF '+_fmtCHF(calc.mwstBetrag)+'</span></div>';
-  html+='<div style="display:flex;justify-content:space-between;padding:8px 0;margin-top:8px;border-top:2px solid var(--orange);font-size:15px;font-weight:800;color:var(--text);"><span>Total Auszahlungsbetrag inkl. MwSt</span><span>CHF '+_fmtCHF(calc.totalInkl)+'</span></div>';
+  html+='<span data-uk-total="mwstBetrag" style="font-size:12px;">CHF '+_fmtCHF(calc.mwstBetrag)+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;padding:8px 0;margin-top:8px;border-top:2px solid var(--orange);font-size:15px;font-weight:800;color:var(--text);"><span>Total Auszahlungsbetrag inkl. MwSt</span><span data-uk-total="totalInkl">CHF '+_fmtCHF(calc.totalInkl)+'</span></div>';
   html+='</div></div>';
 
   c.innerHTML=html;
@@ -10934,7 +10935,7 @@ window._ukUpdate=function(key,val){
   if(!uk)return;
   uk[key]=(val===''?'':isNaN(val)?val:parseFloat(val));
   _saveUKontos(S.pid,list);
-  renderUKonto();
+  _ukRefreshTotals(uk);
 };
 window._ukDelete=function(id){
   if(!confirm('Unternehmerkonto wirklich l\u00f6schen?'))return;
@@ -10956,7 +10957,7 @@ window._ukRemoveNachtrag=function(i){
 window._ukUpdateNachtrag=function(i,key,val){
   var list=_getUKontos(S.pid);var uk=list.find(function(u){return u.id===_ukEditId;});if(!uk)return;
   uk.nachtraege[i][key]=key==='betrag'?parseFloat(val)||0:val;
-  _saveUKontos(S.pid,list);renderUKonto();
+  _saveUKontos(S.pid,list);_ukRefreshTotals(uk);
 };
 window._ukAddAkonto=function(){
   var list=_getUKontos(S.pid);var uk=list.find(function(u){return u.id===_ukEditId;});if(!uk)return;
@@ -10971,7 +10972,7 @@ window._ukRemoveAkonto=function(i){
 window._ukUpdateAkonto=function(i,key,val){
   var list=_getUKontos(S.pid);var uk=list.find(function(u){return u.id===_ukEditId;});if(!uk)return;
   uk.akontos[i][key]=key==='betrag'?parseFloat(val)||0:val;
-  _saveUKontos(S.pid,list);renderUKonto();
+  _saveUKontos(S.pid,list);_ukRefreshTotals(uk);
 };
 window._ukAddLastschrift=function(){
   var list=_getUKontos(S.pid);var uk=list.find(function(u){return u.id===_ukEditId;});if(!uk)return;
@@ -10986,7 +10987,111 @@ window._ukRemoveLastschrift=function(i){
 window._ukUpdateLastschrift=function(i,key,val){
   var list=_getUKontos(S.pid);var uk=list.find(function(u){return u.id===_ukEditId;});if(!uk)return;
   uk.lastschriften[i][key]=key==='betrag'?parseFloat(val)||0:val;
-  _saveUKontos(S.pid,list);renderUKonto();
+  _saveUKontos(S.pid,list);_ukRefreshTotals(uk);
+};
+
+// Refresh only the calculated totals without re-rendering (preserves focus/tab)
+function _ukRefreshTotals(uk){
+  var calc=_ukCalc(uk);
+  var els=document.querySelectorAll('[data-uk-total]');
+  els.forEach(function(el){
+    var key=el.getAttribute('data-uk-total');
+    if(key==='totalBrutto')el.textContent='CHF '+_fmtCHF(calc.totalBrutto);
+    if(key==='totalExkl')el.textContent='CHF '+_fmtCHF(calc.totalExkl);
+    if(key==='totalZahlungen')el.textContent='CHF '+_fmtCHF(calc.totalZahlungen);
+    if(key==='totalAuszahlung')el.textContent='CHF '+_fmtCHF(calc.totalAuszahlung);
+    if(key==='mwstBetrag')el.textContent='CHF '+_fmtCHF(calc.mwstBetrag);
+    if(key==='totalInkl')el.textContent='CHF '+_fmtCHF(calc.totalInkl);
+    if(key==='pct'){
+      var pct=calc.leistungsstand;
+      var color=pct>90?'var(--red)':pct>75?'var(--orange)':'var(--green)';
+      el.textContent=pct+'% von 90%';el.style.color=color;
+    }
+    if(key==='bar'){
+      var pct=calc.leistungsstand;
+      var color=pct>90?'var(--red)':pct>75?'var(--orange)':'var(--green)';
+      el.style.width=Math.min(pct,100)+'%';el.style.background=color;
+    }
+    if(key==='warn90'){
+      el.style.display=calc.ueber90?'block':'none';
+      if(calc.ueber90)el.innerHTML='&#9888; Achtung: Akontos \u00fcberschreiten die 90%-Grenze! (Max CHF '+_fmtCHF(calc.grenze90)+')';
+    }
+  });
+}
+
+// PDF Export
+window._ukExportPDF=function(){
+  var list=_getUKontos(S.pid);
+  var uk=list.find(function(u){return u.id===_ukEditId;});
+  if(!uk)return;
+  var calc=_ukCalc(uk);
+  var pName='';
+  var idx=getIdx();var p=idx.find(function(x){return x.id==S.pid;});
+  if(p)pName=p.name;
+  var today=new Date().toLocaleDateString('de-CH');
+
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Unternehmerkonto - '+esc(uk.firma)+'</title>'
+    +'<style>'
+    +'body{font-family:Arial,sans-serif;font-size:11px;color:#222;margin:20px;}'
+    +'h1{font-size:16px;margin:0 0 4px;}h2{font-size:13px;margin:16px 0 6px;border-bottom:1px solid #999;padding-bottom:3px;}'
+    +'table{width:100%;border-collapse:collapse;margin-bottom:12px;}td,th{padding:4px 8px;border:1px solid #ccc;text-align:left;}th{background:#f0f0f0;font-size:10px;}'
+    +'.r{text-align:right;font-family:monospace;}.b{font-weight:bold;}.total{background:#f8f8f8;font-weight:bold;}'
+    +'.warn{color:#e00;font-weight:bold;}.bar{height:10px;background:#eee;border-radius:5px;overflow:hidden;margin:4px 0;}.bar-fill{height:100%;border-radius:5px;}'
+    +'@media print{body{margin:10px;}}'
+    +'</style></head><body>';
+
+  html+='<h1>Unternehmerkonto</h1>';
+  html+='<table><tr><td><b>Projekt:</b> '+esc(pName)+'</td><td><b>Datum:</b> '+today+'</td></tr>';
+  html+='<tr><td><b>BKP:</b> '+esc(uk.bkp)+' '+esc(uk.beschreibung)+'</td><td><b>Firma:</b> '+esc(uk.firma)+'</td></tr>';
+  html+='<tr><td><b>Werkvertrag Nr.:</b> '+esc(uk.werkvertragNr)+'</td><td><b>Zust\u00e4ndiger PL:</b> '+esc(uk.zustaendig)+'</td></tr>';
+  html+='<tr><td><b>Werkvertragssumme:</b></td><td class="r">CHF '+_fmtCHF(uk.hauptvertrag||0)+'</td></tr></table>';
+
+  // Nachträge
+  if(uk.nachtraege&&uk.nachtraege.length){
+    html+='<h2>Nachtr\u00e4ge</h2><table>';
+    uk.nachtraege.forEach(function(n,i){
+      html+='<tr><td>Nachtrag Nr. '+(i+1)+'</td><td>'+esc(n.text)+'</td><td class="r">CHF '+_fmtCHF(n.betrag||0)+'</td></tr>';
+    });
+    html+='</table>';
+  }
+
+  html+='<table>';
+  html+='<tr class="total"><td colspan="2">Total brutto exkl. MwSt</td><td class="r">CHF '+_fmtCHF(calc.totalBrutto)+'</td></tr>';
+  if(uk.rabatt)html+='<tr><td>Rabatt</td><td class="r">'+(uk.rabatt||0)+' %</td><td class="r">CHF -'+_fmtCHF(calc.rabatt)+'</td></tr>';
+  if(uk.skonto)html+='<tr><td>Skonto</td><td class="r">'+(uk.skonto||0)+' %</td><td class="r">CHF -'+_fmtCHF(Math.abs(calc.skonto))+'</td></tr>';
+  if(uk.bauabzuege)html+='<tr><td>Allg. Bauabz\u00fcge</td><td class="r">'+(uk.bauabzuege||0)+' %</td><td class="r">CHF -'+_fmtCHF(Math.abs(calc.bauabzuege))+'</td></tr>';
+  if(uk.baugarantie)html+='<tr><td>Baugarantie</td><td class="r">'+(uk.baugarantie||0)+' %</td><td class="r">CHF -'+_fmtCHF(Math.abs(calc.baugarantie))+'</td></tr>';
+  if(uk.baureklame)html+='<tr><td>Baureklame</td><td colspan="2" class="r">CHF -'+_fmtCHF(uk.baureklame||0)+'</td></tr>';
+  html+='<tr class="total"><td colspan="2">Total exkl. MwSt</td><td class="r">CHF '+_fmtCHF(calc.totalExkl)+'</td></tr>';
+  html+='</table>';
+
+  // Akontos
+  html+='<h2>Akonto / Lastschriften</h2>';
+  var pctVal=calc.leistungsstand;
+  var barCol=pctVal>90?'#e00':pctVal>75?'#f90':'#2a2';
+  html+='<div class="bar"><div class="bar-fill" style="width:'+Math.min(pctVal,100)+'%;background:'+barCol+';"></div></div>';
+  html+='<p style="font-size:10px;">Leistungsstand: <b>'+pctVal+'%</b> von 90%'+(calc.ueber90?' <span class="warn">- \u00dcBERSCHRITTEN!</span>':'')+'</p>';
+  html+='<table><tr><th></th><th>Ref.</th><th>Datum</th><th class="r">Betrag</th></tr>';
+  (uk.akontos||[]).forEach(function(a,i){
+    html+='<tr><td>'+(i+1)+'. Akonto</td><td>'+esc(a.ref||'')+'</td><td>'+(a.datum?new Date(a.datum+'T00:00:00').toLocaleDateString('de-CH'):'')+'</td><td class="r">CHF '+_fmtCHF(a.betrag||0)+'</td></tr>';
+  });
+  (uk.lastschriften||[]).forEach(function(l){
+    html+='<tr><td>Lastschrift</td><td colspan="2">'+esc(l.text||'')+'</td><td class="r">CHF -'+_fmtCHF(l.betrag||0)+'</td></tr>';
+  });
+  html+='<tr class="total"><td colspan="3">Total Zahlungen</td><td class="r">CHF '+_fmtCHF(calc.totalZahlungen)+'</td></tr>';
+  html+='</table>';
+
+  html+='<table>';
+  html+='<tr class="total"><td>Total Auszahlungsbetrag exkl. MwSt</td><td class="r">CHF '+_fmtCHF(calc.totalAuszahlung)+'</td></tr>';
+  html+='<tr><td>Mehrwertsteuer '+(uk.mwst||8.1)+' %</td><td class="r">CHF '+_fmtCHF(calc.mwstBetrag)+'</td></tr>';
+  html+='<tr class="total" style="font-size:13px;"><td>Total Auszahlungsbetrag inkl. MwSt</td><td class="r">CHF '+_fmtCHF(calc.totalInkl)+'</td></tr>';
+  html+='</table>';
+
+  html+='</body></html>';
+  var win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(function(){win.print();},500);
 };
 
 /* ─── PROJECT SUB-PAGES ─── */
