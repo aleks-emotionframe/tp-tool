@@ -11045,7 +11045,8 @@ window.renderBesprechungen=function(){
     html+='<button onclick="_bespCmd(\'redo\')" style="background:none;border:1px solid var(--border);border-radius:4px;width:28px;height:28px;cursor:pointer;font-size:13px;color:var(--text);" title="Wiederherstellen">&#8618;</button>';
     html+='</div>';
     // Editor
-    html+='<div id="bespEditor" contenteditable="true" data-id="'+esc(active.id)+'" style="flex:1;padding:16px;overflow-y:auto;color:var(--text);font-family:var(--font);font-size:13px;line-height:1.7;outline:none;" onblur="_bespSaveHtml(this)">'+(active.content||'<p style="color:var(--text3);">Notizen hier eingeben...</p>')+'</div>';
+    html+='<div id="bespEditor" contenteditable="true" data-id="'+esc(active.id)+'" data-placeholder="Notizen hier eingeben..." style="flex:1;padding:16px;overflow-y:auto;color:var(--text);font-family:var(--font);font-size:13px;line-height:1.7;outline:none;position:relative;" onblur="_bespSaveHtml(this)" onfocus="if(this.innerHTML.indexOf(\'Notizen hier eingeben\')>-1)this.innerHTML=\'\'">'+(active.content||'')+'</div>';
+    html+='<style>#bespEditor:empty::before{content:attr(data-placeholder);color:var(--text3);pointer-events:none;}</style>';
   } else {
     html+='<div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px;"><div style="text-align:center;"><div style="font-size:40px;margin-bottom:12px;">&#128221;</div>W\u00e4hle eine Besprechung<br>oder erstelle eine neue.</div></div>';
   }
