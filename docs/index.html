@@ -11726,7 +11726,12 @@ window.clearAdressliste=function(){
   });
 };
 window.addUnternehmer=function(){
+  // Build category options from existing categories
+  var list=_subPageData('unternehmer');
+  var catOptions=[{value:'_end',label:'(Am Ende einf\u00fcgen)'}];
+  list.forEach(function(u,i){if(u._isCategory)catOptions.push({value:String(i),label:u.bereich});});
   var fields=[
+    {key:'_kategorie',label:'Kategorie',val:catOptions.length>1?catOptions[1].value:'_end',type:'select',options:catOptions},
     {key:'bereich',label:'BKP',val:''},
     {key:'firma',label:'Unternehmer',val:''},
     {key:'strasse',label:'Strasse',val:''},
@@ -11739,8 +11744,18 @@ window.addUnternehmer=function(){
   ];
   _openMultiFieldModal('Neuer Eintrag',fields,function(vals){
     if(!vals.firma&&!vals.bereich)return;
+    var catIdx=vals._kategorie;
+    delete vals._kategorie;
     var list=_subPageData('unternehmer');
-    list.push(vals);
+    if(catIdx&&catIdx!=='_end'){
+      // Insert after the category and its entries
+      var idx=parseInt(catIdx);
+      var insertAt=idx+1;
+      while(insertAt<list.length&&!list[insertAt]._isCategory)insertAt++;
+      list.splice(insertAt,0,vals);
+    } else {
+      list.push(vals);
+    }
     _saveSubPageData('unternehmer',list);
     renderUnternehmer();
   });
@@ -11954,12 +11969,18 @@ function _openMultiFieldModal(title,fields,callback){
   // Build two-column layout for fields
   var fieldHtml='';
   fields.forEach(function(f,i){
-    var isWide=fields.length<=4||(f.key==='bereich'||f.key==='firma');
+    var isWide=fields.length<=4||(f.key==='bereich'||f.key==='firma'||f.key==='_kategorie');
     var span=isWide?'grid-column:1/-1;':'';
     fieldHtml+='<div style="'+span+'">'
-      +'<label class="mf-label">'+esc(f.label)+'</label>'
-      +'<input type="text" id="_mf_'+f.key+'" value="'+esc(f.val)+'" placeholder="'+esc(f.label)+'" class="mf-input">'
-      +'</div>';
+      +'<label class="mf-label">'+esc(f.label)+'</label>';
+    if(f.type==='select'&&f.options){
+      fieldHtml+='<select id="_mf_'+f.key+'" class="mf-input" style="cursor:pointer;">';
+      f.options.forEach(function(o){fieldHtml+='<option value="'+esc(o.value)+'"'+(o.value===f.val?' selected':'')+'>'+esc(o.label)+'</option>';});
+      fieldHtml+='</select>';
+    } else {
+      fieldHtml+='<input type="text" id="_mf_'+f.key+'" value="'+esc(f.val)+'" placeholder="'+esc(f.label)+'" class="mf-input">';
+    }
+    fieldHtml+='</div>';
   });
 
   var box='<div class="mf-modal">'
