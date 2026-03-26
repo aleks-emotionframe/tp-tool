@@ -10888,7 +10888,6 @@ function _renderUKontoDetail(c,uk){
   var html='<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">';
   html+='<h2 style="font-size:18px;font-weight:700;margin:0;flex:1;">'+esc(uk.firma||'Neues Unternehmerkonto')+'</h2>';
   html+='<button class="admin-btn" onclick="_ukExportPDF()" style="font-size:11px;">&#128438; PDF</button>';
-  if(userHasPerm('manage_ukonto'))html+='<button class="admin-btn danger" onclick="_ukDelete(\''+uk.id+'\')" style="font-size:11px;">L\u00f6schen</button>';
   html+='</div>';
 
   // === TOP SUMMARY BAR ===
