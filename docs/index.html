@@ -2458,7 +2458,26 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
           <button class="login-btn" type="submit">Einloggen</button>
         </form>
         <div class="login-error" id="loginErr">Falsches Passwort oder E-Mail</div>
-        <div style="text-align:center;margin-top:24px;font-size:12px;"><a href="#" onclick="showRegisterPanel();return false;" style="color:var(--orange);text-decoration:none;">Noch kein Konto? Registrieren</a></div>
+        <div style="text-align:center;margin-top:24px;font-size:12px;">
+          <a href="#" onclick="showRegisterPanel();return false;" style="color:var(--orange);text-decoration:none;">Noch kein Konto? Registrieren</a>
+          <span style="color:var(--text3);margin:0 6px;">&middot;</span>
+          <a href="#" onclick="showRequestPanel();return false;" style="color:var(--text3);text-decoration:none;">Testzugang anfordern</a>
+        </div>
+      </div>
+      <!-- REQUEST ACCESS PANEL -->
+      <div id="requestPanel" style="display:none;">
+        <p class="login-sub">Testzugang anfordern</p>
+        <p style="font-size:13px;color:var(--text3);margin-bottom:20px;line-height:1.5;">F&uuml;lle das Formular aus und wir melden uns bei dir.</p>
+        <form id="requestForm">
+          <input class="login-input" type="text" id="reqName" placeholder="Vor- und Nachname" required>
+          <input class="login-input" type="email" id="reqEmail" placeholder="E-Mail Adresse" required style="margin-top:8px;">
+          <input class="login-input" type="text" id="reqFirma" placeholder="Firma" style="margin-top:8px;">
+          <textarea class="login-input" id="reqMsg" placeholder="Nachricht (optional)" rows="3" style="margin-top:8px;resize:vertical;font-family:var(--font);"></textarea>
+          <button class="login-btn" type="submit" style="margin-top:8px;">Anfrage senden</button>
+        </form>
+        <div class="login-error" id="reqErr"></div>
+        <div id="reqSuccess" style="display:none;text-align:center;padding:20px 0;color:var(--green);font-weight:600;font-size:14px;">&#10003; Deine Anfrage wurde gesendet. Wir melden uns bei dir!</div>
+        <div style="text-align:center;margin-top:24px;font-size:12px;"><a href="#" onclick="showLoginPanel();return false;" style="color:var(--orange);text-decoration:none;">Zur&uuml;ck zum Login</a></div>
       </div>
       <!-- REGISTRATION DISABLED -->
       <div id="regDisabledPanel" style="display:none;text-align:center;padding:20px 0;">
@@ -3909,9 +3928,48 @@ window.showRegisterPanel=function(){
 window.showLoginPanel=function(){
   $('registerPanel').style.display='none';
   $('regDisabledPanel').style.display='none';
+  $('requestPanel').style.display='none';
   $('loginPanel').style.display='';
   $('loginBrand').style.display='';
 };
+window.showRequestPanel=function(){
+  $('loginPanel').style.display='none';
+  $('registerPanel').style.display='none';
+  $('regDisabledPanel').style.display='none';
+  $('requestPanel').style.display='';
+  $('loginBrand').style.display='';
+  $('reqSuccess').style.display='none';
+  var f=$('requestForm');if(f)f.style.display='';
+};
+$('requestForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  var name=$('reqName').value.trim();
+  var email=$('reqEmail').value.trim();
+  var firma=$('reqFirma').value.trim();
+  var msg=$('reqMsg').value.trim();
+  var errEl=$('reqErr');
+  errEl.style.display='none';
+  if(!name||!email){errEl.textContent='Bitte Name und E-Mail eingeben.';errEl.style.display='block';return;}
+  var btn=this.querySelector('.login-btn');
+  btn.textContent='Wird gesendet...';btn.disabled=true;
+  fetch('api/invite.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'request',name:name,email:email,firma:firma,message:msg}),
+    credentials:'same-origin'
+  })
+  .then(function(r){return r.json();})
+  .then(function(res){
+    btn.textContent='Anfrage senden';btn.disabled=false;
+    $('requestForm').style.display='none';
+    $('reqSuccess').style.display='block';
+  })
+  .catch(function(){
+    btn.textContent='Anfrage senden';btn.disabled=false;
+    $('requestForm').style.display='none';
+    $('reqSuccess').style.display='block';
+  });
+});
 // Auto-show register if URL has ?register=CODE
 (function(){
   var params=new URLSearchParams(window.location.search);
