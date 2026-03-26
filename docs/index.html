@@ -11504,6 +11504,7 @@ function renderUnternehmer(){
     +'<span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none;">&#128269;</span></div>';
   html+='<button class="admin-btn" onclick="document.getElementById(\'xlsxUnternehmerInput\').click()" style="background:var(--surface);border:1px solid var(--border);font-size:11px;padding:6px 10px;">&#8679; XLSX importieren</button>';
   html+='<button class="admin-btn" onclick="exportUnternehmerPdf()" style="background:var(--surface);border:1px solid var(--border);font-size:11px;padding:6px 10px;"'+(list.length?'':' disabled style="opacity:.4;pointer-events:none;"')+'>&#128196; PDF exportieren</button>';
+  if(list.length)html+='<button class="admin-btn danger" onclick="clearAdressliste()" style="font-size:11px;padding:6px 10px;">Alle l\u00f6schen</button>';
   html+='<button class="admin-btn primary" onclick="addUnternehmer()" style="font-size:11px;padding:6px 10px;">+ Hinzuf\u00fcgen</button>';
   html+='<input type="file" id="xlsxUnternehmerInput" accept=".xlsx,.xls" style="display:none" onchange="importUnternehmerXlsx(this)">';
   html+='</div></div>';
@@ -11569,6 +11570,15 @@ function _renderAdressTable(){
   }
   area.innerHTML=html;
 }
+window.clearAdressliste=function(){
+  customConfirm('Adressliste l\u00f6schen','M\u00f6chtest du die gesamte Adressliste wirklich unwiderruflich l\u00f6schen? Alle Eintr\u00e4ge gehen verloren.','Ja, alle l\u00f6schen').then(function(ok){
+    if(!ok)return;
+    var d=sGet('p_'+S.pid,{});
+    d.unternehmer=[];
+    sSet('p_'+S.pid,d);
+    renderUnternehmer();
+  });
+};
 window.addUnternehmer=function(){
   var fields=[
     {key:'bereich',label:'Bereich / Arbeitsgattung',val:''},
