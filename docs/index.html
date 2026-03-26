@@ -2690,7 +2690,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
       <button class="admin-tab" onclick="switchAdminTab('backup',this)">Backup</button>
       <button class="admin-tab" onclick="switchAdminTab('settings',this)">Einstellungen</button>
       <button class="admin-tab" onclick="switchAdminTab('logs',this)">Aktivit&auml;tslog</button>
-      <button class="admin-tab" onclick="switchAdminTab('analytics',this)">Nutzungsanalyse</button>
+      <button class="admin-tab" onclick="switchAdminTab('analytics',this)">Cockpit</button>
       <button class="admin-tab" onclick="switchAdminTab('changelog',this)">Changelog</button>
       <button class="admin-tab" onclick="switchAdminTab('testaufgaben',this)" id="adminTabBtnFeedback">Feedback</button>
       <button class="admin-tab" onclick="switchAdminTab('lizenzen',this)">Lizenzen</button>
@@ -10480,14 +10480,40 @@ function trackUsage(category,action){
 
 function renderAdminAnalytics(){
   var c=$('adminTabAnalytics');
+  // ═══ COCKPIT DATA ═══
   var data=sGet('usage_analytics',{events:[],daily:{}});
   var logs=sGet('activity_log',[]);
-  var users=sGet('users',[]);
+  var users=getUsers();
+
+  var idx=getIdx();
+  var allProjects=idx.map(function(p){var d=sGet('p_'+p.id,{});return{id:p.id,name:p.name,data:d,tasks:d.tasks||[],pend:d.pendenzen||[],uKontos:d.uKontos||[],cols:d.jourFixeColumns||[],users:d.users||[]};});
+  var licenses=getLicenses();
+  var feedbacks=sGet('feedbacks',[]);
+  var now=new Date();var today=now.toISOString().substring(0,10);
+
+  // --- Aggregate all pendenzen ---
+  var allProjPend=[];var allMyPend=[];
+  allProjects.forEach(function(p){p.pend.forEach(function(pd){pd._proj=p.name;allProjPend.push(pd);});});
+  users.forEach(function(u){var mp=sGet('pendenzen_'+u.username,[]);mp.forEach(function(pd){pd._user=u.username;allMyPend.push(pd);});});
+  var allPend=allProjPend.concat(allMyPend);
+  var pendOpen=allPend.filter(function(p){return !p.done;});
+  var pendDone=allPend.filter(function(p){return p.done;});
+
+  // --- Aggregate tasks ---
+  var allTasks=[];var overdueProjects=[];
+  allProjects.forEach(function(p){
+    var work=p.tasks.filter(function(t){return !t.summary;});
+    var overdue=work.filter(function(t){return t.finish&&t.finish<today&&(t.percentComplete||0)<100;});
+    if(overdue.length>0)overdueProjects.push({name:p.name,count:overdue.length});
+    allTasks=allTasks.concat(work);
+  });
+
+  // --- Aggregate Unternehmerkontos ---
+  var allUK=[];
+  allProjects.forEach(function(p){p.uKontos.forEach(function(uk){uk._proj=p.name;allUK.push(uk);});});
 
   // --- Aggregate from activity_log ---
-  var actionsByType={};
-  var actionsByUser={};
-  var activityByDay={};
+  var actionsByType={};var actionsByUser={};var activityByDay={};
   logs.forEach(function(l){
     actionsByType[l.type]=(actionsByType[l.type]||0)+1;
     actionsByUser[l.user||'System']=(actionsByUser[l.user||'System']||0)+1;
@@ -10516,23 +10542,110 @@ function renderAdminAnalytics(){
 
   var html='';
 
-  // ── Overview Cards ──
-  var totalEvents=(data.events||[]).length;
+  // ═══════════════════════════════════════
+  // SECTION 1: SUMMARY KPI CARDS
+  // ═══════════════════════════════════════
   var totalLogEntries=logs.length;
-  var activeDays=Object.keys(data.daily||{}).length;
-  var activeUsers=Object.keys(userSessions).length||Object.keys(actionsByUser).length;
-  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;">';
-  html+='<div class="admin-card" style="text-align:center;padding:16px;"><div style="font-size:28px;font-weight:700;color:var(--orange);">'+totalLogEntries+'</div><div style="font-size:12px;color:var(--text3);margin-top:4px;">Aktivit\u00e4ten gesamt</div></div>';
-  html+='<div class="admin-card" style="text-align:center;padding:16px;"><div style="font-size:28px;font-weight:700;color:var(--blue);">'+totalEvents+'</div><div style="font-size:12px;color:var(--text3);margin-top:4px;">Interaktionen erfasst</div></div>';
-  html+='<div class="admin-card" style="text-align:center;padding:16px;"><div style="font-size:28px;font-weight:700;color:var(--green);">'+activeUsers+'</div><div style="font-size:12px;color:var(--text3);margin-top:4px;">Aktive Benutzer</div></div>';
-  html+='<div class="admin-card" style="text-align:center;padding:16px;"><div style="font-size:28px;font-weight:700;color:var(--text2);">'+activeDays+'</div><div style="font-size:12px;color:var(--text3);margin-top:4px;">Aktive Tage</div></div>';
-  html+='</div>';
+  var activeUsers=users.filter(function(u){return !u.locked&&u.username!=='admin';}).length;
+  var activeProjects=allProjects.length;
+  var totalUK=allUK.length;
+  // Avg completion time for done pendenzen
+  var completionTimes=pendDone.filter(function(p){return p.created&&p.due;}).map(function(p){
+    return Math.ceil((new Date(p.due)-new Date(p.created))/(1000*60*60*24));
+  }).filter(function(d){return d>0&&d<365;});
+  var avgCompletion=completionTimes.length?Math.round(completionTimes.reduce(function(s,v){return s+v;},0)/completionTimes.length):0;
+  // Jour Fixe count (columns across projects)
+  var totalJFCols=allProjects.reduce(function(s,p){return s+p.cols.length;},0);
+  var projectsWithDelay=overdueProjects.length;
+  function _kpi(val,label,color){return '<div class="admin-card" style="text-align:center;padding:14px 10px;"><div style="font-size:26px;font-weight:800;color:'+(color||'var(--text)')+';">'+val+'</div><div style="font-size:10px;color:var(--text3);margin-top:3px;text-transform:uppercase;font-weight:600;letter-spacing:0.3px;">'+label+'</div></div>';}
+  function _section(title,badge){return '<div class="admin-section" style="margin-top:24px;"><div class="admin-section-title">'+title+(badge?' <span class="admin-badge blue" style="font-size:10px;">'+badge+'</span>':'')+'</div>';}
+  function _bar(pct,color,h){h=h||18;return '<div style="flex:1;height:'+h+'px;background:var(--surface2);border-radius:'+(h/2)+'px;overflow:hidden;"><div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+(color||'var(--orange)')+';border-radius:'+(h/2)+'px;min-width:2px;"></div></div>';}
 
-  // ── Activity Timeline (last 14 days bar chart) ──
-  html+='<div class="admin-section"><div class="admin-section-title">Aktivit\u00e4t der letzten 14 Tage</div>';
+  // KPI Cards Row 1
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:10px;">';
+  html+=_kpi(activeUsers,'Aktive Nutzer','var(--blue)');
+  html+=_kpi(activeProjects,'Projekte','var(--orange)');
+  html+=_kpi(pendOpen.length,'Offene Pendenzen','var(--red)');
+  html+=_kpi(pendDone.length,'Erledigte Pendenzen','var(--green)');
+  html+=_kpi(avgCompletion?avgCompletion+'d':'-','Ø Erledigungszeit','var(--text2)');
+  html+='</div>';
+  // KPI Cards Row 2
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:10px;">';
+  html+=_kpi(totalJFCols,'Jour Fixe Spalten','#8b5cf6');
+  html+=_kpi(totalUK,'Unternehmerkontos','#06b6d4');
+  html+=_kpi(totalLogEntries,'Aktivit\u00e4ten','var(--text3)');
+  html+=_kpi(projectsWithDelay,'Projekte mit Verzug','var(--red)');
+  html+=_kpi(feedbacks.length,'Feedbacks','var(--orange)');
+  html+='</div>';
+  // ═══ SECTION 2: ALERTS & AUFFÄLLIGKEITEN ═══
+  var alerts=[];
+  overdueProjects.forEach(function(p){alerts.push({type:'danger',text:esc(p.name)+': <strong>'+p.count+'</strong> \u00fcberf\u00e4llige Vorg\u00e4nge'});});
+  allProjects.forEach(function(p){var open=p.pend.filter(function(x){return!x.done;});if(open.length>10)alerts.push({type:'warning',text:esc(p.name)+': <strong>'+open.length+'</strong> offene Pendenzen'});});
+  allUK.forEach(function(uk){var calc=_ukCalc(uk);if(calc.ueber90)alerts.push({type:'danger',text:'Unternehmerkonto <strong>'+esc(uk.firma)+'</strong>: 90%-Grenze \u00fcberschritten ('+calc.leistungsstand+'%)'});});
+  if(alerts.length){
+    html+=_section('Alerts &amp; Auff\u00e4lligkeiten',''+alerts.length);
+    html+='<div class="admin-card"><div class="admin-card-body" style="display:flex;flex-direction:column;gap:6px;">';
+    alerts.forEach(function(a){
+      var col=a.type==='danger'?'var(--red)':'var(--orange)';
+      html+='<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:'+(a.type==='danger'?'rgba(239,68,68,0.06)':'rgba(245,158,11,0.06)')+';border-radius:var(--radius-xs);border-left:3px solid '+col+';font-size:12px;color:var(--text);">'+a.text+'</div>';
+    });
+    html+='</div></div></div>';
+  }
+
+  // ═══ SECTION 3: PROJEKT & BAUSTELLEN INSIGHTS ═══
+  html+=_section('Projekt &amp; Baustellen Insights',''+allProjects.length+' Projekte');
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">';
+  // Pendenzen per project
+  html+='<div class="admin-card"><div class="admin-card-header"><div class="admin-card-title">Pendenzen pro Projekt</div></div><div class="admin-card-body" style="display:flex;flex-direction:column;gap:6px;">';
+  var maxPP=1;allProjects.forEach(function(p){if(p.pend.length>maxPP)maxPP=p.pend.length;});
+  allProjects.forEach(function(p){
+    var open=p.pend.filter(function(x){return!x.done;}).length;
+    var done=p.pend.filter(function(x){return x.done;}).length;
+    var total=p.pend.length;
+    if(!total)return;
+    html+='<div style="font-size:11px;"><div style="display:flex;justify-content:space-between;margin-bottom:2px;"><span style="font-weight:600;color:var(--text);">'+esc(p.name)+'</span><span style="color:var(--text3);">'+open+' offen / '+done+' erledigt</span></div>';
+    html+='<div style="display:flex;height:14px;border-radius:7px;overflow:hidden;background:var(--surface2);">';
+    if(done)html+='<div style="width:'+Math.round(done/total*100)+'%;background:var(--green);"></div>';
+    if(open)html+='<div style="width:'+Math.round(open/total*100)+'%;background:var(--orange);"></div>';
+    html+='</div></div>';
+  });
+  if(!allProjects.some(function(p){return p.pend.length>0;}))html+='<div style="font-size:12px;color:var(--text3);font-style:italic;">Keine Pendenzen</div>';
+  html+='</div></div>';
+  // Projects with delays
+  html+='<div class="admin-card"><div class="admin-card-header"><div class="admin-card-title">Projekte mit Terminverzug</div></div><div class="admin-card-body" style="display:flex;flex-direction:column;gap:6px;">';
+  overdueProjects.sort(function(a,b){return b.count-a.count;});
+  if(!overdueProjects.length)html+='<div style="font-size:12px;color:var(--green);font-weight:600;">&#10003; Keine Verz\u00f6gerungen</div>';
+  overdueProjects.forEach(function(p){
+    html+='<div style="display:flex;align-items:center;gap:8px;font-size:12px;"><span style="font-weight:600;color:var(--text);flex:1;">'+esc(p.name)+'</span><span style="color:var(--red);font-weight:700;">'+p.count+' \u00fcberf\u00e4llig</span></div>';
+  });
+  html+='</div></div>';
+  html+='</div></div>';
+
+  // ═══ SECTION 4: UNTERNEHMER & TEAM INSIGHTS ═══
+  if(allUK.length){
+    html+=_section('Unternehmer Insights',''+allUK.length+' Kontos');
+    html+='<div class="admin-card"><div class="admin-card-body">';
+    html+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;font-size:10px;color:var(--text3);font-weight:600;text-transform:uppercase;padding-bottom:6px;border-bottom:1px solid var(--border);">';
+    html+='<div>Firma</div><div style="text-align:right;">Vertrag</div><div style="text-align:right;">Bezahlt</div><div style="text-align:right;">Stand</div></div>';
+    allUK.forEach(function(uk){
+      var calc=_ukCalc(uk);
+      var pct=calc.leistungsstand;
+      var col=pct>90?'var(--red)':pct>75?'var(--orange)':'var(--green)';
+      html+='<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;font-size:11px;padding:6px 0;border-bottom:1px solid var(--border);align-items:center;">';
+      html+='<div><span style="font-weight:600;color:var(--text);">'+esc(uk.firma||'-')+'</span><br><span style="font-size:10px;color:var(--text3);">'+esc(uk._proj)+'</span></div>';
+      html+='<div style="text-align:right;">'+_fmtCHF(calc.totalExkl)+'</div>';
+      html+='<div style="text-align:right;color:var(--orange);">'+_fmtCHF(calc.totalZahlungen)+'</div>';
+      html+='<div style="text-align:right;font-weight:700;color:'+col+';">'+pct+'%</div>';
+      html+='</div>';
+    });
+    html+='</div></div></div>';
+  }
+
+  // ═══ SECTION 5: NUTZERVERHALTEN ═══
+  // Activity Timeline (last 14 days bar chart)
+  html+=_section('Nutzerverhalten','letzte 14 Tage');
   html+='<div class="admin-card"><div class="admin-card-body">';
   var allDays14=[];
-  var now=new Date();
   for(var i=13;i>=0;i--){
     var d=new Date(now);d.setDate(d.getDate()-i);
     allDays14.push(d.toISOString().substring(0,10));
@@ -10701,9 +10814,36 @@ function renderAdminAnalytics(){
   html+='<span style="font-size:10px;color:var(--text3);">Mehr</span></div>';
   html+='</div></div></div>';
 
+  // ═══ SECTION 6: MEDIEN & DOKUMENTATION ═══
+  var totalPhotos=0;var totalComments=0;
+  allPend.forEach(function(p){if(p.images)totalPhotos+=p.images.length;if(p.comment)totalComments++;});
+  allProjects.forEach(function(p){p.tasks.forEach(function(t){/* tasks don't have photos in current model */});});
+  html+=_section('Medien &amp; Dokumentation');
+  html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">';
+  html+=_kpi(totalPhotos,'Fotos in Pendenzen','#8b5cf6');
+  html+=_kpi(totalComments,'Kommentare','#06b6d4');
+  html+=_kpi(feedbacks.filter(function(f){return f.screenshot;}).length,'Screenshots (Feedback)','var(--orange)');
+  // NOTE: Document upload tracking not yet implemented - would need new tracking events
+  html+=_kpi('-','Hochgeladene Dokumente','var(--text3)');
+  html+='</div></div>';
+
+  // ═══ SECTION 7: LIZENZEN ÜBERSICHT ═══
+  if(licenses.length){
+    var activeLic=licenses.filter(function(l){return l.active;}).length;
+    var totalSeats=licenses.reduce(function(s,l){return s+l.seats;},0);
+    var usedSeats=licenses.reduce(function(s,l){return s+(l.users?l.users.length:0);},0);
+    html+=_section('Lizenzen',''+licenses.length);
+    html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">';
+    html+=_kpi(activeLic,'Aktive Lizenzen','var(--green)');
+    html+=_kpi(usedSeats+'/'+totalSeats,'Pl\u00e4tze belegt','var(--orange)');
+    var expiringSoon=licenses.filter(function(l){if(!l.active)return false;var exp=new Date(l.expiry+'T23:59:59');var diff=Math.ceil((exp-now)/(1000*60*60*24));return diff>=0&&diff<=30;}).length;
+    html+=_kpi(expiringSoon,'Laufen bald ab','var(--red)');
+    html+='</div></div>';
+  }
+
   // ── Info & Reset ──
-  html+='<div style="margin-top:16px;display:flex;align-items:center;justify-content:space-between;">'
-    +'<div style="font-size:11px;color:var(--text3);">Daten werden lokal gespeichert. Die Erfassung beginnt ab jetzt automatisch.</div>'
+  html+='<div style="margin-top:24px;display:flex;align-items:center;justify-content:space-between;">'
+    +'<div style="font-size:11px;color:var(--text3);">Daten werden automatisch erfasst und gespeichert.</div>'
     +'<button class="admin-btn danger" onclick="if(confirm(\'Nutzungsdaten wirklich zur\u00fccksetzen?\')){sSet(\'usage_analytics\',{events:[],daily:{}});renderAdminAnalytics();}">Daten zur\u00fccksetzen</button>'
     +'</div>';
 
