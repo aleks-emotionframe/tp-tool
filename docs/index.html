@@ -2776,6 +2776,14 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 </div>
 
 <!-- IMAGE LIGHTBOX -->
+<!-- UNTERNEHMERKONTO MODAL -->
+<div class="modal-bg" id="ukModal" onclick="if(event.target===this)_ukCloseModal()">
+  <div style="background:var(--surface);border-radius:16px;width:90vw;max-width:800px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:var(--shadow-lg);">
+    <button style="position:sticky;top:12px;right:14px;float:right;background:var(--surface2);border:none;font-size:20px;color:var(--text3);cursor:pointer;z-index:2;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50;margin:12px;" onclick="_ukCloseModal()">&times;</button>
+    <div id="ukModalBody" style="padding:24px 32px 32px;"></div>
+  </div>
+</div>
+
 <div id="imgLightbox" style="display:none;position:fixed;inset:0;z-index:2500;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;cursor:zoom-out;" onclick="this.style.display='none'">
   <img id="imgLightboxImg" src="" style="max-width:92vw;max-height:92vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.5);object-fit:contain;">
   <button onclick="event.stopPropagation();$('imgLightbox').style.display='none';" style="position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:32px;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50;opacity:0.8;">&times;</button>
@@ -10775,43 +10783,69 @@ window.renderUKonto=function(){
   if(!S.pid){c.innerHTML='<div style="padding:40px;text-align:center;color:var(--text3);">Bitte zuerst ein Projekt w\u00e4hlen.</div>';return;}
   var list=_getUKontos(S.pid);
 
-  if(_ukEditId){
-    var uk=list.find(function(u){return u.id===_ukEditId;});
-    if(uk){_renderUKontoDetail(c,uk);return;}
-    _ukEditId=null;
-  }
+  // Detail view now opens as modal via _ukShowModal()
 
   // Overview
-  var html='<h2 style="font-size:18px;font-weight:700;margin:0 0 16px;">Unternehmerkontos <span style="font-size:14px;font-weight:400;color:var(--text3);">'+list.length+'</span></h2>';
-  html+='<button class="admin-btn primary" onclick="_ukCreate()" style="margin-bottom:20px;">+ Neues Unternehmerkonto</button>';
+  var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">';
+  html+='<h2 style="font-size:18px;font-weight:700;margin:0;">Unternehmerkontos <span style="font-size:14px;font-weight:400;color:var(--text3);">'+list.length+'</span></h2>';
+  html+='<button class="admin-btn primary" onclick="_ukCreate()">+ Neues Unternehmerkonto</button>';
+  html+='</div>';
 
   if(!list.length){
-    html+='<div style="text-align:center;padding:40px;color:var(--text3);">Noch keine Unternehmerkontos erstellt.</div>';
+    html+='<div style="text-align:center;padding:60px 20px;color:var(--text3);"><div style="font-size:40px;margin-bottom:12px;">&#128176;</div><div style="font-size:14px;">Noch keine Unternehmerkontos erstellt.</div></div>';
   } else {
     list.forEach(function(uk){
       var calc=_ukCalc(uk);
       var pct=calc.leistungsstand;
       var barColor=pct>90?'var(--red)':pct>75?'var(--orange)':'var(--green)';
-      html+='<div class="admin-card" style="margin-bottom:12px;cursor:pointer;" onclick="_ukEditId=\''+esc(uk.id)+'\';renderUKonto();">';
-      html+='<div class="admin-card-header">';
-      html+='<div><div class="admin-card-title" style="margin:0;">'+esc(uk.firma||'Ohne Firma')+'</div>';
-      html+='<div style="font-size:11px;color:var(--text3);">BKP '+esc(uk.bkp||'-')+' &middot; '+esc(uk.beschreibung||'')+'</div></div>';
-      html+='<div style="text-align:right;">';
-      html+='<div style="font-size:16px;font-weight:700;color:var(--text);">CHF '+_fmtCHF(calc.totalExkl)+'</div>';
-      html+='<div style="font-size:11px;color:var(--text3);">Akontos: CHF '+_fmtCHF(calc.totalZahlungen)+'</div>';
+      var akontoCount=(uk.akontos||[]).length;
+      var nachtragCount=(uk.nachtraege||[]).length;
+      html+='<div class="admin-card" style="margin-bottom:12px;">';
+      // Header
+      html+='<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:16px;border-bottom:1px solid var(--border);">';
+      html+='<div style="flex:1;min-width:0;">';
+      html+='<div style="font-size:15px;font-weight:700;color:var(--text);">'+esc(uk.firma||'Ohne Firma')+'</div>';
+      html+='<div style="font-size:12px;color:var(--text3);margin-top:2px;">BKP '+esc(uk.bkp||'-')+' &middot; '+esc(uk.beschreibung||'')+'</div>';
+      if(uk.werkvertragNr)html+='<div style="font-size:11px;color:var(--text3);margin-top:1px;">WV Nr. '+esc(uk.werkvertragNr)+(uk.zustaendig?' &middot; PL: '+esc(uk.zustaendig):'')+'</div>';
+      html+='</div>';
+      html+='<div style="display:flex;gap:6px;">';
+      html+='<button class="admin-btn" onclick="_ukEditId=\''+esc(uk.id)+'\';_ukShowModal();" style="font-size:11px;">&#9998; \u00d6ffnen</button>';
+      html+='<button class="admin-btn danger" onclick="_ukDelete(\''+esc(uk.id)+'\')" style="font-size:11px;">&times;</button>';
       html+='</div></div>';
+      // Stats grid
+      html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);">';
+      html+='<div style="background:var(--surface);padding:12px;text-align:center;"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:600;">Vertragssumme</div><div style="font-size:15px;font-weight:700;color:var(--text);margin-top:4px;">'+_fmtCHF(uk.hauptvertrag||0)+'</div></div>';
+      html+='<div style="background:var(--surface);padding:12px;text-align:center;"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:600;">Total exkl. MwSt</div><div style="font-size:15px;font-weight:700;color:var(--text);margin-top:4px;">'+_fmtCHF(calc.totalExkl)+'</div></div>';
+      html+='<div style="background:var(--surface);padding:12px;text-align:center;"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:600;">Akontos ('+akontoCount+')</div><div style="font-size:15px;font-weight:700;color:var(--orange);margin-top:4px;">'+_fmtCHF(calc.totalZahlungen)+'</div></div>';
+      html+='<div style="background:var(--surface);padding:12px;text-align:center;"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:600;">Offen</div><div style="font-size:15px;font-weight:700;color:var(--green);margin-top:4px;">'+_fmtCHF(calc.totalAuszahlung)+'</div></div>';
+      html+='</div>';
       // Progress bar
-      html+='<div style="padding:0 16px 12px;">';
-      html+='<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px;"><span style="color:var(--text3);">Leistungsstand</span><span style="font-weight:700;color:'+barColor+';">'+pct+'% von 90%</span></div>';
-      html+='<div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;position:relative;">';
-      html+='<div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+barColor+';border-radius:3px;transition:width 0.3s;"></div>';
-      html+='<div style="position:absolute;left:90%;top:0;bottom:0;width:2px;background:var(--red);opacity:0.5;"></div>';
+      html+='<div style="padding:10px 16px 12px;">';
+      html+='<div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px;">';
+      html+='<span style="color:var(--text3);">Leistungsstand'+(nachtragCount?' &middot; '+nachtragCount+' Nachtr\u00e4ge':'')+'</span>';
+      html+='<span style="font-weight:700;color:'+barColor+';">'+pct+'% von 90% (Max '+_fmtCHF(calc.grenze90)+')</span></div>';
+      html+='<div style="height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;position:relative;">';
+      html+='<div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+barColor+';border-radius:4px;transition:width 0.3s;"></div>';
+      html+='<div style="position:absolute;left:90%;top:0;bottom:0;width:2px;background:var(--red);opacity:0.6;"></div>';
       html+='</div></div>';
       if(calc.ueber90)html+='<div style="padding:4px 16px 12px;font-size:11px;color:var(--red);font-weight:600;">&#9888; Akontos \u00fcberschreiten 90%-Grenze!</div>';
       html+='</div>';
     });
   }
   c.innerHTML=html;
+};
+
+window._ukShowModal=function(){
+  var list=_getUKontos(S.pid);
+  var uk=list.find(function(u){return u.id===_ukEditId;});
+  if(!uk)return;
+  _renderUKontoDetail($('ukModalBody'),uk);
+  $('ukModal').classList.add('show');
+};
+window._ukCloseModal=function(){
+  $('ukModal').classList.remove('show');
+  _ukEditId=null;
+  renderUKonto();
 };
 
 window._ukCreate=function(){
@@ -10821,14 +10855,14 @@ window._ukCreate=function(){
   _saveUKontos(S.pid,list);
   _ukEditId=uk.id;
   renderUKonto();
+  _ukShowModal();
 };
 
 function _renderUKontoDetail(c,uk){
   var calc=_ukCalc(uk);
   var html='<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">';
-  html+='<button class="admin-btn" onclick="_ukEditId=null;renderUKonto();" style="font-size:12px;">&#8592; Zur\u00fcck</button>';
-  html+='<h2 style="font-size:18px;font-weight:700;margin:0;">'+esc(uk.firma||'Neues Unternehmerkonto')+'</h2>';
-  html+='<button class="admin-btn" onclick="_ukExportPDF()" style="margin-left:auto;font-size:11px;">&#128438; PDF Export</button>';
+  html+='<h2 style="font-size:18px;font-weight:700;margin:0;flex:1;">'+esc(uk.firma||'Neues Unternehmerkonto')+'</h2>';
+  html+='<button class="admin-btn" onclick="_ukExportPDF()" style="font-size:11px;">&#128438; PDF</button>';
   html+='<button class="admin-btn danger" onclick="_ukDelete(\''+esc(uk.id)+'\')" style="font-size:11px;">L\u00f6schen</button>';
   html+='</div>';
 
@@ -10942,6 +10976,7 @@ window._ukDelete=function(id){
   var list=_getUKontos(S.pid).filter(function(u){return u.id!==id;});
   _saveUKontos(S.pid,list);
   _ukEditId=null;
+  $('ukModal').classList.remove('show');
   renderUKonto();
 };
 window._ukAddNachtrag=function(){
