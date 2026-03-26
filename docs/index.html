@@ -8816,7 +8816,8 @@ var PERMS=[
   {key:'export_xml',label:'XML exportieren'},
   {key:'create_project',label:'Projekt erstellen'},
   {key:'delete_project',label:'Projekt l\u00f6schen'},
-  {key:'manage_users',label:'Benutzer verwalten'}
+  {key:'manage_users',label:'Benutzer verwalten'},
+  {key:'manage_ukonto',label:'Unternehmerkontos erstellen/l\u00f6schen'}
 ];
 
 var ROLE_COLORS=[
@@ -10788,7 +10789,7 @@ window.renderUKonto=function(){
   // Overview
   var html='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">';
   html+='<h2 style="font-size:18px;font-weight:700;margin:0;">Unternehmerkontos <span style="font-size:14px;font-weight:400;color:var(--text3);">'+list.length+'</span></h2>';
-  html+='<button class="admin-btn primary" onclick="_ukCreate()">+ Neues Unternehmerkonto</button>';
+  if(userHasPerm('manage_ukonto'))html+='<button class="admin-btn primary" onclick="_ukCreate()">+ Neues Unternehmerkonto</button>';
   html+='</div>';
 
   if(!list.length){
@@ -10809,15 +10810,17 @@ window.renderUKonto=function(){
       if(uk.werkvertragNr)html+='<div style="font-size:11px;color:var(--text3);margin-top:1px;">WV Nr. '+esc(uk.werkvertragNr)+(uk.zustaendig?' &middot; PL: '+esc(uk.zustaendig):'')+'</div>';
       html+='</div>';
       html+='<div style="display:flex;gap:6px;">';
-      html+='<button class="admin-btn" onclick="_ukEditId=\''+esc(uk.id)+'\';_ukShowModal();" style="font-size:11px;">&#9998; \u00d6ffnen</button>';
-      html+='<button class="admin-btn danger" onclick="_ukDelete(\''+esc(uk.id)+'\')" style="font-size:11px;">&times;</button>';
+      html+='<button class="admin-btn" onclick="_ukOpen(\''+uk.id+'\')" style="font-size:11px;">&#9998; \u00d6ffnen</button>';
+      if(userHasPerm('manage_ukonto'))html+='<button class="admin-btn danger" onclick="_ukDelete(\''+uk.id+'\')" style="font-size:11px;">&times;</button>';
       html+='</div></div>';
       // Stats grid
-      html+='<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);">';
-      html+='<div style="background:var(--surface);padding:12px;text-align:center;"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:600;">Vertragssumme</div><div style="font-size:15px;font-weight:700;color:var(--text);margin-top:4px;">'+_fmtCHF(uk.hauptvertrag||0)+'</div></div>';
-      html+='<div style="background:var(--surface);padding:12px;text-align:center;"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:600;">Total exkl. MwSt</div><div style="font-size:15px;font-weight:700;color:var(--text);margin-top:4px;">'+_fmtCHF(calc.totalExkl)+'</div></div>';
-      html+='<div style="background:var(--surface);padding:12px;text-align:center;"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:600;">Akontos ('+akontoCount+')</div><div style="font-size:15px;font-weight:700;color:var(--orange);margin-top:4px;">'+_fmtCHF(calc.totalZahlungen)+'</div></div>';
-      html+='<div style="background:var(--surface);padding:12px;text-align:center;"><div style="font-size:10px;color:var(--text3);text-transform:uppercase;font-weight:600;">Offen</div><div style="font-size:15px;font-weight:700;color:var(--green);margin-top:4px;">'+_fmtCHF(calc.totalAuszahlung)+'</div></div>';
+      var nachtragSum=(uk.nachtraege||[]).reduce(function(s,n){return s+(parseFloat(n.betrag)||0);},0);
+      html+='<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);">';
+      html+='<div style="background:var(--surface);padding:10px;text-align:center;"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600;">Vertragssumme</div><div style="font-size:14px;font-weight:700;color:var(--text);margin-top:3px;">'+_fmtCHF(uk.hauptvertrag||0)+'</div></div>';
+      html+='<div style="background:var(--surface);padding:10px;text-align:center;"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600;">Nachtr\u00e4ge ('+nachtragCount+')</div><div style="font-size:14px;font-weight:700;color:var(--blue);margin-top:3px;">'+_fmtCHF(nachtragSum)+'</div></div>';
+      html+='<div style="background:var(--surface);padding:10px;text-align:center;"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600;">Total exkl. MwSt</div><div style="font-size:14px;font-weight:700;color:var(--text);margin-top:3px;">'+_fmtCHF(calc.totalExkl)+'</div></div>';
+      html+='<div style="background:var(--surface);padding:10px;text-align:center;"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600;">Akontos ('+akontoCount+')</div><div style="font-size:14px;font-weight:700;color:var(--orange);margin-top:3px;">'+_fmtCHF(calc.totalZahlungen)+'</div></div>';
+      html+='<div style="background:var(--surface);padding:10px;text-align:center;"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;font-weight:600;">Offen</div><div style="font-size:14px;font-weight:700;color:var(--green);margin-top:3px;">'+_fmtCHF(calc.totalAuszahlung)+'</div></div>';
       html+='</div>';
       // Progress bar
       html+='<div style="padding:10px 16px 12px;">';
@@ -10835,6 +10838,10 @@ window.renderUKonto=function(){
   c.innerHTML=html;
 };
 
+window._ukOpen=function(id){
+  _ukEditId=id;
+  _ukShowModal();
+};
 window._ukShowModal=function(){
   var list=_getUKontos(S.pid);
   var uk=list.find(function(u){return u.id===_ukEditId;});
