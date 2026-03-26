@@ -11561,8 +11561,8 @@ function _renderAdressTable(){
   var currentGroup=[];
   list.forEach(function(u,i){
     if(u._isCategory){
-      // Sort previous group by BKP before adding
-      if(currentGroup.length){
+      // Sort previous group by BKP (unless manually sorted)
+      if(currentGroup.length&&!currentGroup.some(function(e){return e.u._manualSort;})){
         currentGroup.sort(function(a,b){
           var aVal=String(a.u.bereich||'').replace(/[^\d.]/g,'');
           var bVal=String(b.u.bereich||'').replace(/[^\d.]/g,'');
@@ -11580,7 +11580,7 @@ function _renderAdressTable(){
     }
   });
   // Sort and add last group
-  if(currentGroup.length){
+  if(currentGroup.length&&!currentGroup.some(function(e){return e.u._manualSort;})){
     currentGroup.sort(function(a,b){
       var aVal=String(a.u.bereich||'').replace(/[^\d.]/g,'');
       var bVal=String(b.u.bereich||'').replace(/[^\d.]/g,'');
@@ -11621,11 +11621,10 @@ function _renderAdressTable(){
     filtered.forEach(function(entry,fi){
       var u=entry.u,i=entry.i;
       if(u._isCategory){
-        // Category/Section header row
-        html+='<tr style="background:var(--surface2);border-top:2px solid var(--border);">'
+        html+='<tr draggable="true" data-adridx="'+i+'" class="adr-drag-row" style="background:var(--surface2);border-top:2px solid var(--border);cursor:grab;">'
           +'<td colspan="7" style="'+tdStyle+'font-weight:700;font-size:12px;color:var(--text);padding:10px 12px;">'
           +'<div style="display:flex;align-items:center;justify-content:space-between;">'
-          +'<span>'+esc(u.bereich||'')+'</span>'
+          +'<span style="display:flex;align-items:center;gap:6px;"><span style="color:var(--text3);font-size:14px;cursor:grab;" title="Verschieben">&#9776;</span> '+esc(u.bereich||'')+'</span>'
           +'<span style="display:flex;gap:4px;">'
           +'<button style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text3);padding:2px 6px;" onclick="editAdressKategorie('+i+')" title="Umbenennen">&#9998;</button>'
           +'<button style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--red);padding:2px 6px;" onclick="deleteAdressEntry('+i+')" title="L\u00f6schen">&times;</button>'
@@ -11635,8 +11634,8 @@ function _renderAdressTable(){
         if(u.strasse) adresseHtml+='<br>'+esc(u.strasse);
         if(u.ort) adresseHtml+='<br>'+esc(u.ort);
         var trBg=fi%2===0?'background:var(--bg);':'';
-        html+='<tr style="'+trBg+'cursor:pointer;" ondblclick="editUnternehmer('+i+')">'
-          +'<td style="'+tdStyle+'font-weight:600;">'+esc(u.bereich||'')+'</td>'
+        html+='<tr draggable="true" data-adridx="'+i+'" class="adr-drag-row" style="'+trBg+'cursor:grab;" ondblclick="editUnternehmer('+i+')">'
+          +'<td style="'+tdStyle+'"><span style="display:flex;align-items:center;gap:6px;"><span style="color:var(--text3);font-size:12px;cursor:grab;">&#9776;</span> <strong>'+esc(u.bereich||'')+'</strong></span></td>'
           +'<td style="'+tdStyle+'">'+(adresseHtml||'\u2013')+'</td>'
           +'<td style="'+tdStyle+'">'+esc(u.sachbearbeiter||'')+'</td>'
           +'<td style="'+tdStyle+'">'+esc(u.funktion||'')+'</td>'
@@ -11649,6 +11648,36 @@ function _renderAdressTable(){
     html+='</tbody></table>';
   }
   area.innerHTML=html;
+  // --- Drag & Drop for address rows ---
+  var _adrDragIdx=null;
+  area.querySelectorAll('.adr-drag-row').forEach(function(row){
+    row.addEventListener('dragstart',function(e){
+      _adrDragIdx=parseInt(this.getAttribute('data-adridx'));
+      this.style.opacity='0.4';
+      e.dataTransfer.effectAllowed='move';
+    });
+    row.addEventListener('dragend',function(){this.style.opacity='';});
+    row.addEventListener('dragover',function(e){
+      e.preventDefault();e.dataTransfer.dropEffect='move';
+      this.style.borderTop='2px solid var(--orange)';
+    });
+    row.addEventListener('dragleave',function(){this.style.borderTop='';});
+    row.addEventListener('drop',function(e){
+      e.preventDefault();this.style.borderTop='';
+      var dropIdx=parseInt(this.getAttribute('data-adridx'));
+      if(_adrDragIdx===null||_adrDragIdx===dropIdx)return;
+      var list=_subPageData('unternehmer');
+      var item=list.splice(_adrDragIdx,1)[0];
+      // Adjust drop index after removal
+      var newIdx=dropIdx>_adrDragIdx?dropIdx-1:dropIdx;
+      list.splice(newIdx,0,item);
+      // Mark as manually sorted
+      item._manualSort=true;
+      var d=sGet('p_'+S.pid,{});d.unternehmer=list;sSet('p_'+S.pid,d);
+      _adrDragIdx=null;
+      _renderAdressTable();
+    });
+  });
 }
 window.addAdressKategorie=function(){
   customPrompt('Neue Kategorie','').then(function(name){
