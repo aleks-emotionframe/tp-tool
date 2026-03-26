@@ -2777,7 +2777,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
 
 <!-- IMAGE LIGHTBOX -->
 <!-- CUSTOM CONFIRM MODAL -->
-<div class="modal-bg" id="confirmModal">
+<div class="modal-bg" id="confirmModal" style="z-index:1100;"
   <div class="modal" style="max-width:400px;">
     <h3 id="confirmTitle" style="font-size:17px;"></h3>
     <p id="confirmText" style="color:var(--text2);font-size:14px;margin-bottom:20px;line-height:1.5;"></p>
@@ -2848,16 +2848,7 @@ tr.is-done .progress-text { color: var(--green) !important; font-weight: 600; }
     </div>
   </div>
 </div>
-<div class="modal-bg" id="confirmModal">
-  <div class="modal" style="max-width:380px;text-align:center;padding:28px;">
-    <div style="font-size:32px;margin-bottom:12px;">&#9888;</div>
-    <div id="confirmMsg" style="font-size:14px;color:var(--text);margin-bottom:20px;line-height:1.5;"></div>
-    <div class="modal-btns" style="justify-content:center;">
-      <button onclick="closeConfirmModal()">Abbrechen</button>
-      <button style="background:var(--red);color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-family:var(--font);font-weight:600;" onclick="doConfirmModal()">L&ouml;schen</button>
-    </div>
-  </div>
-</div>
+<!-- old confirm modal removed, using new customConfirm -->
 
 <!-- NEW PROJECT MODAL -->
 <div class="modal-bg" id="newModal">
@@ -5834,15 +5825,7 @@ window.toggleMyPendenz=function(id){
   saveMyPendenzen(list);
   renderMyPendenzen();
 };
-var _confirmCb=null,_confirmCancelCb=null;
-function openConfirmModal(msg,cb,cancelCb){
-  $('confirmMsg').innerHTML=msg;
-  _confirmCb=cb;
-  _confirmCancelCb=cancelCb||null;
-  $('confirmModal').classList.add('show');
-}
-window.closeConfirmModal=function(){$('confirmModal').classList.remove('show');var cc=_confirmCancelCb;_confirmCb=null;_confirmCancelCb=null;if(cc)cc();};
-window.doConfirmModal=function(){var cb=_confirmCb;_confirmCancelCb=null;closeConfirmModal();if(cb)cb();};
+// Legacy confirm removed, using customConfirm() with Promises
 
 window.deleteMyPendenz=function(id){
   openConfirmModal('M\u00f6chtest du diese Pendenz wirklich l\u00f6schen?',function(){
