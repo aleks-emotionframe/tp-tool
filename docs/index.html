@@ -10806,6 +10806,7 @@ window.renderUKonto=function(){
       html+='</div>';
       html+='<div style="display:flex;gap:6px;">';
       html+='<button class="admin-btn" onclick="_ukOpen(\''+uk.id+'\')" style="font-size:11px;">&#9998; \u00d6ffnen</button>';
+      html+='<button class="admin-btn" onclick="_ukPdfFromList(\''+uk.id+'\')" style="font-size:11px;">&#128438; PDF</button>';
       if(userHasPerm('manage_ukonto'))html+='<button class="admin-btn danger" onclick="_ukDelete(\''+uk.id+'\')" style="font-size:11px;">&times;</button>';
       html+='</div></div>';
       // Stats grid
@@ -10850,6 +10851,11 @@ function customConfirm(title,text,btnLabel){
   });
 }
 
+window._ukPdfFromList=function(id){
+  _ukEditId=id;
+  _ukExportPDF();
+  _ukEditId=null;
+};
 window._ukOpen=function(id){
   _ukEditId=id;
   _ukShowModal();
