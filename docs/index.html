@@ -11027,15 +11027,23 @@ window._ukDelete=function(id){
     renderUKonto();
   });
 };
+// Re-render the modal content (for add/remove operations)
+function _ukReloadModal(){
+  var list=_getUKontos(S.pid);
+  var uk=list.find(function(u){return u.id===_ukEditId;});
+  if(uk&&document.getElementById('ukModal').classList.contains('show')){
+    _renderUKontoDetail(document.getElementById('ukModalBody'),uk);
+  }
+}
 window._ukAddNachtrag=function(){
   var list=_getUKontos(S.pid);var uk=list.find(function(u){return u.id===_ukEditId;});if(!uk)return;
   if(!uk.nachtraege)uk.nachtraege=[];
   uk.nachtraege.push({text:'',betrag:0});
-  _saveUKontos(S.pid,list);renderUKonto();
+  _saveUKontos(S.pid,list);_ukReloadModal();
 };
 window._ukRemoveNachtrag=function(i){
   var list=_getUKontos(S.pid);var uk=list.find(function(u){return u.id===_ukEditId;});if(!uk)return;
-  uk.nachtraege.splice(i,1);_saveUKontos(S.pid,list);renderUKonto();
+  uk.nachtraege.splice(i,1);_saveUKontos(S.pid,list);_ukReloadModal();
 };
 window._ukUpdateNachtrag=function(i,key,val){
   var list=_getUKontos(S.pid);var uk=list.find(function(u){return u.id===_ukEditId;});if(!uk)return;
@@ -11046,11 +11054,11 @@ window._ukAddAkonto=function(){
   var list=_getUKontos(S.pid);var uk=list.find(function(u){return u.id===_ukEditId;});if(!uk)return;
   if(!uk.akontos)uk.akontos=[];
   uk.akontos.push({ref:'',datum:'',betrag:0});
-  _saveUKontos(S.pid,list);renderUKonto();
+  _saveUKontos(S.pid,list);_ukReloadModal();
 };
 window._ukRemoveAkonto=function(i){
   var list=_getUKontos(S.pid);var uk=list.find(function(u){return u.id===_ukEditId;});if(!uk)return;
-  uk.akontos.splice(i,1);_saveUKontos(S.pid,list);renderUKonto();
+  uk.akontos.splice(i,1);_saveUKontos(S.pid,list);_ukReloadModal();
 };
 window._ukUpdateAkonto=function(i,key,val){
   var list=_getUKontos(S.pid);var uk=list.find(function(u){return u.id===_ukEditId;});if(!uk)return;
@@ -11061,11 +11069,11 @@ window._ukAddLastschrift=function(){
   var list=_getUKontos(S.pid);var uk=list.find(function(u){return u.id===_ukEditId;});if(!uk)return;
   if(!uk.lastschriften)uk.lastschriften=[];
   uk.lastschriften.push({text:'',datum:'',betrag:0});
-  _saveUKontos(S.pid,list);renderUKonto();
+  _saveUKontos(S.pid,list);_ukReloadModal();
 };
 window._ukRemoveLastschrift=function(i){
   var list=_getUKontos(S.pid);var uk=list.find(function(u){return u.id===_ukEditId;});if(!uk)return;
-  uk.lastschriften.splice(i,1);_saveUKontos(S.pid,list);renderUKonto();
+  uk.lastschriften.splice(i,1);_saveUKontos(S.pid,list);_ukReloadModal();
 };
 window._ukUpdateLastschrift=function(i,key,val){
   var list=_getUKontos(S.pid);var uk=list.find(function(u){return u.id===_ukEditId;});if(!uk)return;
