@@ -11505,6 +11505,7 @@ function renderUnternehmer(){
   html+='<button class="admin-btn" onclick="document.getElementById(\'xlsxUnternehmerInput\').click()" style="background:var(--surface);border:1px solid var(--border);font-size:11px;padding:6px 10px;">&#8679; XLSX importieren</button>';
   html+='<button class="admin-btn" onclick="exportUnternehmerPdf()" style="background:var(--surface);border:1px solid var(--border);font-size:11px;padding:6px 10px;"'+(list.length?'':' disabled style="opacity:.4;pointer-events:none;"')+'>&#128196; PDF exportieren</button>';
   if(list.length)html+='<button class="admin-btn danger" onclick="clearAdressliste()" style="font-size:11px;padding:6px 10px;">Alle l\u00f6schen</button>';
+  html+='<button class="admin-btn" onclick="addAdressKategorie()" style="font-size:11px;padding:6px 10px;background:var(--surface);border:1px solid var(--border);">+ Kategorie</button>';
   html+='<button class="admin-btn primary" onclick="addUnternehmer()" style="font-size:11px;padding:6px 10px;">+ Hinzuf\u00fcgen</button>';
   html+='<input type="file" id="xlsxUnternehmerInput" accept=".xlsx,.xls" style="display:none" onchange="importUnternehmerXlsx(this)">';
   html+='</div></div>';
@@ -11552,24 +11553,62 @@ function _renderAdressTable(){
       +'</tr></thead><tbody>';
     filtered.forEach(function(entry,fi){
       var u=entry.u,i=entry.i;
-      var adresseHtml=esc(u.firma||'');
-      if(u.strasse) adresseHtml+='<br>'+esc(u.strasse);
-      if(u.ort) adresseHtml+='<br>'+esc(u.ort);
-      var trBg=fi%2===0?'background:var(--bg);':'';
-      html+='<tr style="'+trBg+'cursor:pointer;" ondblclick="editUnternehmer('+i+')">'
-        +'<td style="'+tdStyle+'font-weight:600;">'+esc(u.bereich||'')+'</td>'
-        +'<td style="'+tdStyle+'">'+(adresseHtml||'\u2013')+'</td>'
-        +'<td style="'+tdStyle+'">'+esc(u.sachbearbeiter||'')+'</td>'
-        +'<td style="'+tdStyle+'">'+esc(u.funktion||'')+'</td>'
-        +'<td style="'+tdStyle+'white-space:nowrap;">'+esc(u.telefon||'')+'</td>'
-        +'<td style="'+tdStyle+'white-space:nowrap;">'+esc(u.natel||'')+'</td>'
-        +'<td style="'+tdStyle+'"><a href="mailto:'+esc(u.email||'')+'" style="color:var(--orange);text-decoration:none;">'+esc(u.email||'')+'</a></td>'
-        +'</tr>';
+      if(u._isCategory){
+        // Category/Section header row
+        html+='<tr style="background:var(--surface2);border-top:2px solid var(--border);">'
+          +'<td colspan="7" style="'+tdStyle+'font-weight:700;font-size:12px;color:var(--text);padding:10px 12px;">'
+          +'<div style="display:flex;align-items:center;justify-content:space-between;">'
+          +'<span>'+esc(u.bereich||'')+'</span>'
+          +'<span style="display:flex;gap:4px;">'
+          +'<button style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--text3);padding:2px 6px;" onclick="editAdressKategorie('+i+')" title="Umbenennen">&#9998;</button>'
+          +'<button style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--red);padding:2px 6px;" onclick="deleteAdressEntry('+i+')" title="L\u00f6schen">&times;</button>'
+          +'</span></div></td></tr>';
+      } else {
+        var adresseHtml=esc(u.firma||'');
+        if(u.strasse) adresseHtml+='<br>'+esc(u.strasse);
+        if(u.ort) adresseHtml+='<br>'+esc(u.ort);
+        var trBg=fi%2===0?'background:var(--bg);':'';
+        html+='<tr style="'+trBg+'cursor:pointer;" ondblclick="editUnternehmer('+i+')">'
+          +'<td style="'+tdStyle+'font-weight:600;">'+esc(u.bereich||'')+'</td>'
+          +'<td style="'+tdStyle+'">'+(adresseHtml||'\u2013')+'</td>'
+          +'<td style="'+tdStyle+'">'+esc(u.sachbearbeiter||'')+'</td>'
+          +'<td style="'+tdStyle+'">'+esc(u.funktion||'')+'</td>'
+          +'<td style="'+tdStyle+'white-space:nowrap;">'+esc(u.telefon||'')+'</td>'
+          +'<td style="'+tdStyle+'white-space:nowrap;">'+esc(u.natel||'')+'</td>'
+          +'<td style="'+tdStyle+'"><a href="mailto:'+esc(u.email||'')+'" style="color:var(--orange);text-decoration:none;">'+esc(u.email||'')+'</a></td>'
+          +'</tr>';
+      }
     });
     html+='</tbody></table>';
   }
   area.innerHTML=html;
 }
+window.addAdressKategorie=function(){
+  var name=prompt('Name der Kategorie:');
+  if(!name||!name.trim())return;
+  var list=_subPageData('unternehmer');
+  list.push({_isCategory:true,bereich:name.trim()});
+  var d=sGet('p_'+S.pid,{});d.unternehmer=list;sSet('p_'+S.pid,d);
+  renderUnternehmer();
+};
+window.editAdressKategorie=function(idx){
+  var list=_subPageData('unternehmer');
+  var entry=list[idx];if(!entry)return;
+  var name=prompt('Kategorie umbenennen:',entry.bereich||'');
+  if(!name||!name.trim())return;
+  entry.bereich=name.trim();
+  var d=sGet('p_'+S.pid,{});d.unternehmer=list;sSet('p_'+S.pid,d);
+  renderUnternehmer();
+};
+window.deleteAdressEntry=function(idx){
+  customConfirm('Eintrag l\u00f6schen','Diesen Eintrag wirklich l\u00f6schen?','Ja, l\u00f6schen').then(function(ok){
+    if(!ok)return;
+    var list=_subPageData('unternehmer');
+    list.splice(idx,1);
+    var d=sGet('p_'+S.pid,{});d.unternehmer=list;sSet('p_'+S.pid,d);
+    renderUnternehmer();
+  });
+};
 window.clearAdressliste=function(){
   customConfirm('Adressliste l\u00f6schen','M\u00f6chtest du die gesamte Adressliste wirklich unwiderruflich l\u00f6schen? Alle Eintr\u00e4ge gehen verloren.','Ja, alle l\u00f6schen').then(function(ok){
     if(!ok)return;
